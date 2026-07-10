@@ -1,0 +1,93 @@
+import { LevelProgress } from "@/components/gamification/level-progress";
+import { StudentLinks } from "@/components/student/student-links";
+import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { StatCard } from "@/components/ui/stat-card";
+import { requireRole } from "@/lib/authorization-service";
+import { db } from "@/lib/db";
+
+export default async function StudentProfilePage() {
+  const user = await requireRole("STUDENT");
+
+  const [profile, badges, xpTransactions, grades] = await Promise.all([
+    db.studentProfile.findUnique({ where: { studentId: user.id } }),
+    db.studentBadge.findMany({
+      where: { studentId: user.id },
+      include: { badge: true },
+      orderBy: { awardedAt: "desc" }
+    }),
+    db.xPTransaction.findMany({
+      where: { studentId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: 10
+    }),
+    db.grade.findMany({
+      where: { studentId: user.id, publishedAt: { not: null } },
+      include: { activity: { include: { module: { include: { class: true } } } } },
+      orderBy: { publishedAt: "desc" },
+      take: 10
+    })
+  ]);
+
+  return (
+    <DashboardShell title="Adventurer profile" subtitle="Your own XP, level, badges, and published grades.">
+      <StudentLinks />
+      <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+        <LevelProgress totalXp={profile?.totalXp ?? 0} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <StatCard label="Current streak" value={profile?.currentStreak ?? 0} />
+          <StatCard label="Longest streak" value={profile?.longestStreak ?? 0} />
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        <section className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-bold">Badges</h2>
+          <div className="mt-4 space-y-3">
+            {badges.length === 0 ? (
+              <p className="text-sm text-ink/65">No badges yet.</p>
+            ) : (
+              badges.map((entry) => (
+                <div key={entry.badgeId}>
+                  <p className="font-semibold">{entry.badge.name}</p>
+                  <p className="text-sm text-ink/60">{entry.badge.description}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+        <section className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-bold">Recent XP</h2>
+          <div className="mt-4 space-y-3">
+            {xpTransactions.length === 0 ? (
+              <p className="text-sm text-ink/65">No XP transactions yet.</p>
+            ) : (
+              xpTransactions.map((transaction) => (
+                <div key={transaction.id}>
+                  <p className="font-semibold">+{transaction.amount} XP</p>
+                  <p className="text-sm text-ink/60">{transaction.description}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+        <section className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-bold">Published grades</h2>
+          <div className="mt-4 space-y-3">
+            {grades.length === 0 ? (
+              <p className="text-sm text-ink/65">No published grades yet.</p>
+            ) : (
+              grades.map((grade) => (
+                <div key={grade.id}>
+                  <p className="font-semibold">{grade.activity.title}</p>
+                  <p className="text-sm text-ink/60">
+                    {grade.activity.module.class.name} · {grade.score.toString()}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+      </div>
+    </DashboardShell>
+  );
+}

@@ -1,0 +1,294 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  LECTURER
+  STUDENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum ClassStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+}
+
+enum ActivityType {
+  LESSON
+  ASSIGNMENT
+  QUIZ
+  PROJECT
+}
+
+enum ProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  COMPLETED
+  FAILED
+}
+
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
+  GRADED
+  RETURNED
+}
+
+enum QuestType {
+  MAIN
+  SIDE
+  CHALLENGE
+  BOSS
+}
+
+model User {
+  id              String             @id @default(cuid())
+  name            String
+  email           String             @unique
+  passwordHash    String
+  role            UserRole
+  status          UserStatus         @default(ACTIVE)
+  avatarUrl       String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  taughtClasses   Class[]            @relation("ClassLecturer")
+  createdClasses  Class[]            @relation("ClassCreator")
+  enrollments     ClassStudent[]
+  progresses      ActivityProgress[]
+  submissions     Submission[]
+  grades          Grade[]            @relation("StudentGrades")
+  gradedGrades    Grade[]            @relation("GradedBy")
+  profile         StudentProfile?
+  xpTransactions  XPTransaction[]
+  badges          StudentBadge[]
+}
+
+model Class {
+  id             String             @id @default(cuid())
+  name           String
+  code           String             @unique
+  description    String?
+  lecturerId     String
+  status         ClassStatus        @default(DRAFT)
+  startDate      DateTime?
+  endDate        DateTime?
+  createdById    String
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  lecturer       User               @relation("ClassLecturer", fields: [lecturerId], references: [id])
+  createdBy      User               @relation("ClassCreator", fields: [createdById], references: [id])
+  students       ClassStudent[]
+  modules        Module[]
+  quests         Quest[]
+  xpTransactions XPTransaction[]
+}
+
+model ClassStudent {
+  classId     String
+  studentId   String
+  status      EnrollmentStatus @default(ACTIVE)
+  enrolledAt  DateTime         @default(now())
+  completedAt DateTime?
+  class       Class            @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student     User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@id([classId, studentId])
+}
+
+model Module {
+  id            String     @id @default(cuid())
+  classId       String
+  title         String
+  description   String?
+  position      Int
+  isPublished   Boolean    @default(false)
+  availableFrom DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  class         Class      @relation(fields: [classId], references: [id], onDelete: Cascade)
+  activities    Activity[]
+
+  @@unique([classId, position])
+}
+
+model Activity {
+  id                    String                 @id @default(cuid())
+  moduleId              String
+  type                  ActivityType
+  title                 String
+  description           String?
+  content               String?
+  position              Int
+  maxScore              Decimal?               @db.Decimal(8, 2)
+  passingScore          Decimal?               @db.Decimal(8, 2)
+  dueAt                 DateTime?
+  isRequired            Boolean                @default(true)
+  isPublished           Boolean                @default(false)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  module                Module                 @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  prerequisites         ActivityPrerequisite[] @relation("ActivityPrerequisites")
+  requiredBy            ActivityPrerequisite[] @relation("RequiredActivity")
+  progresses            ActivityProgress[]
+  submissions           Submission[]
+  grades                Grade[]
+  questLinks            QuestActivity[]
+
+  @@unique([moduleId, position])
+}
+
+model ActivityPrerequisite {
+  activityId         String
+  requiredActivityId String
+  minimumScore       Decimal? @db.Decimal(8, 2)
+  activity           Activity @relation("ActivityPrerequisites", fields: [activityId], references: [id], onDelete: Cascade)
+  requiredActivity   Activity @relation("RequiredActivity", fields: [requiredActivityId], references: [id], onDelete: Cascade)
+
+  @@id([activityId, requiredActivityId])
+}
+
+model ActivityProgress {
+  id              String         @id @default(cuid())
+  activityId      String
+  studentId       String
+  status          ProgressStatus @default(NOT_STARTED)
+  progressPercent Int            @default(0)
+  bestScore       Decimal?       @db.Decimal(8, 2)
+  startedAt       DateTime?
+  submittedAt     DateTime?
+  completedAt     DateTime?
+  updatedAt       DateTime       @updatedAt
+  activity        Activity       @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  student         User           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, studentId])
+}
+
+model Submission {
+  id          String           @id @default(cuid())
+  activityId  String
+  studentId   String
+  textContent String?
+  fileUrl     String?
+  status      SubmissionStatus @default(DRAFT)
+  submittedAt DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  activity    Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  student     User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, studentId])
+}
+
+model Grade {
+  id          String    @id @default(cuid())
+  activityId  String
+  studentId   String
+  score       Decimal   @db.Decimal(8, 2)
+  feedback    String?
+  gradedById  String
+  gradedAt    DateTime  @default(now())
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  activity    Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  student     User      @relation("StudentGrades", fields: [studentId], references: [id], onDelete: Cascade)
+  gradedBy    User      @relation("GradedBy", fields: [gradedById], references: [id])
+
+  @@unique([activityId, studentId])
+}
+
+model Quest {
+  id          String          @id @default(cuid())
+  classId     String
+  title       String
+  description String?
+  type        QuestType       @default(MAIN)
+  position    Int
+  xpReward    Int
+  isOptional  Boolean         @default(false)
+  isPublished Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  class       Class           @relation(fields: [classId], references: [id], onDelete: Cascade)
+  activities  QuestActivity[]
+
+  @@unique([classId, position])
+}
+
+model QuestActivity {
+  questId    String
+  activityId String
+  position   Int
+  quest      Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@id([questId, activityId])
+  @@unique([questId, position])
+}
+
+model StudentProfile {
+  studentId     String   @id
+  totalXp       Int      @default(0)
+  level         Int      @default(1)
+  currentStreak Int      @default(0)
+  longestStreak Int      @default(0)
+  updatedAt     DateTime @updatedAt
+  student       User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model XPTransaction {
+  id             String   @id @default(cuid())
+  studentId      String
+  classId        String?
+  amount         Int
+  sourceType     String
+  sourceId       String
+  description    String
+  idempotencyKey String   @unique
+  createdAt      DateTime @default(now())
+  student        User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  class          Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
+}
+
+model Badge {
+  id             String         @id @default(cuid())
+  name           String         @unique
+  description    String
+  iconUrl        String?
+  conditionType  String
+  conditionValue String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  students       StudentBadge[]
+}
+
+model StudentBadge {
+  studentId String
+  badgeId   String
+  awardedAt DateTime @default(now())
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@id([studentId, badgeId])
+}
