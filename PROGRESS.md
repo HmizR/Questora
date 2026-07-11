@@ -19,7 +19,8 @@ Post-MVP UI refresh completed:
 - Sticky top navbar
 - Role-aware sidebar navigation
 - Class/realm workspace tabs in the main content area
-- Dedicated lecturer creation pages for regions, missions, and quests
+- Dedicated lecturer create/edit pages for regions, missions, and quests
+- Compact lecturer action menus for edit, publish, and delete actions
 - Shared `/account` page
 
 Latest verified checks:
@@ -79,9 +80,10 @@ Completed:
 - Lecturer class dashboard
 - Module create/update/publish/delete
 - Activity create/update/publish/delete
-- Dedicated create pages for regions, missions, and quests
+- Dedicated create/edit pages for regions, missions, and quests
+- Compact triple-dot action menus for region, mission, and quest rows
 - Activity prerequisite add/remove controls
-- Quest create/update/publish
+- Quest create/update/publish/delete
 - Connect activities to quests
 - Student roster and progress summary
 - Submission review
@@ -95,10 +97,13 @@ Key routes:
 - `/lecturer/classes/[classId]`
 - `/lecturer/classes/[classId]/modules`
 - `/lecturer/classes/[classId]/modules/new`
+- `/lecturer/classes/[classId]/modules/[moduleId]/edit`
 - `/lecturer/classes/[classId]/modules/[moduleId]/activities/new`
+- `/lecturer/classes/[classId]/modules/[moduleId]/activities/[activityId]/edit`
 - `/lecturer/classes/[classId]/students`
 - `/lecturer/classes/[classId]/quests`
 - `/lecturer/classes/[classId]/quests/new`
+- `/lecturer/classes/[classId]/quests/[questId]/edit`
 - `/lecturer/classes/[classId]/submissions`
 
 ## Phase 4: Student

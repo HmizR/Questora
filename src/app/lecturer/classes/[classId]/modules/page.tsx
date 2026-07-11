@@ -5,11 +5,12 @@ import {
   ActivityPrerequisiteForm,
   DeleteActivityForm,
   DeleteModuleForm,
+  lecturerMenuDangerClassName,
+  lecturerMenuItemClassName,
   PublishActivityForm,
-  PublishModuleForm,
-  UpdateActivityForm,
-  UpdateModuleForm
+  PublishModuleForm
 } from "@/components/lecturer/forms";
+import { ActionMenu } from "@/components/ui/action-menu";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { Expander } from "@/components/ui/expander";
@@ -82,11 +83,24 @@ export default async function LecturerModulesPage({
               >
                 New mission
               </Link>
-              {!module.isPublished ? <PublishModuleForm moduleId={module.id} /> : null}
-              <DeleteModuleForm moduleId={module.id} />
-            </div>
-            <div className="mt-5">
-              <UpdateModuleForm module={module} />
+              <ActionMenu label={`Actions for ${module.title}`}>
+                <Link
+                  className={lecturerMenuItemClassName}
+                  href={`/lecturer/classes/${classId}/modules/${module.id}/edit`}
+                >
+                  Edit
+                </Link>
+                {!module.isPublished ? (
+                  <PublishModuleForm
+                    buttonClassName={lecturerMenuItemClassName}
+                    moduleId={module.id}
+                  />
+                ) : null}
+                <DeleteModuleForm
+                  buttonClassName={lecturerMenuDangerClassName}
+                  moduleId={module.id}
+                />
+              </ActionMenu>
             </div>
             <div className="mt-6 space-y-4">
               {module.activities.map((activity) => (
@@ -96,19 +110,32 @@ export default async function LecturerModulesPage({
                   meta={`${activity.type} - ${activity.isPublished ? "Published" : "Draft"}`}
                   title={`${activity.position}. ${activity.title}`}
                 >
-                  <div className="mb-4 flex justify-end gap-2">
-                    {!activity.isPublished ? <PublishActivityForm activityId={activity.id} /> : null}
-                    <DeleteActivityForm activityId={activity.id} />
+                  <div className="mb-4 flex justify-end">
+                    <ActionMenu label={`Actions for ${activity.title}`}>
+                      <Link
+                        className={lecturerMenuItemClassName}
+                        href={`/lecturer/classes/${classId}/modules/${module.id}/activities/${activity.id}/edit`}
+                      >
+                        Edit
+                      </Link>
+                      {!activity.isPublished ? (
+                        <PublishActivityForm
+                          activityId={activity.id}
+                          buttonClassName={lecturerMenuItemClassName}
+                        />
+                      ) : null}
+                      <DeleteActivityForm
+                        activityId={activity.id}
+                        buttonClassName={lecturerMenuDangerClassName}
+                      />
+                    </ActionMenu>
                   </div>
-                  <div className="grid gap-5 xl:grid-cols-2">
-                    <UpdateActivityForm activity={activity} />
-                    <ActivityPrerequisiteForm
-                      activities={allActivities}
-                      activityId={activity.id}
-                      classId={classId}
-                      prerequisites={activity.prerequisites}
-                    />
-                  </div>
+                  <ActivityPrerequisiteForm
+                    activities={allActivities}
+                    activityId={activity.id}
+                    classId={classId}
+                    prerequisites={activity.prerequisites}
+                  />
                 </Expander>
               ))}
             </div>

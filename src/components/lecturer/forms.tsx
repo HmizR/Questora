@@ -8,6 +8,7 @@ import {
   createQuestAction,
   deleteActivityAction,
   deleteModuleAction,
+  deleteQuestAction,
   gradeSubmissionAction,
   publishActivityAction,
   publishGradeAction,
@@ -27,6 +28,15 @@ type PrerequisiteView = {
   minimumScore: { toString(): string } | null;
   requiredActivity: ActivityOption;
 };
+
+const smallActionButton =
+  "rounded-md border bg-white px-3 py-1.5 text-xs font-semibold hover:text-white";
+
+const menuItemButton =
+  "block w-full rounded-md px-3 py-2 text-left text-sm font-semibold text-ink/75 hover:bg-parchment hover:text-ink";
+
+const menuDangerButton =
+  "block w-full rounded-md px-3 py-2 text-left text-sm font-semibold text-ember hover:bg-ember/10";
 
 function boolDefault(value: boolean) {
   return value ? "on" : undefined;
@@ -86,22 +96,34 @@ export function UpdateModuleForm({ module }: { module: Module }) {
   );
 }
 
-export function PublishModuleForm({ moduleId }: { moduleId: string }) {
+export function PublishModuleForm({
+  moduleId,
+  buttonClassName = `${smallActionButton} border-moss/30 text-moss hover:bg-moss`
+}: {
+  moduleId: string;
+  buttonClassName?: string;
+}) {
   return (
     <LecturerActionForm action={publishModuleAction}>
       <input name="moduleId" type="hidden" value={moduleId} />
-      <button className="rounded-md border border-moss/30 bg-white px-3 py-1.5 text-xs font-semibold text-moss hover:bg-moss hover:text-white">
+      <button className={buttonClassName}>
         Publish
       </button>
     </LecturerActionForm>
   );
 }
 
-export function DeleteModuleForm({ moduleId }: { moduleId: string }) {
+export function DeleteModuleForm({
+  moduleId,
+  buttonClassName = `${smallActionButton} border-ember/30 text-ember hover:bg-ember`
+}: {
+  moduleId: string;
+  buttonClassName?: string;
+}) {
   return (
     <LecturerActionForm action={deleteModuleAction}>
       <input name="moduleId" type="hidden" value={moduleId} />
-      <button className="rounded-md border border-ember/30 bg-white px-3 py-1.5 text-xs font-semibold text-ember hover:bg-ember hover:text-white">
+      <button className={buttonClassName}>
         Delete
       </button>
     </LecturerActionForm>
@@ -177,22 +199,34 @@ export function UpdateActivityForm({ activity }: { activity: Activity }) {
   );
 }
 
-export function PublishActivityForm({ activityId }: { activityId: string }) {
+export function PublishActivityForm({
+  activityId,
+  buttonClassName = `${smallActionButton} border-moss/30 text-moss hover:bg-moss`
+}: {
+  activityId: string;
+  buttonClassName?: string;
+}) {
   return (
     <LecturerActionForm action={publishActivityAction}>
       <input name="activityId" type="hidden" value={activityId} />
-      <button className="rounded-md border border-moss/30 bg-white px-3 py-1.5 text-xs font-semibold text-moss hover:bg-moss hover:text-white">
+      <button className={buttonClassName}>
         Publish
       </button>
     </LecturerActionForm>
   );
 }
 
-export function DeleteActivityForm({ activityId }: { activityId: string }) {
+export function DeleteActivityForm({
+  activityId,
+  buttonClassName = `${smallActionButton} border-ember/30 text-ember hover:bg-ember`
+}: {
+  activityId: string;
+  buttonClassName?: string;
+}) {
   return (
     <LecturerActionForm action={deleteActivityAction}>
       <input name="activityId" type="hidden" value={activityId} />
-      <button className="rounded-md border border-ember/30 bg-white px-3 py-1.5 text-xs font-semibold text-ember hover:bg-ember hover:text-white">
+      <button className={buttonClassName}>
         Delete
       </button>
     </LecturerActionForm>
@@ -333,16 +367,42 @@ export function UpdateQuestForm({ quest }: { quest: Quest }) {
   );
 }
 
-export function PublishQuestForm({ questId }: { questId: string }) {
+export function PublishQuestForm({
+  questId,
+  buttonClassName = `${smallActionButton} border-moss/30 text-moss hover:bg-moss`
+}: {
+  questId: string;
+  buttonClassName?: string;
+}) {
   return (
     <LecturerActionForm action={publishQuestAction}>
       <input name="questId" type="hidden" value={questId} />
-      <button className="rounded-md border border-moss/30 bg-white px-3 py-1.5 text-xs font-semibold text-moss hover:bg-moss hover:text-white">
+      <button className={buttonClassName}>
         Publish
       </button>
     </LecturerActionForm>
   );
 }
+
+export function DeleteQuestForm({
+  questId,
+  buttonClassName = `${smallActionButton} border-ember/30 text-ember hover:bg-ember`
+}: {
+  questId: string;
+  buttonClassName?: string;
+}) {
+  return (
+    <LecturerActionForm action={deleteQuestAction}>
+      <input name="questId" type="hidden" value={questId} />
+      <button className={buttonClassName}>
+        Delete
+      </button>
+    </LecturerActionForm>
+  );
+}
+
+export const lecturerMenuItemClassName = menuItemButton;
+export const lecturerMenuDangerClassName = menuDangerButton;
 
 export function ConnectQuestActivityForm({
   questId,

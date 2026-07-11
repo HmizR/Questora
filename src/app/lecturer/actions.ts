@@ -34,6 +34,7 @@ import {
   createQuest,
   deleteActivity,
   deleteModule,
+  deleteQuest,
   gradeSubmission,
   publishActivity,
   publishModule,
@@ -88,14 +89,17 @@ export async function updateModuleAction(
   const parsed = updateModuleSchema.safeParse(formDataToObject(formData));
   if (!parsed.success) return validationError(parsed.error);
 
+  let redirectTo: string;
   try {
     const user = await requireRole("LECTURER");
     await updateModule({ ...parsed.data, lecturerId: user.id });
-    revalidatePath(`/lecturer/classes/${parsed.data.classId}/modules`);
-    return { ok: true, data: { message: "Region updated." } };
+    redirectTo = `/lecturer/classes/${parsed.data.classId}/modules`;
+    revalidatePath(redirectTo);
   } catch (error) {
     return { ok: false, error: toActionError(error) };
   }
+
+  redirect(redirectTo);
 }
 
 export async function publishModuleAction(
@@ -165,14 +169,23 @@ export async function updateActivityAction(
   const parsed = updateActivitySchema.safeParse(formDataToObject(formData));
   if (!parsed.success) return validationError(parsed.error);
 
+  let redirectTo: string;
   try {
     const user = await requireRole("LECTURER");
-    await updateActivity({ ...parsed.data, lecturerId: user.id });
-    revalidatePath("/lecturer/classes");
-    return { ok: true, data: { message: "Mission updated." } };
+    const activity = await updateActivity({ ...parsed.data, lecturerId: user.id });
+    const learningModule = await db.module.findUnique({
+      where: { id: activity.moduleId },
+      select: { classId: true }
+    });
+    redirectTo = learningModule
+      ? `/lecturer/classes/${learningModule.classId}/modules`
+      : "/lecturer/classes";
+    revalidatePath(redirectTo);
   } catch (error) {
     return { ok: false, error: toActionError(error) };
   }
+
+  redirect(redirectTo);
 }
 
 export async function publishActivityAction(
@@ -270,14 +283,17 @@ export async function updateQuestAction(
   const parsed = updateQuestSchema.safeParse(formDataToObject(formData));
   if (!parsed.success) return validationError(parsed.error);
 
+  let redirectTo: string;
   try {
     const user = await requireRole("LECTURER");
     await updateQuest({ ...parsed.data, lecturerId: user.id });
-    revalidatePath(`/lecturer/classes/${parsed.data.classId}/quests`);
-    return { ok: true, data: { message: "Quest updated." } };
+    redirectTo = `/lecturer/classes/${parsed.data.classId}/quests`;
+    revalidatePath(redirectTo);
   } catch (error) {
     return { ok: false, error: toActionError(error) };
   }
+
+  redirect(redirectTo);
 }
 
 export async function publishQuestAction(
@@ -292,6 +308,23 @@ export async function publishQuestAction(
     await publishQuest(parsed.data.questId, user.id);
     revalidatePath("/lecturer/classes");
     return { ok: true, data: { message: "Quest published." } };
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+}
+
+export async function deleteQuestAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = questIdSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  try {
+    const user = await requireRole("LECTURER");
+    await deleteQuest(parsed.data.questId, user.id);
+    revalidatePath("/lecturer/classes");
+    return { ok: true, data: { message: "Quest deleted." } };
   } catch (error) {
     return { ok: false, error: toActionError(error) };
   }

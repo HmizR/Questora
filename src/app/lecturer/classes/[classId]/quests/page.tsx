@@ -3,9 +3,12 @@ import Link from "next/link";
 
 import {
   ConnectQuestActivityForm,
+  DeleteQuestForm,
+  lecturerMenuDangerClassName,
+  lecturerMenuItemClassName,
   PublishQuestForm,
-  UpdateQuestForm
 } from "@/components/lecturer/forms";
+import { ActionMenu } from "@/components/ui/action-menu";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { Expander } from "@/components/ui/expander";
@@ -65,25 +68,39 @@ export default async function LecturerQuestsPage({
             title={quest.title}
           >
             <div className="flex justify-end">
-              {!quest.isPublished ? <PublishQuestForm questId={quest.id} /> : null}
+              <ActionMenu label={`Actions for ${quest.title}`}>
+                <Link
+                  className={lecturerMenuItemClassName}
+                  href={`/lecturer/classes/${classId}/quests/${quest.id}/edit`}
+                >
+                  Edit
+                </Link>
+                {!quest.isPublished ? (
+                  <PublishQuestForm
+                    buttonClassName={lecturerMenuItemClassName}
+                    questId={quest.id}
+                  />
+                ) : null}
+                <DeleteQuestForm
+                  buttonClassName={lecturerMenuDangerClassName}
+                  questId={quest.id}
+                />
+              </ActionMenu>
             </div>
-            <div className="mt-5 grid gap-6 xl:grid-cols-2">
-              <UpdateQuestForm quest={quest} />
-              <div className="rounded-lg border border-ink/10 p-5">
-                <h3 className="font-bold">Connected missions</h3>
-                <div className="mt-3 space-y-2">
-                  {quest.activities.length === 0 ? (
-                    <p className="text-sm text-ink/65">No missions connected yet.</p>
-                  ) : (
-                    quest.activities.map((link) => (
-                      <p className="text-sm" key={link.activityId}>
-                        {link.position}. {link.activity.title}
-                      </p>
-                    ))
-                  )}
-                </div>
-                <ConnectQuestActivityForm questId={quest.id} activities={activities} />
+            <div className="mt-5 rounded-lg border border-ink/10 p-5">
+              <h3 className="font-bold">Connected missions</h3>
+              <div className="mt-3 space-y-2">
+                {quest.activities.length === 0 ? (
+                  <p className="text-sm text-ink/65">No missions connected yet.</p>
+                ) : (
+                  quest.activities.map((link) => (
+                    <p className="text-sm" key={link.activityId}>
+                      {link.position}. {link.activity.title}
+                    </p>
+                  ))
+                )}
               </div>
+              <ConnectQuestActivityForm questId={quest.id} activities={activities} />
             </div>
           </Expander>
         ))}

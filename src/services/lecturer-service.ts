@@ -367,6 +367,11 @@ export async function publishQuest(questId: string, lecturerId: string) {
   return db.quest.update({ where: { id: questId }, data: { isPublished: true } });
 }
 
+export async function deleteQuest(questId: string, lecturerId: string) {
+  await getQuestForLecturer(questId, lecturerId);
+  return db.quest.delete({ where: { id: questId } });
+}
+
 export async function connectActivityToQuest(input: {
   lecturerId: string;
   questId: string;
