@@ -7,6 +7,7 @@ import {
   UpdateQuestForm
 } from "@/components/lecturer/forms";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { Expander } from "@/components/ui/expander";
 import { requireClassLecturer } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
 
@@ -45,17 +46,16 @@ export default async function LecturerQuestsPage({
     >
       <CreateQuestForm classId={classId} />
       <div className="mt-6 grid gap-6">
-        {teachingClass.quests.map((quest) => (
-          <section className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm" key={quest.id}>
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-moss">{quest.type}</p>
-                <h2 className="mt-1 text-xl font-bold">{quest.title}</h2>
-                <p className="mt-2 text-sm text-ink/65">
-                  {quest.xpReward} XP · {quest.isPublished ? "Published" : "Draft"} ·{" "}
-                  {quest.isOptional ? "Optional" : "Required"}
-                </p>
-              </div>
+        {teachingClass.quests.map((quest, index) => (
+          <Expander
+            defaultOpen={index === 0}
+            key={quest.id}
+            meta={`${quest.type} - ${quest.xpReward} XP - ${
+              quest.isPublished ? "Published" : "Draft"
+            } - ${quest.isOptional ? "Optional" : "Required"}`}
+            title={quest.title}
+          >
+            <div className="flex justify-end">
               {!quest.isPublished ? <PublishQuestForm questId={quest.id} /> : null}
             </div>
             <div className="mt-5 grid gap-6 xl:grid-cols-2">
@@ -76,7 +76,7 @@ export default async function LecturerQuestsPage({
                 <ConnectQuestActivityForm questId={quest.id} activities={activities} />
               </div>
             </div>
-          </section>
+          </Expander>
         ))}
       </div>
     </DashboardShell>

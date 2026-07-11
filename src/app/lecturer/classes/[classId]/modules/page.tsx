@@ -1,17 +1,18 @@
 import { notFound } from "next/navigation";
 
 import {
+  ActivityPrerequisiteForm,
   CreateActivityForm,
   CreateModuleForm,
   DeleteActivityForm,
   DeleteModuleForm,
-  ActivityPrerequisiteForm,
   PublishActivityForm,
   PublishModuleForm,
   UpdateActivityForm,
   UpdateModuleForm
 } from "@/components/lecturer/forms";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { Expander } from "@/components/ui/expander";
 import { requireClassLecturer } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
 
@@ -59,19 +60,16 @@ export default async function LecturerModulesPage({
     >
       <CreateModuleForm classId={classId} />
       <div className="mt-6 space-y-6">
-        {teachingClass.modules.map((module) => (
-          <section className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm" key={module.id}>
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <h2 className="text-xl font-bold">
-                  {module.position}. {module.title}
-                </h2>
-                <p className="mt-1 text-sm text-ink/60">{module.isPublished ? "Published" : "Draft"}</p>
-              </div>
-              <div className="flex gap-2">
-                {!module.isPublished ? <PublishModuleForm moduleId={module.id} /> : null}
-                <DeleteModuleForm moduleId={module.id} />
-              </div>
+        {teachingClass.modules.map((module, moduleIndex) => (
+          <Expander
+            defaultOpen={moduleIndex === 0}
+            key={module.id}
+            meta={`${module.isPublished ? "Published" : "Draft"} - ${module.activities.length} missions`}
+            title={`${module.position}. ${module.title}`}
+          >
+            <div className="flex justify-end gap-2">
+              {!module.isPublished ? <PublishModuleForm moduleId={module.id} /> : null}
+              <DeleteModuleForm moduleId={module.id} />
             </div>
             <div className="mt-5 grid gap-6 xl:grid-cols-2">
               <UpdateModuleForm module={module} />
@@ -79,20 +77,15 @@ export default async function LecturerModulesPage({
             </div>
             <div className="mt-6 space-y-4">
               {module.activities.map((activity) => (
-                <div className="rounded-lg border border-ink/10 p-4" key={activity.id}>
-                  <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="font-semibold">
-                        {activity.position}. {activity.title}
-                      </p>
-                      <p className="text-sm text-ink/60">
-                        {activity.type} · {activity.isPublished ? "Published" : "Draft"}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      {!activity.isPublished ? <PublishActivityForm activityId={activity.id} /> : null}
-                      <DeleteActivityForm activityId={activity.id} />
-                    </div>
+                <Expander
+                  className="shadow-none"
+                  key={activity.id}
+                  meta={`${activity.type} - ${activity.isPublished ? "Published" : "Draft"}`}
+                  title={`${activity.position}. ${activity.title}`}
+                >
+                  <div className="mb-4 flex justify-end gap-2">
+                    {!activity.isPublished ? <PublishActivityForm activityId={activity.id} /> : null}
+                    <DeleteActivityForm activityId={activity.id} />
                   </div>
                   <div className="grid gap-5 xl:grid-cols-2">
                     <UpdateActivityForm activity={activity} />
@@ -103,10 +96,10 @@ export default async function LecturerModulesPage({
                       prerequisites={activity.prerequisites}
                     />
                   </div>
-                </div>
+                </Expander>
               ))}
             </div>
-          </section>
+          </Expander>
         ))}
       </div>
     </DashboardShell>

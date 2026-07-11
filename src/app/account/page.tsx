@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { DashboardShell } from "@/components/ui/dashboard-shell";
-import { StatCard } from "@/components/ui/stat-card";
 import { requireUser } from "@/lib/authorization-service";
 
 const roleHome = {
@@ -27,11 +26,18 @@ export default async function AccountPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <section className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">
           <h2 className="text-xl font-bold">Profile</h2>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <StatCard label="Name" value={user.name ?? "Unnamed user"} />
-            <StatCard label="Role" value={user.role} />
-            <StatCard label="Email" value={user.email ?? "No email"} />
-            <StatCard label="Status" value={user.status} />
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {[
+              ["Name", user.name ?? "Unnamed user"],
+              ["Role", user.role],
+              ["Email", user.email ?? "No email"],
+              ["Status", user.status]
+            ].map(([label, value]) => (
+              <div className="rounded-md border border-ink/10 bg-parchment/50 px-4 py-3" key={label}>
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink/45">{label}</p>
+                <p className="mt-1 break-words text-sm font-semibold text-ink">{value}</p>
+              </div>
+            ))}
           </div>
         </section>
         <aside className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">
