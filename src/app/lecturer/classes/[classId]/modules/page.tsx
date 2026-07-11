@@ -6,6 +6,7 @@ import {
   CreateModuleForm,
   DeleteActivityForm,
   DeleteModuleForm,
+  ActivityPrerequisiteForm,
   PublishActivityForm,
   PublishModuleForm,
   UpdateActivityForm,
@@ -27,13 +28,30 @@ export default async function LecturerModulesPage({
     where: { id: classId },
     include: {
       modules: {
-        include: { activities: { orderBy: { position: "asc" } } },
+        include: {
+          activities: {
+            include: {
+              prerequisites: {
+                include: {
+                  requiredActivity: true
+                },
+                orderBy: {
+                  requiredActivity: {
+                    position: "asc"
+                  }
+                }
+              }
+            },
+            orderBy: { position: "asc" }
+          }
+        },
         orderBy: { position: "asc" }
       }
     }
   });
 
   if (!teachingClass) notFound();
+  const allActivities = teachingClass.modules.flatMap((learningModule) => learningModule.activities);
 
   return (
     <DashboardShell
@@ -78,7 +96,15 @@ export default async function LecturerModulesPage({
                       <DeleteActivityForm activityId={activity.id} />
                     </div>
                   </div>
-                  <UpdateActivityForm activity={activity} />
+                  <div className="grid gap-5 xl:grid-cols-2">
+                    <UpdateActivityForm activity={activity} />
+                    <ActivityPrerequisiteForm
+                      activities={allActivities}
+                      activityId={activity.id}
+                      classId={classId}
+                      prerequisites={activity.prerequisites}
+                    />
+                  </div>
                 </div>
               ))}
             </div>

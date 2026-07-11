@@ -63,6 +63,19 @@ export const activityIdSchema = z.object({
   activityId: z.string().min(1)
 });
 
+export const activityPrerequisiteSchema = z.object({
+  classId: z.string().min(1),
+  activityId: z.string().min(1),
+  requiredActivityId: z.string().min(1),
+  minimumScore: optionalDecimal.optional()
+});
+
+export const removeActivityPrerequisiteSchema = z.object({
+  classId: z.string().min(1),
+  activityId: z.string().min(1),
+  requiredActivityId: z.string().min(1)
+});
+
 export const createQuestSchema = z.object({
   classId: z.string().min(1),
   title: z.string().trim().min(2, "Title is required"),

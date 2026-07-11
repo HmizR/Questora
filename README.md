@@ -77,6 +77,7 @@ student5@questora.dev
 
 - Admins manage users, classes, lecturer assignments, and student enrollment.
 - Lecturers manage only classes assigned to them, including modules, missions, quests, submissions, and grades.
+- Lecturers can configure mission prerequisites from their class module panel.
 - Students access only enrolled classes, published modules, published activities, their own progress, their own submissions, their own grades, XP, level, and badges.
 
 ## Main Pages

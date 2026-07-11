@@ -9,6 +9,7 @@ import { toActionError } from "@/lib/errors";
 import { formDataToObject } from "@/lib/form-data";
 import {
   activityIdSchema,
+  activityPrerequisiteSchema,
   connectQuestActivitySchema,
   createActivitySchema,
   createModuleSchema,
@@ -17,12 +18,14 @@ import {
   moduleIdSchema,
   publishGradeSchema,
   questIdSchema,
+  removeActivityPrerequisiteSchema,
   updateActivitySchema,
   updateModuleSchema,
   updateQuestSchema
 } from "@/schemas/lecturer";
 import { publishGrade } from "@/services/grade-service";
 import {
+  addActivityPrerequisite,
   connectActivityToQuest,
   createActivity,
   createModule,
@@ -33,6 +36,7 @@ import {
   publishActivity,
   publishModule,
   publishQuest,
+  removeActivityPrerequisite,
   updateActivity,
   updateModule,
   updateQuest
@@ -186,6 +190,40 @@ export async function deleteActivityAction(
     await deleteActivity(parsed.data.activityId, user.id);
     revalidatePath("/lecturer/classes");
     return { ok: true, data: { message: "Mission deleted." } };
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+}
+
+export async function addActivityPrerequisiteAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = activityPrerequisiteSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  try {
+    const user = await requireRole("LECTURER");
+    await addActivityPrerequisite({ ...parsed.data, lecturerId: user.id });
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}/modules`);
+    return { ok: true, data: { message: "Prerequisite saved." } };
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+}
+
+export async function removeActivityPrerequisiteAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = removeActivityPrerequisiteSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  try {
+    const user = await requireRole("LECTURER");
+    await removeActivityPrerequisite({ ...parsed.data, lecturerId: user.id });
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}/modules`);
+    return { ok: true, data: { message: "Prerequisite removed." } };
   } catch (error) {
     return { ok: false, error: toActionError(error) };
   }

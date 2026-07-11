@@ -1,6 +1,7 @@
 import { ActivityType, QuestType, type Activity, type Module, type Quest } from "@prisma/client";
 
 import {
+  addActivityPrerequisiteAction,
   connectQuestActivityAction,
   createActivityAction,
   createModuleAction,
@@ -12,6 +13,7 @@ import {
   publishGradeAction,
   publishModuleAction,
   publishQuestAction,
+  removeActivityPrerequisiteAction,
   updateActivityAction,
   updateModuleAction,
   updateQuestAction
@@ -20,6 +22,11 @@ import { LecturerActionForm } from "@/components/lecturer/action-form";
 import { SelectField, TextAreaField, TextField } from "@/components/admin/form-fields";
 
 type ActivityOption = Pick<Activity, "id" | "title" | "position" | "type">;
+type PrerequisiteView = {
+  requiredActivityId: string;
+  minimumScore: { toString(): string } | null;
+  requiredActivity: ActivityOption;
+};
 
 function boolDefault(value: boolean) {
   return value ? "on" : undefined;
@@ -189,6 +196,77 @@ export function DeleteActivityForm({ activityId }: { activityId: string }) {
         Delete
       </button>
     </LecturerActionForm>
+  );
+}
+
+export function ActivityPrerequisiteForm({
+  classId,
+  activityId,
+  activities,
+  prerequisites
+}: {
+  classId: string;
+  activityId: string;
+  activities: ActivityOption[];
+  prerequisites: PrerequisiteView[];
+}) {
+  const candidates = activities.filter(
+    (activity) =>
+      activity.id !== activityId &&
+      !prerequisites.some((prerequisite) => prerequisite.requiredActivityId === activity.id)
+  );
+
+  return (
+    <div className="rounded-lg border border-ink/10 bg-parchment/50 p-4">
+      <h4 className="text-sm font-bold">Prerequisites</h4>
+      <div className="mt-3 space-y-2">
+        {prerequisites.length === 0 ? (
+          <p className="text-sm text-ink/60">No prerequisite missions set.</p>
+        ) : (
+          prerequisites.map((prerequisite) => (
+            <div
+              className="flex flex-col gap-2 rounded-md border border-ink/10 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
+              key={prerequisite.requiredActivityId}
+            >
+              <p className="text-sm">
+                {prerequisite.requiredActivity.position}. {prerequisite.requiredActivity.title}
+                {prerequisite.minimumScore
+                  ? ` - minimum score ${prerequisite.minimumScore.toString()}`
+                  : ""}
+              </p>
+              <LecturerActionForm action={removeActivityPrerequisiteAction}>
+                <input name="classId" type="hidden" value={classId} />
+                <input name="activityId" type="hidden" value={activityId} />
+                <input
+                  name="requiredActivityId"
+                  type="hidden"
+                  value={prerequisite.requiredActivityId}
+                />
+                <button className="rounded-md border border-ember/30 bg-white px-3 py-1.5 text-xs font-semibold text-ember hover:bg-ember hover:text-white">
+                  Remove
+                </button>
+              </LecturerActionForm>
+            </div>
+          ))
+        )}
+      </div>
+      {candidates.length > 0 ? (
+        <LecturerActionForm
+          action={addActivityPrerequisiteAction}
+          className="mt-4 border-t border-ink/10 pt-4"
+        >
+          <input name="classId" type="hidden" value={classId} />
+          <input name="activityId" type="hidden" value={activityId} />
+          <SelectField label="Required mission" name="requiredActivityId" options={activityOptions(candidates)} />
+          <TextField label="Minimum score" name="minimumScore" type="number" required={false} />
+          <button className="rounded-md border border-ink/20 bg-white px-3 py-2 text-sm font-semibold hover:bg-ink hover:text-white">
+            Add prerequisite
+          </button>
+        </LecturerActionForm>
+      ) : (
+        <p className="mt-3 text-sm text-ink/60">No available prerequisite candidates.</p>
+      )}
+    </div>
   );
 }
 

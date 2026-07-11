@@ -222,6 +222,73 @@ export async function deleteActivity(activityId: string, lecturerId: string) {
   return db.activity.delete({ where: { id: activityId } });
 }
 
+export async function addActivityPrerequisite(input: {
+  lecturerId: string;
+  activityId: string;
+  requiredActivityId: string;
+  minimumScore?: number;
+}) {
+  if (input.activityId === input.requiredActivityId) {
+    throw new AppError("BAD_REQUEST", "A mission cannot require itself.");
+  }
+
+  const [activity, requiredActivity] = await Promise.all([
+    getActivityForLecturer(input.activityId, input.lecturerId),
+    getActivityForLecturer(input.requiredActivityId, input.lecturerId)
+  ]);
+
+  if (activity.module.classId !== requiredActivity.module.classId) {
+    throw new AppError("BAD_REQUEST", "Prerequisites must be in the same learning realm.");
+  }
+
+  const directCycle = await db.activityPrerequisite.findUnique({
+    where: {
+      activityId_requiredActivityId: {
+        activityId: input.requiredActivityId,
+        requiredActivityId: input.activityId
+      }
+    }
+  });
+
+  if (directCycle) {
+    throw new AppError("BAD_REQUEST", "This would create a direct prerequisite loop.");
+  }
+
+  return db.activityPrerequisite.upsert({
+    where: {
+      activityId_requiredActivityId: {
+        activityId: input.activityId,
+        requiredActivityId: input.requiredActivityId
+      }
+    },
+    update: {
+      minimumScore: input.minimumScore
+    },
+    create: {
+      activityId: input.activityId,
+      requiredActivityId: input.requiredActivityId,
+      minimumScore: input.minimumScore
+    }
+  });
+}
+
+export async function removeActivityPrerequisite(input: {
+  lecturerId: string;
+  activityId: string;
+  requiredActivityId: string;
+}) {
+  await getActivityForLecturer(input.activityId, input.lecturerId);
+
+  return db.activityPrerequisite.delete({
+    where: {
+      activityId_requiredActivityId: {
+        activityId: input.activityId,
+        requiredActivityId: input.requiredActivityId
+      }
+    }
+  });
+}
+
 export async function createQuest(input: {
   lecturerId: string;
   classId: string;
