@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { requireClassLecturer } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
@@ -45,6 +46,7 @@ export default async function LecturerStudentsPage({
 
   return (
     <DashboardShell title="Student roster" subtitle="View learner XP, progress, and grading status.">
+      <ClassTabs classId={classId} role="LECTURER" />
       <div className="overflow-hidden rounded-lg border border-ink/10 bg-white shadow-sm">
         <table className="w-full min-w-[760px] text-left text-sm">
           <thead className="bg-ink text-white">

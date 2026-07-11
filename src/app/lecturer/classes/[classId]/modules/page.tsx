@@ -11,6 +11,7 @@ import {
   UpdateActivityForm,
   UpdateModuleForm
 } from "@/components/lecturer/forms";
+import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { Expander } from "@/components/ui/expander";
 import { requireClassLecturer } from "@/lib/authorization-service";
@@ -58,6 +59,7 @@ export default async function LecturerModulesPage({
       title="Regions and missions"
       subtitle="Create, update, publish, and delete regions and their learning missions."
     >
+      <ClassTabs classId={classId} role="LECTURER" />
       <CreateModuleForm classId={classId} />
       <div className="mt-6 space-y-6">
         {teachingClass.modules.map((module, moduleIndex) => (

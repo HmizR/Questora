@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { Expander } from "@/components/ui/expander";
 import { requireClassEnrollment } from "@/lib/authorization-service";
@@ -50,6 +51,7 @@ export default async function StudentClassPage({
 
   return (
     <DashboardShell title={teachingClass.name} subtitle="Choose a mission and continue your quest.">
+      <ClassTabs classId={classId} role="STUDENT" />
       <div className="space-y-6">
         {teachingClass.modules.map((module, index) => (
           <Expander

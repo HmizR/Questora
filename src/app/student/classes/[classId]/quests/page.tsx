@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { requireClassEnrollment } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
@@ -38,6 +39,7 @@ export default async function StudentQuestsPage({
 
   return (
     <DashboardShell title="Quest log" subtitle="Quest completion is derived from required mission progress.">
+      <ClassTabs classId={classId} role="STUDENT" />
       <div className="grid gap-4">
         {teachingClass.quests.map((quest) => {
           const requiredLinks = quest.activities.filter((link) => link.activity.isRequired);

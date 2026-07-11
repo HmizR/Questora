@@ -11,14 +11,7 @@ type NavItem = {
   label: string;
 };
 
-function getClassId(pathname: string) {
-  const match = pathname.match(/^\/(?:lecturer|student)\/classes\/([^/]+)/);
-  return match?.[1];
-}
-
-function getRoleItems(role: UserRole, pathname: string): NavItem[] {
-  const classId = getClassId(pathname);
-
+function getRoleItems(role: UserRole): NavItem[] {
   if (role === "ADMIN") {
     return [
       { href: "/admin", label: "Dashboard" },
@@ -29,52 +22,32 @@ function getRoleItems(role: UserRole, pathname: string): NavItem[] {
   }
 
   if (role === "LECTURER") {
-    const items = [
+    return [
       { href: "/lecturer", label: "Dashboard" },
-      { href: "/lecturer/classes", label: "Classes / Realms" }
+      { href: "/lecturer/classes", label: "Classes / Realms" },
+      { href: "/account", label: "Account" }
     ];
-
-    if (classId) {
-      items.push(
-        { href: `/lecturer/classes/${classId}`, label: "Overview" },
-        { href: `/lecturer/classes/${classId}/modules`, label: "Regions" },
-        { href: `/lecturer/classes/${classId}/students`, label: "Students" },
-        { href: `/lecturer/classes/${classId}/quests`, label: "Quests" },
-        { href: `/lecturer/classes/${classId}/submissions`, label: "Submissions" }
-      );
-    }
-
-    items.push({ href: "/account", label: "Account" });
-    return items;
   }
 
-  const items = [
+  return [
     { href: "/student", label: "Dashboard" },
-    { href: "/student/classes", label: "Realms" }
+    { href: "/student/classes", label: "Realms" },
+    { href: "/student/profile", label: "Profile" },
+    { href: "/account", label: "Account" }
   ];
-
-  if (classId) {
-    items.push(
-      { href: `/student/classes/${classId}`, label: "Missions" },
-      { href: `/student/classes/${classId}/quests`, label: "Quests" }
-    );
-  }
-
-  items.push({ href: "/student/profile", label: "Profile" }, { href: "/account", label: "Account" });
-  return items;
 }
 
 function isActive(pathname: string, href: string) {
-  if (href === "/account") {
+  if (href === "/account" || href === "/admin" || href === "/lecturer" || href === "/student") {
     return pathname === href;
   }
 
-  return pathname === href;
+  return pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
 }
 
 export function AppNav({ role }: { role: UserRole }) {
   const pathname = usePathname();
-  const items = getRoleItems(role, pathname);
+  const items = getRoleItems(role);
 
   return (
     <nav className="space-y-1">

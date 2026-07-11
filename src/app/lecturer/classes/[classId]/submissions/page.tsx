@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { GradeSubmissionForm, PublishGradeForm } from "@/components/lecturer/forms";
+import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { Expander } from "@/components/ui/expander";
 import { requireClassLecturer } from "@/lib/authorization-service";
@@ -53,6 +54,7 @@ export default async function LecturerSubmissionsPage({
 
   return (
     <DashboardShell title="Submissions" subtitle="Review submissions, give feedback, and publish grades.">
+      <ClassTabs classId={classId} role="LECTURER" />
       <div className="space-y-4">
         {groupedSubmissions.length === 0 ? (
           <section className="rounded-lg border border-ink/10 bg-white p-6 text-sm text-ink/65 shadow-sm">

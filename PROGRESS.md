@@ -18,7 +18,7 @@ Post-MVP UI refresh completed:
 - Hybrid protected dashboard shell
 - Sticky top navbar
 - Role-aware sidebar navigation
-- Contextual class/realm navigation
+- Class/realm workspace tabs in the main content area
 - Shared `/account` page
 
 Latest verified checks:
