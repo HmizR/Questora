@@ -10,6 +10,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Prisma/PostgreSQL domain schema for users, classes, modules, activities, quests, progress, submissions, grades, XP, and badges.
 - Role-aware route protection for `/admin`, `/lecturer`, and `/student`.
 - Service layer for authorization, activity progress, quest completion, XP transactions, badges, grades, enrollment, lecturer workflows, and student workflows.
+- Shared dashboard app shell with top account navigation and role-aware sidebar navigation.
 - Seed data with one admin, two lecturers, five students, two classes, example modules, activities, quests, badges, and student profiles.
 
 ## Tech Stack
@@ -85,6 +86,7 @@ student5@questora.dev
 - Admin: `/admin`, `/admin/users`, `/admin/classes`
 - Lecturer: `/lecturer`, `/lecturer/classes`, `/lecturer/classes/[classId]/modules`, `/students`, `/quests`, `/submissions`
 - Student: `/student`, `/student/classes`, `/student/classes/[classId]`, `/student/classes/[classId]/activities/[activityId]`, `/student/profile`
+- Shared account page: `/account`
 
 ## Gamification Rules
 

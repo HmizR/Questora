@@ -1,7 +1,6 @@
 import { UserRole } from "@prisma/client";
 import { notFound } from "next/navigation";
 
-import { AdminLinks } from "@/components/admin/admin-links";
 import {
   EnrollStudentForm,
   RemoveStudentForm,
@@ -56,7 +55,6 @@ export default async function AdminClassDetailPage({
       title={teachingClass.name}
       subtitle="Update class details, assign the lecturer, and manage the active student roster."
     >
-      <AdminLinks />
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Active students" value={activeEnrollments.length} />
         <StatCard label="Regions" value={teachingClass.modules.length} />

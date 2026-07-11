@@ -1,6 +1,5 @@
 import { QuestCard } from "@/components/gamification/quest-card";
 import { LevelProgress } from "@/components/gamification/level-progress";
-import { StudentLinks } from "@/components/student/student-links";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { StatCard } from "@/components/ui/stat-card";
 import { requireRole } from "@/lib/authorization-service";
@@ -85,7 +84,6 @@ export default async function StudentDashboardPage() {
       title="Adventurer dashboard"
       subtitle="Track experience points, active learning realms, mission progress, and published grades."
     >
-      <StudentLinks />
       <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">
         <LevelProgress totalXp={totalXp} />
         <div className="grid gap-4 sm:grid-cols-3">

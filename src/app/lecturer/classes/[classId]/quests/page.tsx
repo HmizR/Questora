@@ -6,7 +6,6 @@ import {
   PublishQuestForm,
   UpdateQuestForm
 } from "@/components/lecturer/forms";
-import { LecturerLinks } from "@/components/lecturer/lecturer-links";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { requireClassLecturer } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
@@ -44,7 +43,6 @@ export default async function LecturerQuestsPage({
       title="Quest management"
       subtitle="Create RPG-style quest chains, connect missions, and configure XP rewards."
     >
-      <LecturerLinks classId={classId} />
       <CreateQuestForm classId={classId} />
       <div className="mt-6 grid gap-6">
         {teachingClass.quests.map((quest) => (

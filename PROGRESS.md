@@ -13,6 +13,14 @@ Core six-phase MVP implementation is complete:
 - Phase 5: Gamification
 - Phase 6: Quality
 
+Post-MVP UI refresh completed:
+
+- Hybrid protected dashboard shell
+- Sticky top navbar
+- Role-aware sidebar navigation
+- Contextual class/realm navigation
+- Shared `/account` page
+
 Latest verified checks:
 
 ```bash

@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { LecturerLinks } from "@/components/lecturer/lecturer-links";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { requireRole } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
@@ -23,7 +22,6 @@ export default async function LecturerClassesPage() {
       title="Assigned learning realms"
       subtitle="Only realms assigned to you appear here."
     >
-      <LecturerLinks />
       <div className="grid gap-4">
         {classes.map((teachingClass) => (
           <Link

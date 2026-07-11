@@ -24,7 +24,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(roleHome[token.role], request.url));
   }
 
-  const protectedPrefix = ["/admin", "/lecturer", "/student"].find((prefix) =>
+  const protectedPrefix = ["/admin", "/lecturer", "/student", "/account"].find((prefix) =>
     pathname.startsWith(prefix)
   );
 
@@ -54,5 +54,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login", "/admin/:path*", "/lecturer/:path*", "/student/:path*"]
+  matcher: ["/login", "/admin/:path*", "/lecturer/:path*", "/student/:path*", "/account"]
 };

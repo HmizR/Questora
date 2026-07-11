@@ -7,7 +7,6 @@ import {
   StartActivityForm,
   SubmitAssignmentForm
 } from "@/components/student/activity-forms";
-import { StudentLinks } from "@/components/student/student-links";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { requireClassEnrollment } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
@@ -46,7 +45,6 @@ export default async function StudentActivityPage({
 
   return (
     <DashboardShell title={activity.title} subtitle={`${activity.type} mission in ${activity.module.title}`}>
-      <StudentLinks classId={classId} />
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <section className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">
           <p className="text-sm font-semibold uppercase tracking-wide text-moss">{activity.type}</p>

@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 
-import { AdminLinks } from "@/components/admin/admin-links";
 import { DeactivateUserForm, UpdateUserForm } from "@/components/admin/user-form";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { requireAdmin } from "@/lib/authorization-service";
@@ -24,7 +23,6 @@ export default async function EditUserPage({
       title="Edit user"
       subtitle="Update account details, role, and status. Use deactivation when access should be revoked."
     >
-      <AdminLinks />
       <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
         <UpdateUserForm user={user} />
         <aside className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">

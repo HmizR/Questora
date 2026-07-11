@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { StudentLinks } from "@/components/student/student-links";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { requireClassEnrollment } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
@@ -50,7 +49,6 @@ export default async function StudentClassPage({
 
   return (
     <DashboardShell title={teachingClass.name} subtitle="Choose a mission and continue your quest.">
-      <StudentLinks classId={classId} />
       <div className="space-y-6">
         {teachingClass.modules.map((module) => (
           <section className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm" key={module.id}>

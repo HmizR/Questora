@@ -1,6 +1,5 @@
 import { UserRole } from "@prisma/client";
 
-import { AdminLinks } from "@/components/admin/admin-links";
 import { CreateClassForm } from "@/components/admin/class-form";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { requireAdmin } from "@/lib/authorization-service";
@@ -22,7 +21,6 @@ export default async function NewClassPage() {
       title="Create learning realm"
       subtitle="Set the class details and assign one lecturer for the MVP."
     >
-      <AdminLinks />
       <CreateClassForm lecturers={lecturers} />
     </DashboardShell>
   );

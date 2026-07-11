@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { AdminLinks } from "@/components/admin/admin-links";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { requireAdmin } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
@@ -23,7 +22,6 @@ export default async function AdminClassesPage() {
       title="Learning realms"
       subtitle="Create classes, assign lecturers, and manage student enrollment."
     >
-      <AdminLinks />
       <div className="mb-5 flex justify-end">
         <Link
           className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-steel"

@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { StudentLinks } from "@/components/student/student-links";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { requireRole } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
@@ -29,7 +28,6 @@ export default async function StudentClassesPage() {
       title="Learning realms"
       subtitle="Your active class enrollments and available missions."
     >
-      <StudentLinks />
       <div className="grid gap-4">
         {enrollments.map((enrollment) => {
           const missionCount = enrollment.class.modules.reduce(

@@ -1,6 +1,5 @@
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { StatCard } from "@/components/ui/stat-card";
-import { LecturerLinks } from "@/components/lecturer/lecturer-links";
 import { requireRole } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
 
@@ -26,7 +25,6 @@ export default async function LecturerDashboardPage() {
       title="Lecturer quest board"
       subtitle="Guide your assigned learning realms, publish missions, and review submissions."
     >
-      <LecturerLinks />
       <div className="grid gap-4 sm:grid-cols-2">
         <StatCard label="Assigned realms" value={classes} />
         <StatCard label="Submissions" value={submissions} hint="Across your realms" />

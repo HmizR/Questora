@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 
-import { LecturerLinks } from "@/components/lecturer/lecturer-links";
 import {
   CreateActivityForm,
   CreateModuleForm,
@@ -58,7 +57,6 @@ export default async function LecturerModulesPage({
       title="Regions and missions"
       subtitle="Create, update, publish, and delete regions and their learning missions."
     >
-      <LecturerLinks classId={classId} />
       <CreateModuleForm classId={classId} />
       <div className="mt-6 space-y-6">
         {teachingClass.modules.map((module) => (

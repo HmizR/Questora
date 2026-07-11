@@ -1,5 +1,4 @@
 import { LevelProgress } from "@/components/gamification/level-progress";
-import { StudentLinks } from "@/components/student/student-links";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { StatCard } from "@/components/ui/stat-card";
 import { requireRole } from "@/lib/authorization-service";
@@ -30,7 +29,6 @@ export default async function StudentProfilePage() {
 
   return (
     <DashboardShell title="Adventurer profile" subtitle="Your own XP, level, badges, and published grades.">
-      <StudentLinks />
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
         <LevelProgress totalXp={profile?.totalXp ?? 0} />
         <div className="grid gap-4 sm:grid-cols-2">

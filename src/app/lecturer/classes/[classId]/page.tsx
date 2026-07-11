@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 
-import { LecturerLinks } from "@/components/lecturer/lecturer-links";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { StatCard } from "@/components/ui/stat-card";
 import { requireClassLecturer } from "@/lib/authorization-service";
@@ -42,7 +41,6 @@ export default async function LecturerClassDashboardPage({
 
   return (
     <DashboardShell title={teachingClass.name} subtitle={teachingClass.description ?? "Realm overview"}>
-      <LecturerLinks classId={classId} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Students" value={teachingClass.students.length} />
         <StatCard label="Regions" value={teachingClass._count.modules} />
