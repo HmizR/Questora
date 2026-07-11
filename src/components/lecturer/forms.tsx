@@ -423,10 +423,17 @@ export function ConnectQuestActivityForm({
   );
 }
 
-export function GradeSubmissionForm({ submissionId }: { submissionId: string }) {
+export function GradeSubmissionForm({
+  submissionId,
+  returnTo
+}: {
+  submissionId: string;
+  returnTo?: string;
+}) {
   return (
     <LecturerActionForm action={gradeSubmissionAction}>
       <input name="submissionId" type="hidden" value={submissionId} />
+      {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
       <div className="grid gap-3 sm:grid-cols-[120px_1fr_auto]">
         <TextField label="Score" name="score" type="number" />
         <TextField label="Feedback" name="feedback" required={false} />
@@ -438,10 +445,17 @@ export function GradeSubmissionForm({ submissionId }: { submissionId: string }) 
   );
 }
 
-export function PublishGradeForm({ gradeId }: { gradeId: string }) {
+export function PublishGradeForm({
+  gradeId,
+  returnTo
+}: {
+  gradeId: string;
+  returnTo?: string;
+}) {
   return (
     <LecturerActionForm action={publishGradeAction}>
       <input name="gradeId" type="hidden" value={gradeId} />
+      {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
       <button className="rounded-md border border-moss/30 bg-white px-3 py-1.5 text-xs font-semibold text-moss hover:bg-moss hover:text-white">
         Publish grade
       </button>

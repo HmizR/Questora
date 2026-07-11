@@ -17,7 +17,7 @@ function getTabs({ role, classId }: ClassTabsProps) {
       { href: `/lecturer/classes/${classId}/modules`, label: "Regions" },
       { href: `/lecturer/classes/${classId}/students`, label: "Students" },
       { href: `/lecturer/classes/${classId}/quests`, label: "Quests" },
-      { href: `/lecturer/classes/${classId}/submissions`, label: "Submissions" }
+      { href: `/lecturer/classes/${classId}/grades`, label: "Grades" }
     ];
   }
 
@@ -36,7 +36,7 @@ function isActive(pathname: string, href: string) {
     return pathname.startsWith(`${href}/activities/`);
   }
 
-  return href.match(/\/lecturer\/classes\/[^/]+\/(?:modules|quests)$/)
+  return href.match(/\/lecturer\/classes\/[^/]+\/(?:modules|quests|grades)$/)
     ? pathname.startsWith(`${href}/`)
     : false;
 }

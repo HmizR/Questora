@@ -21,6 +21,7 @@ Post-MVP UI refresh completed:
 - Class/realm workspace tabs in the main content area
 - Dedicated lecturer create/edit pages for regions, missions, and quests
 - Compact lecturer action menus for edit, publish, and delete actions
+- Mission-specific submission review and class-level Grades tab
 - Shared `/account` page
 
 Latest verified checks:
@@ -86,7 +87,8 @@ Completed:
 - Quest create/update/publish/delete
 - Connect activities to quests
 - Student roster and progress summary
-- Submission review
+- Mission-specific submission review
+- Class grade matrix across students and non-lesson missions
 - Assignment grading and grade publishing
 - Lecturer ownership checks for all mutations
 
@@ -100,11 +102,12 @@ Key routes:
 - `/lecturer/classes/[classId]/modules/[moduleId]/edit`
 - `/lecturer/classes/[classId]/modules/[moduleId]/activities/new`
 - `/lecturer/classes/[classId]/modules/[moduleId]/activities/[activityId]/edit`
+- `/lecturer/classes/[classId]/modules/[moduleId]/activities/[activityId]/submissions`
 - `/lecturer/classes/[classId]/students`
 - `/lecturer/classes/[classId]/quests`
 - `/lecturer/classes/[classId]/quests/new`
 - `/lecturer/classes/[classId]/quests/[questId]/edit`
-- `/lecturer/classes/[classId]/submissions`
+- `/lecturer/classes/[classId]/grades`
 
 ## Phase 4: Student
 

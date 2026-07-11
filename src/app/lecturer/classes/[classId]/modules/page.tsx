@@ -1,8 +1,8 @@
+import { ActivityType, SubmissionStatus } from "@prisma/client";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
 import {
-  ActivityPrerequisiteForm,
   DeleteActivityForm,
   DeleteModuleForm,
   lecturerMenuDangerClassName,
@@ -28,19 +28,25 @@ export default async function LecturerModulesPage({
   const teachingClass = await db.class.findUnique({
     where: { id: classId },
     include: {
+      students: {
+        where: { status: "ACTIVE" },
+        select: { studentId: true }
+      },
       modules: {
         include: {
           activities: {
             include: {
-              prerequisites: {
-                include: {
-                  requiredActivity: true
-                },
-                orderBy: {
-                  requiredActivity: {
-                    position: "asc"
+              submissions: {
+                where: {
+                  status: {
+                    in: [
+                      SubmissionStatus.SUBMITTED,
+                      SubmissionStatus.GRADED,
+                      SubmissionStatus.RETURNED
+                    ]
                   }
-                }
+                },
+                select: { studentId: true }
               }
             },
             orderBy: { position: "asc" }
@@ -52,7 +58,8 @@ export default async function LecturerModulesPage({
   });
 
   if (!teachingClass) notFound();
-  const allActivities = teachingClass.modules.flatMap((learningModule) => learningModule.activities);
+  const activeStudentCount = teachingClass.students.length;
+  const activeStudentIds = new Set(teachingClass.students.map((student) => student.studentId));
 
   return (
     <DashboardShell
@@ -103,41 +110,65 @@ export default async function LecturerModulesPage({
               </ActionMenu>
             </div>
             <div className="mt-6 space-y-4">
-              {module.activities.map((activity) => (
-                <Expander
-                  className="shadow-none"
-                  key={activity.id}
-                  meta={`${activity.type} - ${activity.isPublished ? "Published" : "Draft"}`}
-                  title={`${activity.position}. ${activity.title}`}
-                >
-                  <div className="mb-4 flex justify-end">
-                    <ActionMenu label={`Actions for ${activity.title}`}>
-                      <Link
-                        className={lecturerMenuItemClassName}
-                        href={`/lecturer/classes/${classId}/modules/${module.id}/activities/${activity.id}/edit`}
-                      >
-                        Edit
-                      </Link>
-                      {!activity.isPublished ? (
-                        <PublishActivityForm
+              {module.activities.map((activity) => {
+                const submittedCount = activity.submissions.filter((submission) =>
+                  activeStudentIds.has(submission.studentId)
+                ).length;
+
+                return (
+                  <Expander
+                    className="shadow-none"
+                    key={activity.id}
+                    meta={`${activity.type} - ${activity.isPublished ? "Published" : "Draft"}`}
+                    title={`${activity.position}. ${activity.title}`}
+                  >
+                    <div className="mb-4 flex justify-end">
+                      <ActionMenu label={`Actions for ${activity.title}`}>
+                        <Link
+                          className={lecturerMenuItemClassName}
+                          href={`/lecturer/classes/${classId}/modules/${module.id}/activities/${activity.id}/edit`}
+                        >
+                          Edit
+                        </Link>
+                        {!activity.isPublished ? (
+                          <PublishActivityForm
+                            activityId={activity.id}
+                            buttonClassName={lecturerMenuItemClassName}
+                          />
+                        ) : null}
+                        <DeleteActivityForm
                           activityId={activity.id}
-                          buttonClassName={lecturerMenuItemClassName}
+                          buttonClassName={lecturerMenuDangerClassName}
                         />
-                      ) : null}
-                      <DeleteActivityForm
-                        activityId={activity.id}
-                        buttonClassName={lecturerMenuDangerClassName}
-                      />
-                    </ActionMenu>
-                  </div>
-                  <ActivityPrerequisiteForm
-                    activities={allActivities}
-                    activityId={activity.id}
-                    classId={classId}
-                    prerequisites={activity.prerequisites}
-                  />
-                </Expander>
-              ))}
+                      </ActionMenu>
+                    </div>
+                    {activity.type === ActivityType.ASSIGNMENT ||
+                    activity.type === ActivityType.PROJECT ? (
+                      <div className="rounded-lg border border-ink/10 bg-parchment/50 p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="text-sm font-bold">Submission status</p>
+                            <p className="mt-1 text-sm text-ink/65">
+                              Submitted {submittedCount} / Not submitted{" "}
+                              {Math.max(activeStudentCount - submittedCount, 0)}
+                            </p>
+                          </div>
+                          <Link
+                            className="rounded-md border border-ink/20 bg-white px-3 py-2 text-sm font-semibold hover:bg-ink hover:text-white"
+                            href={`/lecturer/classes/${classId}/modules/${module.id}/activities/${activity.id}/submissions`}
+                          >
+                            Review submissions
+                          </Link>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="rounded-lg border border-ink/10 bg-parchment/50 p-4 text-sm text-ink/65">
+                        No submission review needed for this mission type.
+                      </div>
+                    )}
+                  </Expander>
+                );
+              })}
             </div>
           </Expander>
         ))}

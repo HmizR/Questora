@@ -104,9 +104,11 @@ export const connectQuestActivitySchema = z.object({
 export const gradeSubmissionSchema = z.object({
   submissionId: z.string().min(1),
   score: z.coerce.number().min(0),
-  feedback: optionalText.optional()
+  feedback: optionalText.optional(),
+  returnTo: optionalText.optional()
 });
 
 export const publishGradeSchema = z.object({
-  gradeId: z.string().min(1)
+  gradeId: z.string().min(1),
+  returnTo: optionalText.optional()
 });

@@ -62,6 +62,14 @@ function validationError(error: z.ZodError): LecturerActionState {
   };
 }
 
+function safeLecturerReturnPath(path?: string) {
+  if (!path || !path.startsWith("/lecturer/classes/") || path.startsWith("//")) {
+    return undefined;
+  }
+
+  return path;
+}
+
 export async function createModuleAction(
   _state: LecturerActionState,
   formData: FormData
@@ -354,14 +362,20 @@ export async function gradeSubmissionAction(
   const parsed = gradeSubmissionSchema.safeParse(formDataToObject(formData));
   if (!parsed.success) return validationError(parsed.error);
 
+  const returnTo = safeLecturerReturnPath(parsed.data.returnTo);
   try {
     const user = await requireRole("LECTURER");
     await gradeSubmission({ ...parsed.data, lecturerId: user.id });
-    revalidatePath("/lecturer/classes");
-    return { ok: true, data: { message: "Submission graded." } };
+    revalidatePath(returnTo ?? "/lecturer/classes");
   } catch (error) {
     return { ok: false, error: toActionError(error) };
   }
+
+  if (returnTo) {
+    redirect(returnTo);
+  }
+
+  return { ok: true, data: { message: "Submission graded." } };
 }
 
 export async function publishGradeAction(
@@ -371,12 +385,18 @@ export async function publishGradeAction(
   const parsed = publishGradeSchema.safeParse(formDataToObject(formData));
   if (!parsed.success) return validationError(parsed.error);
 
+  const returnTo = safeLecturerReturnPath(parsed.data.returnTo);
   try {
     const user = await requireRole("LECTURER");
     await publishGrade(parsed.data.gradeId, user.id);
-    revalidatePath("/lecturer/classes");
-    return { ok: true, data: { message: "Grade published." } };
+    revalidatePath(returnTo ?? "/lecturer/classes");
   } catch (error) {
     return { ok: false, error: toActionError(error) };
   }
+
+  if (returnTo) {
+    redirect(returnTo);
+  }
+
+  return { ok: true, data: { message: "Grade published." } };
 }

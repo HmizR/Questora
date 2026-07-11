@@ -11,8 +11,9 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Role-aware route protection for `/admin`, `/lecturer`, and `/student`.
 - Service layer for authorization, activity progress, quest completion, XP transactions, badges, grades, enrollment, lecturer workflows, and student workflows.
 - Shared dashboard app shell with top account navigation and role-aware sidebar navigation.
-- Lecturer and student class workspaces use compact main-content tabs for regions, missions, quests, submissions, and roster views.
+- Lecturer and student class workspaces use compact main-content tabs for regions, missions, quests, grades, and roster views.
 - Lecturer region, mission, and quest creation/editing use dedicated pages and compact action menus to keep management lists clean.
+- Lecturer submission review is mission-specific for assignments and projects, with a class-level Grades matrix.
 - Seed data with one admin, two lecturers, five students, two classes, example modules, activities, quests, badges, and student profiles.
 
 ## Tech Stack
@@ -86,7 +87,7 @@ student5@questora.dev
 ## Main Pages
 
 - Admin: `/admin`, `/admin/users`, `/admin/classes`
-- Lecturer: `/lecturer`, `/lecturer/classes`, `/lecturer/classes/[classId]/modules`, `/modules/new`, `/modules/[moduleId]/edit`, `/modules/[moduleId]/activities/new`, `/modules/[moduleId]/activities/[activityId]/edit`, `/students`, `/quests`, `/quests/new`, `/quests/[questId]/edit`, `/submissions`
+- Lecturer: `/lecturer`, `/lecturer/classes`, `/lecturer/classes/[classId]/modules`, `/modules/new`, `/modules/[moduleId]/edit`, `/modules/[moduleId]/activities/new`, `/modules/[moduleId]/activities/[activityId]/edit`, `/modules/[moduleId]/activities/[activityId]/submissions`, `/students`, `/quests`, `/quests/new`, `/quests/[questId]/edit`, `/grades`
 - Student: `/student`, `/student/classes`, `/student/classes/[classId]`, `/student/classes/[classId]/activities/[activityId]`, `/student/profile`
 - Shared account page: `/account`
 

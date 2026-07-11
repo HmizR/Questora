@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { UpdateActivityForm } from "@/components/lecturer/forms";
+import { ActivityPrerequisiteForm, UpdateActivityForm } from "@/components/lecturer/forms";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { requireClassLecturer } from "@/lib/authorization-service";
@@ -21,10 +21,27 @@ export default async function EditMissionPage({
       moduleId,
       module: { classId }
     },
-    include: { module: true }
+    include: {
+      module: true,
+      prerequisites: {
+        include: {
+          requiredActivity: true
+        },
+        orderBy: {
+          requiredActivity: {
+            position: "asc"
+          }
+        }
+      }
+    }
   });
 
   if (!activity) notFound();
+
+  const allActivities = await db.activity.findMany({
+    where: { module: { classId } },
+    orderBy: [{ module: { position: "asc" } }, { position: "asc" }]
+  });
 
   return (
     <DashboardShell title="Edit mission" subtitle={`Update ${activity.title} in ${activity.module.title}.`}>
@@ -37,7 +54,15 @@ export default async function EditMissionPage({
           Back to regions
         </Link>
       </div>
-      <UpdateActivityForm activity={activity} />
+      <div className="grid gap-6 xl:grid-cols-[1fr_420px]">
+        <UpdateActivityForm activity={activity} />
+        <ActivityPrerequisiteForm
+          activities={allActivities}
+          activityId={activity.id}
+          classId={classId}
+          prerequisites={activity.prerequisites}
+        />
+      </div>
     </DashboardShell>
   );
 }
