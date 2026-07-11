@@ -1,9 +1,8 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 
 import {
   ActivityPrerequisiteForm,
-  CreateActivityForm,
-  CreateModuleForm,
   DeleteActivityForm,
   DeleteModuleForm,
   PublishActivityForm,
@@ -60,7 +59,14 @@ export default async function LecturerModulesPage({
       subtitle="Create, update, publish, and delete regions and their learning missions."
     >
       <ClassTabs classId={classId} role="LECTURER" />
-      <CreateModuleForm classId={classId} />
+      <div className="mb-6 flex justify-end">
+        <Link
+          className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-steel"
+          href={`/lecturer/classes/${classId}/modules/new`}
+        >
+          New region
+        </Link>
+      </div>
       <div className="mt-6 space-y-6">
         {teachingClass.modules.map((module, moduleIndex) => (
           <Expander
@@ -69,13 +75,18 @@ export default async function LecturerModulesPage({
             meta={`${module.isPublished ? "Published" : "Draft"} - ${module.activities.length} missions`}
             title={`${module.position}. ${module.title}`}
           >
-            <div className="flex justify-end gap-2">
+            <div className="flex items-center justify-end gap-2">
+              <Link
+                className="inline-flex min-h-[30px] items-center rounded-md border border-ink/20 bg-white px-3 py-1.5 text-xs font-semibold leading-none hover:bg-ink hover:text-white"
+                href={`/lecturer/classes/${classId}/modules/${module.id}/activities/new`}
+              >
+                New mission
+              </Link>
               {!module.isPublished ? <PublishModuleForm moduleId={module.id} /> : null}
               <DeleteModuleForm moduleId={module.id} />
             </div>
-            <div className="mt-5 grid gap-6 xl:grid-cols-2">
+            <div className="mt-5">
               <UpdateModuleForm module={module} />
-              <CreateActivityForm moduleId={module.id} />
             </div>
             <div className="mt-6 space-y-4">
               {module.activities.map((activity) => (

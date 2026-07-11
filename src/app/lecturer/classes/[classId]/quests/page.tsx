@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 
 import {
   ConnectQuestActivityForm,
-  CreateQuestForm,
   PublishQuestForm,
   UpdateQuestForm
 } from "@/components/lecturer/forms";
@@ -46,7 +46,14 @@ export default async function LecturerQuestsPage({
       subtitle="Create RPG-style quest chains, connect missions, and configure XP rewards."
     >
       <ClassTabs classId={classId} role="LECTURER" />
-      <CreateQuestForm classId={classId} />
+      <div className="mb-6 flex justify-end">
+        <Link
+          className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-steel"
+          href={`/lecturer/classes/${classId}/quests/new`}
+        >
+          New quest
+        </Link>
+      </div>
       <div className="mt-6 grid gap-6">
         {teachingClass.quests.map((quest, index) => (
           <Expander

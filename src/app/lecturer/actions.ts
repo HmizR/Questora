@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import type { LecturerActionState } from "@/app/lecturer/action-state";
 import { requireRole } from "@/lib/authorization-service";
+import { db } from "@/lib/db";
 import { toActionError } from "@/lib/errors";
 import { formDataToObject } from "@/lib/form-data";
 import {
@@ -66,14 +68,17 @@ export async function createModuleAction(
   const parsed = createModuleSchema.safeParse(formDataToObject(formData));
   if (!parsed.success) return validationError(parsed.error);
 
+  let redirectTo: string;
   try {
     const user = await requireRole("LECTURER");
     await createModule({ ...parsed.data, lecturerId: user.id });
-    revalidatePath(`/lecturer/classes/${parsed.data.classId}/modules`);
-    return { ok: true, data: { message: "Region created." } };
+    redirectTo = `/lecturer/classes/${parsed.data.classId}/modules`;
+    revalidatePath(redirectTo);
   } catch (error) {
     return { ok: false, error: toActionError(error) };
   }
+
+  redirect(redirectTo);
 }
 
 export async function updateModuleAction(
@@ -134,14 +139,23 @@ export async function createActivityAction(
   const parsed = createActivitySchema.safeParse(formDataToObject(formData));
   if (!parsed.success) return validationError(parsed.error);
 
+  let redirectTo: string;
   try {
     const user = await requireRole("LECTURER");
-    await createActivity({ ...parsed.data, lecturerId: user.id });
-    revalidatePath("/lecturer/classes");
-    return { ok: true, data: { message: "Mission created." } };
+    const activity = await createActivity({ ...parsed.data, lecturerId: user.id });
+    const learningModule = await db.module.findUnique({
+      where: { id: activity.moduleId },
+      select: { classId: true }
+    });
+    redirectTo = learningModule
+      ? `/lecturer/classes/${learningModule.classId}/modules`
+      : "/lecturer/classes";
+    revalidatePath(redirectTo);
   } catch (error) {
     return { ok: false, error: toActionError(error) };
   }
+
+  redirect(redirectTo);
 }
 
 export async function updateActivityAction(
@@ -236,14 +250,17 @@ export async function createQuestAction(
   const parsed = createQuestSchema.safeParse(formDataToObject(formData));
   if (!parsed.success) return validationError(parsed.error);
 
+  let redirectTo: string;
   try {
     const user = await requireRole("LECTURER");
     await createQuest({ ...parsed.data, lecturerId: user.id });
-    revalidatePath(`/lecturer/classes/${parsed.data.classId}/quests`);
-    return { ok: true, data: { message: "Quest created." } };
+    redirectTo = `/lecturer/classes/${parsed.data.classId}/quests`;
+    revalidatePath(redirectTo);
   } catch (error) {
     return { ok: false, error: toActionError(error) };
   }
+
+  redirect(redirectTo);
 }
 
 export async function updateQuestAction(

@@ -25,7 +25,7 @@ export function LecturerActionForm({
 
   return (
     <form action={formAction} className={className}>
-      <fieldset className="space-y-4 disabled:opacity-70" disabled={isPending}>
+      <fieldset className="flex flex-col gap-4 disabled:opacity-70" disabled={isPending}>
         {children}
       </fieldset>
       {!state.ok ? (

@@ -32,7 +32,13 @@ function isActive(pathname: string, href: string) {
     return true;
   }
 
-  return href.match(/\/student\/classes\/[^/]+$/) ? pathname.startsWith(`${href}/activities/`) : false;
+  if (href.match(/\/student\/classes\/[^/]+$/)) {
+    return pathname.startsWith(`${href}/activities/`);
+  }
+
+  return href.match(/\/lecturer\/classes\/[^/]+\/(?:modules|quests)$/)
+    ? pathname.startsWith(`${href}/`)
+    : false;
 }
 
 export function ClassTabs(props: ClassTabsProps) {
