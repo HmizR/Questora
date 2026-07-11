@@ -15,6 +15,7 @@ import {
   publishModuleAction,
   publishQuestAction,
   removeActivityPrerequisiteAction,
+  removeQuestActivityAction,
   updateActivityAction,
   updateModuleAction,
   updateQuestAction
@@ -405,19 +406,43 @@ export const lecturerMenuItemClassName = menuItemButton;
 export const lecturerMenuDangerClassName = menuDangerButton;
 
 export function ConnectQuestActivityForm({
+  classId,
   questId,
   activities
 }: {
+  classId: string;
   questId: string;
   activities: ActivityOption[];
 }) {
   return (
     <LecturerActionForm action={connectQuestActivityAction} className="mt-4 border-t border-ink/10 pt-4">
+      <input name="classId" type="hidden" value={classId} />
       <input name="questId" type="hidden" value={questId} />
       <SelectField label="Mission" name="activityId" options={activityOptions(activities)} />
       <TextField label="Quest order" name="position" type="number" defaultValue="1" />
       <button className="rounded-md border border-ink/20 bg-white px-3 py-2 text-sm font-semibold hover:bg-ink hover:text-white">
         Connect mission
+      </button>
+    </LecturerActionForm>
+  );
+}
+
+export function RemoveQuestActivityForm({
+  classId,
+  questId,
+  activityId
+}: {
+  classId: string;
+  questId: string;
+  activityId: string;
+}) {
+  return (
+    <LecturerActionForm action={removeQuestActivityAction}>
+      <input name="classId" type="hidden" value={classId} />
+      <input name="questId" type="hidden" value={questId} />
+      <input name="activityId" type="hidden" value={activityId} />
+      <button className="rounded-md border border-ember/30 bg-white px-3 py-1.5 text-xs font-semibold text-ember hover:bg-ember hover:text-white">
+        Remove
       </button>
     </LecturerActionForm>
   );

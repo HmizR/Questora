@@ -21,6 +21,7 @@ import {
   publishGradeSchema,
   questIdSchema,
   removeActivityPrerequisiteSchema,
+  removeQuestActivitySchema,
   updateActivitySchema,
   updateModuleSchema,
   updateQuestSchema
@@ -40,6 +41,7 @@ import {
   publishModule,
   publishQuest,
   removeActivityPrerequisite,
+  removeActivityFromQuest,
   updateActivity,
   updateModule,
   updateQuest
@@ -348,8 +350,25 @@ export async function connectQuestActivityAction(
   try {
     const user = await requireRole("LECTURER");
     await connectActivityToQuest({ ...parsed.data, lecturerId: user.id });
-    revalidatePath("/lecturer/classes");
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}/quests`);
     return { ok: true, data: { message: "Mission connected to quest." } };
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+}
+
+export async function removeQuestActivityAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = removeQuestActivitySchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  try {
+    const user = await requireRole("LECTURER");
+    await removeActivityFromQuest({ ...parsed.data, lecturerId: user.id });
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}/quests`);
+    return { ok: true, data: { message: "Mission removed from quest." } };
   } catch (error) {
     return { ok: false, error: toActionError(error) };
   }

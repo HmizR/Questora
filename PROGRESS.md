@@ -22,6 +22,7 @@ Post-MVP UI refresh completed:
 - Dedicated lecturer create/edit pages for regions, missions, and quests
 - Compact lecturer action menus for edit, publish, and delete actions
 - Mission-specific submission review and class-level Grades tab
+- Quest connected-mission management with completion stats
 - Shared `/account` page
 
 Latest verified checks:
@@ -85,7 +86,8 @@ Completed:
 - Compact triple-dot action menus for region, mission, and quest rows
 - Activity prerequisite add/remove controls
 - Quest create/update/publish/delete
-- Connect activities to quests
+- Connect and remove quest missions from quest edit pages
+- Quest completion stats for active students
 - Student roster and progress summary
 - Mission-specific submission review
 - Class grade matrix across students and non-lesson missions

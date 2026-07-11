@@ -374,6 +374,7 @@ export async function deleteQuest(questId: string, lecturerId: string) {
 
 export async function connectActivityToQuest(input: {
   lecturerId: string;
+  classId: string;
   questId: string;
   activityId: string;
   position: number;
@@ -383,7 +384,7 @@ export async function connectActivityToQuest(input: {
     getActivityForLecturer(input.activityId, input.lecturerId)
   ]);
 
-  if (quest.classId !== activity.module.classId) {
+  if (quest.classId !== input.classId || activity.module.classId !== input.classId) {
     throw new AppError("BAD_REQUEST", "Quest and mission must belong to the same realm.");
   }
 
@@ -405,6 +406,31 @@ export async function connectActivityToQuest(input: {
   } catch (error) {
     throw prismaErrorToAppError(error);
   }
+}
+
+export async function removeActivityFromQuest(input: {
+  lecturerId: string;
+  classId: string;
+  questId: string;
+  activityId: string;
+}) {
+  const [quest, activity] = await Promise.all([
+    getQuestForLecturer(input.questId, input.lecturerId),
+    getActivityForLecturer(input.activityId, input.lecturerId)
+  ]);
+
+  if (quest.classId !== input.classId || activity.module.classId !== input.classId) {
+    throw new AppError("BAD_REQUEST", "Quest and mission must belong to the same realm.");
+  }
+
+  return db.questActivity.delete({
+    where: {
+      questId_activityId: {
+        questId: input.questId,
+        activityId: input.activityId
+      }
+    }
+  });
 }
 
 export async function gradeSubmission(input: {

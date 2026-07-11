@@ -96,9 +96,16 @@ export const questIdSchema = z.object({
 });
 
 export const connectQuestActivitySchema = z.object({
+  classId: z.string().min(1),
   questId: z.string().min(1),
   activityId: z.string().min(1),
   position: z.coerce.number().int().positive()
+});
+
+export const removeQuestActivitySchema = z.object({
+  classId: z.string().min(1),
+  questId: z.string().min(1),
+  activityId: z.string().min(1)
 });
 
 export const gradeSubmissionSchema = z.object({
