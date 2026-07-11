@@ -32,6 +32,7 @@ function getRoleItems(role: UserRole): NavItem[] {
   return [
     { href: "/student", label: "Dashboard" },
     { href: "/student/classes", label: "Realms" },
+    { href: "/student/leaderboard", label: "Leaderboard" },
     { href: "/student/profile", label: "Profile" },
     { href: "/account", label: "Account" }
   ];

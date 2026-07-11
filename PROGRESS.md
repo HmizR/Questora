@@ -23,6 +23,7 @@ Post-MVP UI refresh completed:
 - Compact lecturer action menus for edit, publish, and delete actions
 - Mission-specific submission review and class-level Grades tab
 - Quest connected-mission management with completion stats
+- Global and class-specific student leaderboards
 - Shared `/account` page
 
 Latest verified checks:
@@ -124,6 +125,8 @@ Completed:
 - Submit assignment/project
 - Attempt quiz, simplified for MVP
 - Quest log
+- Global leaderboard using total profile XP
+- Class leaderboard using quest XP earned in that class
 - Profile with XP, level, badges, XP history, and own published grades
 - Student enrollment/publication/prerequisite checks
 
@@ -131,9 +134,11 @@ Key routes:
 
 - `/student`
 - `/student/classes`
+- `/student/leaderboard`
 - `/student/classes/[classId]`
 - `/student/classes/[classId]/activities/[activityId]`
 - `/student/classes/[classId]/quests`
+- `/student/classes/[classId]/leaderboard`
 - `/student/profile`
 
 ## Phase 5: Gamification

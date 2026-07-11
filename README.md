@@ -15,6 +15,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Lecturer region, mission, and quest creation/editing use dedicated pages and compact action menus to keep management lists clean.
 - Lecturer submission review is mission-specific for assignments and projects, with a class-level Grades matrix.
 - Quest edit pages manage connected missions, while quest lists show connected mission summaries and completion stats.
+- Student leaderboards include a global XP ranking and class-specific quest XP ranking.
 - Seed data with one admin, two lecturers, five students, two classes, example modules, activities, quests, badges, and student profiles.
 
 ## Tech Stack
@@ -89,7 +90,7 @@ student5@questora.dev
 
 - Admin: `/admin`, `/admin/users`, `/admin/classes`
 - Lecturer: `/lecturer`, `/lecturer/classes`, `/lecturer/classes/[classId]/modules`, `/modules/new`, `/modules/[moduleId]/edit`, `/modules/[moduleId]/activities/new`, `/modules/[moduleId]/activities/[activityId]/edit`, `/modules/[moduleId]/activities/[activityId]/submissions`, `/students`, `/quests`, `/quests/new`, `/quests/[questId]/edit`, `/grades`
-- Student: `/student`, `/student/classes`, `/student/classes/[classId]`, `/student/classes/[classId]/activities/[activityId]`, `/student/profile`
+- Student: `/student`, `/student/classes`, `/student/leaderboard`, `/student/classes/[classId]`, `/student/classes/[classId]/activities/[activityId]`, `/student/classes/[classId]/quests`, `/student/classes/[classId]/leaderboard`, `/student/profile`
 - Shared account page: `/account`
 
 ## Gamification Rules
@@ -101,6 +102,7 @@ student5@questora.dev
 - Duplicate XP rewards are blocked by unique idempotency keys.
 - Level calculation is centralized as `floor(sqrt(totalXp / 100)) + 1`.
 - Assignments and boss battles complete after lecturer grading, then run the same quest/XP/badge reward path.
+- Global leaderboards use total profile XP; class leaderboards use quest XP transactions for that class.
 
 ## Quality Checks
 
