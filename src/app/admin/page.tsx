@@ -1,4 +1,5 @@
 import { ClassStatus, UserRole } from "@prisma/client";
+import { BookOpen, GraduationCap, UsersRound, UserRound } from "lucide-react";
 
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { StatCard } from "@/components/ui/stat-card";
@@ -20,10 +21,10 @@ export default async function AdminDashboardPage() {
       subtitle="Manage users, learning realms, lecturer assignments, and enrollment from here."
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total users" value={totalUsers} />
-        <StatCard label="Lecturers" value={lecturers} />
-        <StatCard label="Students" value={students} />
-        <StatCard label="Active realms" value={activeClasses} />
+        <StatCard icon={UsersRound} label="Total users" value={totalUsers} />
+        <StatCard icon={GraduationCap} label="Lecturers" value={lecturers} />
+        <StatCard icon={UserRound} label="Students" value={students} />
+        <StatCard icon={BookOpen} label="Active realms" value={activeClasses} />
       </div>
     </DashboardShell>
   );

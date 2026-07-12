@@ -12,8 +12,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="bg-parchment text-ink antialiased">{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className="bg-parchment text-ink antialiased">
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var t=localStorage.getItem('questora-theme');document.documentElement.classList.toggle('dark',t==='dark');document.documentElement.dataset.theme=t||'light'}catch(e){}"
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }

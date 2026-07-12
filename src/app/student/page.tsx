@@ -1,3 +1,5 @@
+import { BookOpen, CheckCircle2, Gauge } from "lucide-react";
+
 import { QuestCard } from "@/components/gamification/quest-card";
 import { LevelProgress } from "@/components/gamification/level-progress";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
@@ -87,9 +89,9 @@ export default async function StudentDashboardPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">
         <LevelProgress totalXp={totalXp} />
         <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard label="Active realms" value={activeClasses} />
-          <StatCard label="Completed missions" value={completedActivities} />
-          <StatCard label="Overall progress" value={`${progressPercent}%`} />
+          <StatCard icon={BookOpen} label="Active realms" value={activeClasses} />
+          <StatCard icon={CheckCircle2} label="Completed missions" value={completedActivities} />
+          <StatCard icon={Gauge} label="Overall progress" value={`${progressPercent}%`} />
         </div>
       </div>
 
@@ -98,7 +100,7 @@ export default async function StudentDashboardPage() {
           <h2 className="mb-4 text-xl font-bold">Current quests</h2>
           <div className="grid gap-4 md:grid-cols-2">
             {quests.length === 0 ? (
-              <div className="rounded-lg border border-ink/10 bg-white p-5 text-sm text-ink/65 shadow-sm">
+              <div className="rounded-2xl border border-border/80 bg-surface p-5 text-sm text-ink/65 shadow-sm">
                 No active quests yet.
               </div>
             ) : (
@@ -121,7 +123,7 @@ export default async function StudentDashboardPage() {
             )}
           </div>
         </section>
-        <section className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">
+        <section className="rounded-2xl border border-border/80 bg-surface p-6 shadow-sm">
           <h2 className="text-xl font-bold">Recent grades</h2>
           <div className="mt-4 space-y-3">
             {recentGrades.length === 0 ? (

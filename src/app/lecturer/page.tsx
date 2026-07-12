@@ -1,3 +1,5 @@
+import { BookOpen, Inbox } from "lucide-react";
+
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { StatCard } from "@/components/ui/stat-card";
 import { requireRole } from "@/lib/authorization-service";
@@ -26,8 +28,8 @@ export default async function LecturerDashboardPage() {
       subtitle="Guide your assigned learning realms, publish missions, and review submissions."
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <StatCard label="Assigned realms" value={classes} />
-        <StatCard label="Submissions" value={submissions} hint="Across your realms" />
+        <StatCard icon={BookOpen} label="Assigned realms" value={classes} />
+        <StatCard icon={Inbox} label="Submissions" value={submissions} hint="Across your realms" />
       </div>
     </DashboardShell>
   );

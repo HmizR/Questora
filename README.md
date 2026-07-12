@@ -11,6 +11,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Role-aware route protection for `/admin`, `/lecturer`, and `/student`.
 - Service layer for authorization, activity progress, quest completion, XP transactions, badges, grades, enrollment, lecturer workflows, and student workflows.
 - Shared dashboard app shell with top account navigation and role-aware sidebar navigation.
+- Modern responsive dashboard UI with icon navigation, polished cards, and a persisted light/dark theme toggle.
 - Lecturer and student class workspaces use compact main-content tabs for regions, missions, quests, grades, and roster views.
 - Lecturer region, mission, and quest creation/editing use dedicated pages and compact action menus to keep management lists clean.
 - Lecturer submission review is mission-specific for assignments and projects, with a class-level Grades matrix.
@@ -27,6 +28,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Prisma ORM
 - Auth.js / NextAuth credentials provider
 - Tailwind CSS
+- Lucide React icons
 - Zod
 - Vitest
 

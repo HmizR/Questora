@@ -26,6 +26,7 @@ Post-MVP UI refresh completed:
 - Global and class-specific student leaderboards
 - Public student profiles linked from leaderboards
 - Shared `/account` page
+- Modern responsive dashboard UI refresh with icons and persisted light/dark theme toggle
 
 Latest verified checks:
 

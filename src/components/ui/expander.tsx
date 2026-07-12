@@ -1,3 +1,5 @@
+import { ChevronDown } from "lucide-react";
+
 type ExpanderProps = {
   title: React.ReactNode;
   meta?: React.ReactNode;
@@ -15,7 +17,7 @@ export function Expander({
 }: ExpanderProps) {
   return (
     <details
-      className={`group rounded-lg border border-ink/10 bg-white shadow-sm ${className}`}
+      className={`group rounded-2xl border border-border/80 bg-surface shadow-sm ${className}`}
       open={defaultOpen}
     >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
@@ -23,11 +25,11 @@ export function Expander({
           <div className="font-bold">{title}</div>
           {meta ? <div className="mt-1 text-sm text-ink/60">{meta}</div> : null}
         </div>
-        <span className="shrink-0 rounded-md border border-ink/10 px-2 py-1 text-xs font-bold text-ink/60 transition group-open:rotate-180">
-          v
+        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-surface-muted text-ink/60 transition group-open:rotate-180">
+          <ChevronDown aria-hidden className="h-4 w-4" />
         </span>
       </summary>
-      <div className="border-t border-ink/10 p-5">{children}</div>
+      <div className="border-t border-border/80 p-5">{children}</div>
     </details>
   );
 }
