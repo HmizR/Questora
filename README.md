@@ -51,6 +51,42 @@ npx prisma migrate dev --name init
 npm run prisma:seed
 ```
 
+## Integration Tests
+
+Database-backed integration tests use a separate PostgreSQL database and never use seed data.
+
+Local PostgreSQL setup:
+
+```bash
+createdb questora_test
+copy .env.test.example .env.test
+npm run db:test:deploy
+npm run test:integration
+```
+
+Optional Docker setup:
+
+```bash
+docker compose -f docker-compose.test.yml up -d
+copy .env.test.example .env.test
+```
+
+For Docker, set `.env.test` to use port `5433`:
+
+```text
+DATABASE_URL_TEST="postgresql://postgres:postgres@localhost:5433/questora_test?schema=public"
+```
+
+Then run:
+
+```bash
+npm run db:test:deploy
+npm run test:integration
+```
+
+The integration suite clears all tables in `DATABASE_URL_TEST` between tests. Do not point
+`DATABASE_URL_TEST` at your development or production database.
+
 ## Development
 
 ```bash
@@ -58,6 +94,8 @@ npm run dev
 npm run lint
 npm run typecheck
 npm test
+npm run test:integration
+npm run test:all
 npm run build
 ```
 

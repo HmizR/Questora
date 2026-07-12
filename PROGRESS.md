@@ -27,6 +27,7 @@ Post-MVP UI refresh completed:
 - Public student profiles linked from leaderboards
 - Shared `/account` page
 - Modern responsive dashboard UI refresh with icons and persisted light/dark theme toggle
+- Isolated PostgreSQL integration test setup with service and server action coverage
 
 Latest verified checks:
 
@@ -172,6 +173,7 @@ Completed:
 - Authorization review documentation
 - README updates
 - Build, lint, typecheck, tests, and Prisma validation passing
+- Database-backed integration test configuration and fixtures for critical service/action flows
 
 Test count at completion:
 
