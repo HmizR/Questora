@@ -1,4 +1,5 @@
 import { ProgressStatus } from "@prisma/client";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ClassTabs } from "@/components/ui/class-tabs";
@@ -129,7 +130,14 @@ export default async function StudentClassLeaderboardPage({
             {rows.map((row, index) => (
               <tr key={row.studentId}>
                 <td className="px-4 py-3 font-bold">#{index + 1}</td>
-                <td className="px-4 py-3 font-semibold">{row.name}</td>
+                <td className="px-4 py-3 font-semibold">
+                  <Link
+                    className="text-ink hover:text-moss hover:underline"
+                    href={`/student/profiles/${row.studentId}`}
+                  >
+                    {row.name}
+                  </Link>
+                </td>
                 <td className="px-4 py-3">{row.xp}</td>
                 <td className="px-4 py-3">
                   {row.completedMissions}/{totalMissions}
