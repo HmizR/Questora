@@ -88,7 +88,7 @@ export async function DashboardShell({ title, subtitle, children }: DashboardShe
         </div>
       </header>
 
-      <div className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-[1440px] lg:grid-cols-[260px_1fr]">
+      <div className="grid min-h-[calc(100vh-4rem)] lg:grid-cols-[260px_1fr]">
         <aside className="hidden border-r border-border/80 bg-surface/65 px-4 py-6 lg:block">
           <div className="sticky top-24">
             <p className="mb-3 px-3 text-xs font-bold uppercase tracking-wide text-ink/45">
@@ -98,12 +98,14 @@ export async function DashboardShell({ title, subtitle, children }: DashboardShe
           </div>
         </aside>
         <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-8">
-          <header className="mb-6 rounded-2xl border border-border/80 bg-surface p-5 shadow-sm">
-            <p className="text-sm font-semibold uppercase tracking-wide text-moss">Questora</p>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-ink/65">{subtitle}</p>
-          </header>
-          {children}
+          <div className="mx-auto max-w-[1180px]">
+            <header className="mb-6 rounded-2xl border border-border/80 bg-surface p-5 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-wide text-moss">Questora</p>
+              <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-ink/65">{subtitle}</p>
+            </header>
+            {children}
+          </div>
         </main>
       </div>
     </div>
