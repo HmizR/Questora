@@ -26,6 +26,7 @@ Post-MVP UI refresh completed:
 - Quest connected-mission management with completion stats
 - Global and class-specific student leaderboards
 - Public student profiles linked from leaderboards
+- Student class Grades tab for own published assignment, project, and quiz grades
 - Shared `/account` page
 - Modern responsive dashboard UI refresh with icons and persisted light/dark theme toggle
 - Isolated PostgreSQL integration test setup with service and server action coverage
@@ -136,6 +137,7 @@ Completed:
 - Global leaderboard using total profile XP
 - Class leaderboard using quest XP earned in that class
 - Public student profiles with XP, streaks, badges, and recent XP only
+- Class-specific Grades tab with own published assignment, project, and quiz grades
 - Profile with XP, level, badges, XP history, and own published grades
 - Student enrollment/publication/prerequisite checks
 
@@ -148,6 +150,7 @@ Key routes:
 - `/student/classes/[classId]`
 - `/student/classes/[classId]/activities/[activityId]`
 - `/student/classes/[classId]/quests`
+- `/student/classes/[classId]/grades`
 - `/student/classes/[classId]/leaderboard`
 - `/student/profile`
 

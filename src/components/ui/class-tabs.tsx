@@ -26,6 +26,7 @@ function getTabs({ role, classId }: ClassTabsProps) {
   return [
     { href: `/student/classes/${classId}`, label: "Missions", icon: ListChecks },
     { href: `/student/classes/${classId}/quests`, label: "Quests", icon: Trophy },
+    { href: `/student/classes/${classId}/grades`, label: "Grades", icon: ClipboardList },
     { href: `/student/classes/${classId}/leaderboard`, label: "Leaderboard", icon: BookOpen }
   ];
 }
@@ -41,7 +42,7 @@ function isActive(pathname: string, href: string) {
     return pathname.startsWith(`${href}/activities/`);
   }
 
-  if (href.match(/\/student\/classes\/[^/]+\/(?:quests|leaderboard)$/)) {
+  if (href.match(/\/student\/classes\/[^/]+\/(?:quests|grades|leaderboard)$/)) {
     return pathname.startsWith(`${href}/`);
   }
 

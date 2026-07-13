@@ -21,6 +21,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Lecturers can cap quiz attempts; quiz grades use the highest student attempt score.
 - Student leaderboards include a global XP ranking and class-specific quest XP ranking.
 - Leaderboard names link to public student profiles with gamification data only.
+- Student class workspaces include a Grades tab for own published assignment, project, and quiz grades.
 - Seed data with one admin, two lecturers, five students, two classes, example modules, activities, quests, badges, and student profiles.
 
 ## Tech Stack
@@ -129,12 +130,13 @@ student5@questora.dev
 - Lecturers manage only classes assigned to them, including modules, missions, quests, submissions, and grades.
 - Lecturers can configure mission prerequisites from their class module panel.
 - Students access only enrolled classes, published modules, published activities, their own progress, their own submissions, their own grades, XP, level, and badges.
+- Student class Grades tabs show only the signed-in student's own published grades.
 
 ## Main Pages
 
 - Admin: `/admin`, `/admin/users`, `/admin/classes`
 - Lecturer: `/lecturer`, `/lecturer/classes`, `/lecturer/classes/[classId]/modules`, `/modules/new`, `/modules/[moduleId]/edit`, `/modules/[moduleId]/activities/new`, `/modules/[moduleId]/activities/[activityId]/edit`, `/modules/[moduleId]/activities/[activityId]/submissions`, `/students`, `/quests`, `/quests/new`, `/quests/[questId]/edit`, `/grades`
-- Student: `/student`, `/student/classes`, `/student/leaderboard`, `/student/profiles/[studentId]`, `/student/classes/[classId]`, `/student/classes/[classId]/activities/[activityId]`, `/student/classes/[classId]/quests`, `/student/classes/[classId]/leaderboard`, `/student/profile`
+- Student: `/student`, `/student/classes`, `/student/leaderboard`, `/student/profiles/[studentId]`, `/student/classes/[classId]`, `/student/classes/[classId]/activities/[activityId]`, `/student/classes/[classId]/quests`, `/student/classes/[classId]/grades`, `/student/classes/[classId]/leaderboard`, `/student/profile`
 - Shared account page: `/account`
 
 ## Gamification Rules
