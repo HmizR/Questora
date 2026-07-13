@@ -1,6 +1,7 @@
 type Role = "ADMIN" | "LECTURER" | "STUDENT";
 type ProgressStatus = "NOT_STARTED" | "IN_PROGRESS" | "SUBMITTED" | "COMPLETED" | "FAILED";
 type QuestType = "MAIN" | "SIDE" | "CHALLENGE" | "BOSS";
+type SubmissionStatus = "DRAFT" | "SUBMITTED" | "GRADED" | "RETURNED";
 
 type SessionLike = {
   id: string;
@@ -78,4 +79,8 @@ export function shouldAwardBossSlayer(input: { questType: QuestType; xpWasNewlyA
 
 export function gradeAndXpRemainSeparate(input: { gradeScore?: number; xpAmount?: number }) {
   return typeof input.gradeScore === "number" && input.xpAmount === undefined;
+}
+
+export function canStudentEditSubmission(status?: SubmissionStatus | null) {
+  return !status || status === "DRAFT" || status === "SUBMITTED" || status === "RETURNED";
 }

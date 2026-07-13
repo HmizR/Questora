@@ -10,6 +10,7 @@ import {
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { requireClassEnrollment } from "@/lib/authorization-service";
+import { canStudentEditSubmission } from "@/lib/domain-rules";
 import { db } from "@/lib/db";
 import { parseQuizDefinition } from "@/lib/quiz";
 import { assertStudentCanAccessActivity } from "@/services/progress-service";
@@ -61,6 +62,7 @@ export default async function StudentActivityPage({
       ? Math.max(activity.maxAttempts - quizAttempts.length, 0)
       : null;
   const hasQuizAttemptsRemaining = remainingAttempts === null || remainingAttempts > 0;
+  const canEditSubmission = canStudentEditSubmission(submission?.status);
 
   return (
     <DashboardShell title={activity.title} subtitle={`${activity.type} mission in ${activity.module.title}`}>
@@ -119,11 +121,28 @@ export default async function StudentActivityPage({
           {activity.type === ActivityType.LESSON ? (
             <CompleteLessonForm activityId={activity.id} />
           ) : activity.type === ActivityType.ASSIGNMENT || activity.type === ActivityType.PROJECT ? (
-            <SubmitAssignmentForm
-              activityId={activity.id}
-              defaultText={submission?.textContent}
-              defaultFileUrl={submission?.fileUrl}
-            />
+            canEditSubmission ? (
+              <SubmitAssignmentForm
+                activityId={activity.id}
+                defaultText={submission?.textContent}
+                defaultFileUrl={submission?.fileUrl}
+              />
+            ) : (
+              <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-sm">
+                <h2 className="font-bold">Submission locked</h2>
+                <p className="mt-2 text-sm text-ink/65">
+                  This work has been graded and can no longer be edited.
+                </p>
+                {submission?.textContent ? (
+                  <div className="mt-4 whitespace-pre-wrap rounded-md bg-parchment p-4 text-sm leading-6">
+                    {submission.textContent}
+                  </div>
+                ) : null}
+                {submission?.fileUrl ? (
+                  <p className="mt-3 break-all text-sm text-ink/65">File URL: {submission.fileUrl}</p>
+                ) : null}
+              </section>
+            )
           ) : activity.type === ActivityType.QUIZ && quizAttempts.length > 0 ? (
             <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-sm">
               <h2 className="font-bold">Recent attempts</h2>

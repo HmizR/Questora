@@ -1,6 +1,7 @@
 import { ActivityType, Prisma, ProgressStatus, SubmissionStatus } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { canStudentEditSubmission } from "@/lib/domain-rules";
 import { AppError } from "@/lib/errors";
 import { parseQuizDefinition, quizAnswersSchema, scoreQuiz } from "@/lib/quiz";
 import {
@@ -25,6 +26,19 @@ export async function submitAssignment(input: {
   }
 
   return db.$transaction(async (tx) => {
+    const existingSubmission = await tx.submission.findUnique({
+      where: {
+        activityId_studentId: {
+          activityId: input.activityId,
+          studentId: input.studentId
+        }
+      }
+    });
+
+    if (!canStudentEditSubmission(existingSubmission?.status)) {
+      throw new AppError("FORBIDDEN", "This submission has already been graded.");
+    }
+
     const submission = await tx.submission.upsert({
       where: {
         activityId_studentId: {

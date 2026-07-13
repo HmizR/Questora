@@ -5,6 +5,7 @@ import {
   canLecturerManageClass,
   canStudentAccessClass,
   canStudentAccessPublishedActivity,
+  canStudentEditSubmission,
   canStudentViewGrade,
   deriveQuestCompletion,
   gradeAndXpRemainSeparate,
@@ -102,5 +103,13 @@ describe("domain authorization and gamification rules", () => {
         { isRequired: false, status: "NOT_STARTED" }
       ])
     ).toBe(true);
+  });
+
+  it("allows assignment/project edits until the submission is graded", () => {
+    expect(canStudentEditSubmission(null)).toBe(true);
+    expect(canStudentEditSubmission("DRAFT")).toBe(true);
+    expect(canStudentEditSubmission("SUBMITTED")).toBe(true);
+    expect(canStudentEditSubmission("RETURNED")).toBe(true);
+    expect(canStudentEditSubmission("GRADED")).toBe(false);
   });
 });

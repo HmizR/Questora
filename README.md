@@ -15,6 +15,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Lecturer and student class workspaces use compact main-content tabs for regions, missions, quests, grades, and roster views.
 - Lecturer region, mission, and quest creation/editing use dedicated pages and compact action menus to keep management lists clean.
 - Lecturer submission review is mission-specific for assignments and projects, with a class-level Grades matrix.
+- Assignment and project submissions can be edited until a lecturer grades them, then they lock.
 - Quest edit pages manage connected missions, while quest lists show connected mission summaries and completion stats.
 - Quiz missions support structured multiple-choice and true/false questions with server-side scoring and attempt history.
 - Lecturers can cap quiz attempts; quiz grades use the highest student attempt score.
@@ -145,6 +146,7 @@ student5@questora.dev
 - Duplicate XP rewards are blocked by unique idempotency keys.
 - Level calculation is centralized as `floor(sqrt(totalXp / 100)) + 1`.
 - Assignments and boss battles complete after lecturer grading, then run the same quest/XP/badge reward path.
+- Assignment/project resubmissions are allowed until grading; graded submissions can no longer be edited.
 - Quizzes are scored on the server; passing attempts update progress to completed and can trigger quest XP.
 - Quiz attempts are stored separately, and the highest attempt score is published as the quiz grade.
 - Quiz grades remain separate from XP transactions.

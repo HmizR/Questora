@@ -22,6 +22,7 @@ Post-MVP UI refresh completed:
 - Dedicated lecturer create/edit pages for regions, missions, and quests
 - Compact lecturer action menus for edit, publish, and delete actions
 - Mission-specific submission review and class-level Grades tab
+- Assignment/project submission edits locked after grading
 - Quest connected-mission management with completion stats
 - Global and class-specific student leaderboards
 - Public student profiles linked from leaderboards
@@ -128,6 +129,7 @@ Completed:
 - Start activity
 - Complete lesson
 - Submit assignment/project
+- Edit assignment/project submissions until lecturer grading
 - Attempt structured quizzes with unlimited attempts and best-score progress
 - Attempt structured quizzes with lecturer-configured attempt caps
 - Quest log
@@ -165,6 +167,7 @@ Completed:
   - Boss Slayer
   - Perfect Score
 - Assignment/project grading triggers activity completion reward flow
+- Graded assignment/project submissions are locked from further student edits
 - Quiz attempts store attempt history, update best score, and trigger completion rewards only after passing
 - Quiz grades are auto-published from each student's highest quiz attempt score
 - RPG-style dashboard cards and progress bars
@@ -183,7 +186,7 @@ Completed:
 Test count at completion:
 
 ```text
-19 tests passing
+20 tests passing
 ```
 
 ## Recommended Next Steps
