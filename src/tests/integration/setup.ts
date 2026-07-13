@@ -71,6 +71,7 @@ async function clearDatabase() {
     db.studentProfile.deleteMany(),
     db.grade.deleteMany(),
     db.submission.deleteMany(),
+    db.quizAttempt.deleteMany(),
     db.activityProgress.deleteMany(),
     db.questActivity.deleteMany(),
     db.activityPrerequisite.deleteMany(),

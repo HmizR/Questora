@@ -10,6 +10,11 @@ import { db } from "@/lib/db";
 import { toActionError } from "@/lib/errors";
 import { formDataToObject } from "@/lib/form-data";
 import {
+  buildQuizDefinitionFromForm,
+  getQuizMaxScore,
+  serializeQuizDefinition
+} from "@/lib/quiz";
+import {
   activityIdSchema,
   activityPrerequisiteSchema,
   connectQuestActivitySchema,
@@ -70,6 +75,27 @@ function safeLecturerReturnPath(path?: string) {
   }
 
   return path;
+}
+
+function normalizeActivityPayload<T extends { type: string; content?: string; maxScore?: number; passingScore?: number; maxAttempts?: number }>(
+  payload: T
+) {
+  if (payload.type !== "QUIZ") {
+    return payload;
+  }
+
+  const definition = buildQuizDefinitionFromForm(payload);
+  if (!definition) {
+    return payload;
+  }
+
+  const maxScore = getQuizMaxScore(definition);
+  return {
+    ...payload,
+    content: serializeQuizDefinition(definition),
+    maxScore: payload.maxScore ?? maxScore,
+    passingScore: payload.passingScore ?? maxScore
+  };
 }
 
 export async function createModuleAction(
@@ -156,7 +182,10 @@ export async function createActivityAction(
   let redirectTo: string;
   try {
     const user = await requireRole("LECTURER");
-    const activity = await createActivity({ ...parsed.data, lecturerId: user.id });
+    const activity = await createActivity({
+      ...normalizeActivityPayload(parsed.data),
+      lecturerId: user.id
+    });
     const learningModule = await db.module.findUnique({
       where: { id: activity.moduleId },
       select: { classId: true }
@@ -182,7 +211,10 @@ export async function updateActivityAction(
   let redirectTo: string;
   try {
     const user = await requireRole("LECTURER");
-    const activity = await updateActivity({ ...parsed.data, lecturerId: user.id });
+    const activity = await updateActivity({
+      ...normalizeActivityPayload(parsed.data),
+      lecturerId: user.id
+    });
     const learningModule = await db.module.findUnique({
       where: { id: activity.moduleId },
       select: { classId: true }

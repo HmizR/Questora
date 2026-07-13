@@ -15,7 +15,8 @@ export const submitAssignmentSchema = z.object({
   fileUrl: optionalText.optional()
 });
 
-export const attemptQuizSchema = z.object({
-  activityId: z.string().min(1),
-  response: optionalText.optional()
-});
+export const attemptQuizSchema = z
+  .object({
+    activityId: z.string().min(1)
+  })
+  .catchall(z.string());

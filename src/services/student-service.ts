@@ -1,8 +1,12 @@
-import { ActivityType, ProgressStatus, SubmissionStatus } from "@prisma/client";
+import { ActivityType, Prisma, ProgressStatus, SubmissionStatus } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
-import { assertStudentCanAccessActivity, completeActivity } from "@/services/progress-service";
+import { parseQuizDefinition, quizAnswersSchema, scoreQuiz } from "@/lib/quiz";
+import {
+  assertStudentCanAccessActivity,
+  processActivityCompletionRewards
+} from "@/services/progress-service";
 
 export async function submitAssignment(input: {
   activityId: string;
@@ -73,7 +77,7 @@ export async function submitAssignment(input: {
 export async function attemptQuiz(input: {
   activityId: string;
   studentId: string;
-  response?: string;
+  [key: string]: unknown;
 }) {
   const activity = await assertStudentCanAccessActivity(input.activityId, input.studentId);
 
@@ -81,5 +85,131 @@ export async function attemptQuiz(input: {
     throw new AppError("BAD_REQUEST", "Only quizzes can be attempted here.");
   }
 
-  return completeActivity(input.activityId, input.studentId);
+  const definition = parseQuizDefinition(activity.content);
+  if (!definition) {
+    throw new AppError("BAD_REQUEST", "This quiz has no valid questions yet.");
+  }
+
+  const rawAnswers = Object.fromEntries(
+    Object.entries(input)
+      .filter(([key]) => key.startsWith("answer_"))
+      .map(([key, value]) => [key.replace("answer_", ""), value])
+  );
+  const answers = quizAnswersSchema.parse(rawAnswers);
+  const scored = scoreQuiz(definition, answers);
+  const passingScore = activity.passingScore
+    ? Number(activity.passingScore)
+    : scored.maxScore;
+  const passed = scored.score >= passingScore;
+
+  return db.$transaction(async (tx) => {
+    const previousAttemptCount = await tx.quizAttempt.count({
+      where: {
+        activityId: input.activityId,
+        studentId: input.studentId
+      }
+    });
+
+    if (activity.maxAttempts && previousAttemptCount >= activity.maxAttempts) {
+      throw new AppError("FORBIDDEN", "You have used all attempts for this quiz.");
+    }
+
+    const attempt = await tx.quizAttempt.create({
+      data: {
+        activityId: input.activityId,
+        studentId: input.studentId,
+        attemptNo: previousAttemptCount + 1,
+        answers: {
+          selected: answers,
+          results: scored.results
+        } as Prisma.InputJsonValue,
+        score: scored.score,
+        maxScore: scored.maxScore,
+        passed
+      }
+    });
+
+    const existingProgress = await tx.activityProgress.findUnique({
+      where: {
+        activityId_studentId: {
+          activityId: input.activityId,
+          studentId: input.studentId
+        }
+      }
+    });
+    const previousBestScore = existingProgress?.bestScore ? Number(existingProgress.bestScore) : 0;
+    const bestScore = Math.max(previousBestScore, scored.score);
+    const wasCompleted = existingProgress?.status === ProgressStatus.COMPLETED;
+    const nextStatus = passed ? ProgressStatus.COMPLETED : ProgressStatus.FAILED;
+    const progressPercent =
+      scored.maxScore > 0 ? Math.round((bestScore / scored.maxScore) * 100) : 0;
+
+    await tx.activityProgress.upsert({
+      where: {
+        activityId_studentId: {
+          activityId: input.activityId,
+          studentId: input.studentId
+        }
+      },
+      update: {
+        status: wasCompleted ? ProgressStatus.COMPLETED : nextStatus,
+        progressPercent: passed ? 100 : progressPercent,
+        bestScore,
+        submittedAt: new Date(),
+        completedAt: passed ? new Date() : existingProgress?.completedAt
+      },
+      create: {
+        activityId: input.activityId,
+        studentId: input.studentId,
+        status: nextStatus,
+        progressPercent: passed ? 100 : progressPercent,
+        bestScore,
+        startedAt: new Date(),
+        submittedAt: new Date(),
+        completedAt: passed ? new Date() : undefined
+      }
+    });
+
+    if (passed && !wasCompleted) {
+      await processActivityCompletionRewards(tx, input.activityId, input.studentId);
+    }
+
+    const existingGrade = await tx.grade.findUnique({
+      where: {
+        activityId_studentId: {
+          activityId: input.activityId,
+          studentId: input.studentId
+        }
+      }
+    });
+    const shouldUpdateGrade = !existingGrade || Number(existingGrade.score) < bestScore;
+
+    if (shouldUpdateGrade) {
+      await tx.grade.upsert({
+        where: {
+          activityId_studentId: {
+            activityId: input.activityId,
+            studentId: input.studentId
+          }
+        },
+        update: {
+          score: bestScore,
+          feedback: `Best quiz attempt score: ${bestScore}/${scored.maxScore}`,
+          gradedById: activity.module.class.lecturerId,
+          gradedAt: new Date(),
+          publishedAt: new Date()
+        },
+        create: {
+          activityId: input.activityId,
+          studentId: input.studentId,
+          score: bestScore,
+          feedback: `Best quiz attempt score: ${bestScore}/${scored.maxScore}`,
+          gradedById: activity.module.class.lecturerId,
+          publishedAt: new Date()
+        }
+      });
+    }
+
+    return attempt;
+  });
 }

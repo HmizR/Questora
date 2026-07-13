@@ -81,6 +81,7 @@ model User {
   profile         StudentProfile?
   xpTransactions  XPTransaction[]
   badges          StudentBadge[]
+  quizAttempts    QuizAttempt[]
 }
 
 model Class {
@@ -141,6 +142,7 @@ model Activity {
   position              Int
   maxScore              Decimal?               @db.Decimal(8, 2)
   passingScore          Decimal?               @db.Decimal(8, 2)
+  maxAttempts           Int?
   dueAt                 DateTime?
   isRequired            Boolean                @default(true)
   isPublished           Boolean                @default(false)
@@ -153,8 +155,26 @@ model Activity {
   submissions           Submission[]
   grades                Grade[]
   questLinks            QuestActivity[]
+  quizAttempts          QuizAttempt[]
 
   @@unique([moduleId, position])
+}
+
+model QuizAttempt {
+  id          String   @id @default(cuid())
+  activityId  String
+  studentId   String
+  attemptNo   Int
+  answers     Json
+  score       Decimal  @db.Decimal(8, 2)
+  maxScore    Decimal  @db.Decimal(8, 2)
+  passed      Boolean
+  submittedAt DateTime @default(now())
+  activity    Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, studentId, attemptNo])
+  @@index([activityId, studentId])
 }
 
 model ActivityPrerequisite {

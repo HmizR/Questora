@@ -7,7 +7,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Credential authentication with active-account checks.
 - Basic login throttling for repeated failed credential attempts.
 - Three primary roles: `ADMIN`, `LECTURER`, and `STUDENT`.
-- Prisma/PostgreSQL domain schema for users, classes, modules, activities, quests, progress, submissions, grades, XP, and badges.
+- Prisma/PostgreSQL domain schema for users, classes, modules, activities, quizzes, quests, progress, submissions, grades, XP, and badges.
 - Role-aware route protection for `/admin`, `/lecturer`, and `/student`.
 - Service layer for authorization, activity progress, quest completion, XP transactions, badges, grades, enrollment, lecturer workflows, and student workflows.
 - Shared dashboard app shell with top account navigation and role-aware sidebar navigation.
@@ -16,6 +16,8 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Lecturer region, mission, and quest creation/editing use dedicated pages and compact action menus to keep management lists clean.
 - Lecturer submission review is mission-specific for assignments and projects, with a class-level Grades matrix.
 - Quest edit pages manage connected missions, while quest lists show connected mission summaries and completion stats.
+- Quiz missions support structured multiple-choice and true/false questions with server-side scoring and attempt history.
+- Lecturers can cap quiz attempts; quiz grades use the highest student attempt score.
 - Student leaderboards include a global XP ranking and class-specific quest XP ranking.
 - Leaderboard names link to public student profiles with gamification data only.
 - Seed data with one admin, two lecturers, five students, two classes, example modules, activities, quests, badges, and student profiles.
@@ -143,6 +145,9 @@ student5@questora.dev
 - Duplicate XP rewards are blocked by unique idempotency keys.
 - Level calculation is centralized as `floor(sqrt(totalXp / 100)) + 1`.
 - Assignments and boss battles complete after lecturer grading, then run the same quest/XP/badge reward path.
+- Quizzes are scored on the server; passing attempts update progress to completed and can trigger quest XP.
+- Quiz attempts are stored separately, and the highest attempt score is published as the quiz grade.
+- Quiz grades remain separate from XP transactions.
 - Global leaderboards use total profile XP; class leaderboards use quest XP transactions for that class.
 
 ## Quality Checks

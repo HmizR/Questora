@@ -105,6 +105,7 @@ export async function createActivityFixture(moduleId: string, overrides?: Partia
   isRequired: boolean;
   isPublished: boolean;
   maxScore: number;
+  maxAttempts: number;
 }>) {
   return db.activity.create({
     data: {
@@ -116,7 +117,8 @@ export async function createActivityFixture(moduleId: string, overrides?: Partia
       position: overrides?.position ?? 1,
       isRequired: overrides?.isRequired ?? true,
       isPublished: overrides?.isPublished ?? true,
-      maxScore: overrides?.maxScore
+      maxScore: overrides?.maxScore,
+      maxAttempts: overrides?.maxAttempts
     }
   });
 }

@@ -17,6 +17,7 @@ async function main() {
   await prisma.studentProfile.deleteMany();
   await prisma.grade.deleteMany();
   await prisma.submission.deleteMany();
+  await prisma.quizAttempt.deleteMany();
   await prisma.activityProgress.deleteMany();
   await prisma.activityPrerequisite.deleteMany();
   await prisma.questActivity.deleteMany();
@@ -150,6 +151,42 @@ async function main() {
     }
   });
 
+  const quiz = await prisma.activity.create({
+    data: {
+      moduleId: webRegion.id,
+      type: ActivityType.QUIZ,
+      title: "Mission 3: Markup Check",
+      description: "Answer a quick knowledge check before the boss battle.",
+      content: JSON.stringify({
+        version: 1,
+        questions: [
+          {
+            id: "q1",
+            type: "MULTIPLE_CHOICE",
+            prompt: "Which HTML element represents the main content of a page?",
+            options: ["section", "main", "article", "aside"],
+            correctOptionIndex: 1,
+            points: 1
+          },
+          {
+            id: "q2",
+            type: "TRUE_FALSE",
+            prompt: "Semantic HTML helps assistive technologies understand page structure.",
+            options: ["True", "False"],
+            correctOptionIndex: 0,
+            points: 1
+          }
+        ]
+      }),
+      position: 3,
+      maxScore: 2,
+      passingScore: 2,
+      maxAttempts: 3,
+      isRequired: true,
+      isPublished: true
+    }
+  });
+
   const boss = await prisma.activity.create({
     data: {
       moduleId: webRegion.id,
@@ -157,7 +194,7 @@ async function main() {
       title: "Boss Battle: Portfolio Gate",
       description: "Build a simple portfolio page using the region skills.",
       content: "Submit a portfolio page with semantic sections and responsive styling.",
-      position: 3,
+      position: 4,
       maxScore: 100,
       passingScore: 70,
       isRequired: true,
@@ -168,7 +205,8 @@ async function main() {
   await prisma.activityPrerequisite.createMany({
     data: [
       { activityId: assignment.id, requiredActivityId: lesson.id },
-      { activityId: boss.id, requiredActivityId: assignment.id, minimumScore: 60 }
+      { activityId: quiz.id, requiredActivityId: assignment.id, minimumScore: 60 },
+      { activityId: boss.id, requiredActivityId: quiz.id, minimumScore: 2 }
     ]
   });
 
@@ -233,6 +271,7 @@ async function main() {
     data: [
       { questId: mainQuest.id, activityId: lesson.id, position: 1 },
       { questId: mainQuest.id, activityId: assignment.id, position: 2 },
+      { questId: mainQuest.id, activityId: quiz.id, position: 3 },
       { questId: bossQuest.id, activityId: boss.id, position: 1 },
       { questId: dataQuest.id, activityId: dataLesson.id, position: 1 }
     ]

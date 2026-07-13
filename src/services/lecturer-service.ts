@@ -145,6 +145,7 @@ export async function createActivity(input: {
   position: number;
   maxScore?: number;
   passingScore?: number;
+  maxAttempts?: number;
   dueAt?: Date;
   isRequired: boolean;
   isPublished: boolean;
@@ -162,6 +163,7 @@ export async function createActivity(input: {
         position: input.position,
         maxScore: input.maxScore,
         passingScore: input.passingScore,
+        maxAttempts: input.maxAttempts,
         dueAt: input.dueAt,
         isRequired: input.isRequired,
         isPublished: input.isPublished
@@ -183,6 +185,7 @@ export async function updateActivity(input: {
   position: number;
   maxScore?: number;
   passingScore?: number;
+  maxAttempts?: number;
   dueAt?: Date;
   isRequired: boolean;
   isPublished: boolean;
@@ -202,6 +205,7 @@ export async function updateActivity(input: {
         position: input.position,
         maxScore: input.maxScore,
         passingScore: input.passingScore,
+        maxAttempts: input.maxAttempts,
         dueAt: input.dueAt,
         isRequired: input.isRequired,
         isPublished: input.isPublished

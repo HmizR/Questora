@@ -28,6 +28,8 @@ Post-MVP UI refresh completed:
 - Shared `/account` page
 - Modern responsive dashboard UI refresh with icons and persisted light/dark theme toggle
 - Isolated PostgreSQL integration test setup with service and server action coverage
+- Structured quiz attempts with multiple-choice/true-false questions and server-side scoring
+- Lecturer-configured quiz attempt caps and best-attempt quiz grades
 
 Latest verified checks:
 
@@ -126,7 +128,8 @@ Completed:
 - Start activity
 - Complete lesson
 - Submit assignment/project
-- Attempt quiz, simplified for MVP
+- Attempt structured quizzes with unlimited attempts and best-score progress
+- Attempt structured quizzes with lecturer-configured attempt caps
 - Quest log
 - Global leaderboard using total profile XP
 - Class leaderboard using quest XP earned in that class
@@ -162,6 +165,8 @@ Completed:
   - Boss Slayer
   - Perfect Score
 - Assignment/project grading triggers activity completion reward flow
+- Quiz attempts store attempt history, update best score, and trigger completion rewards only after passing
+- Quiz grades are auto-published from each student's highest quiz attempt score
 - RPG-style dashboard cards and progress bars
 
 ## Phase 6: Quality
@@ -178,14 +183,14 @@ Completed:
 Test count at completion:
 
 ```text
-16 tests passing
+19 tests passing
 ```
 
 ## Recommended Next Steps
 
 - Add database-backed integration tests with an isolated test PostgreSQL database.
 - Add UI-level tests for admin, lecturer, and student workflows.
-- Improve quiz attempts beyond the MVP placeholder.
+- Add richer quiz analytics and per-question review.
 - Add structured toast/error display for server action field errors.
 - Replace in-memory auth rate limiting with Redis for production.
 - Add CI to run lint, typecheck, tests, build, and Prisma validation.

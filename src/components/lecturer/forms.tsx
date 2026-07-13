@@ -22,6 +22,8 @@ import {
 } from "@/app/lecturer/actions";
 import { LecturerActionForm } from "@/components/lecturer/action-form";
 import { SelectField, TextAreaField, TextField } from "@/components/admin/form-fields";
+import { QuizBuilderFields } from "@/components/lecturer/quiz-builder-fields";
+import { getQuizQuestionFieldDefaults } from "@/lib/quiz";
 
 type ActivityOption = Pick<Activity, "id" | "title" | "position" | "type">;
 type PrerequisiteView = {
@@ -144,10 +146,12 @@ export function CreateActivityForm({ moduleId }: { moduleId: string }) {
       <TextField label="Mission title" name="title" />
       <TextAreaField label="Description" name="description" />
       <TextAreaField label="Content or instructions" name="content" />
-      <div className="grid gap-4 sm:grid-cols-3">
+      <QuizBuilderFields />
+      <div className="grid gap-4 sm:grid-cols-4">
         <TextField label="Position" name="position" type="number" defaultValue="1" />
         <TextField label="Max score" name="maxScore" type="number" required={false} />
         <TextField label="Passing score" name="passingScore" type="number" required={false} />
+        <TextField label="Max attempts" name="maxAttempts" type="number" required={false} />
       </div>
       <TextField label="Due date" name="dueAt" type="date" required={false} />
       <div className="flex flex-wrap gap-4">
@@ -166,6 +170,9 @@ export function CreateActivityForm({ moduleId }: { moduleId: string }) {
 }
 
 export function UpdateActivityForm({ activity }: { activity: Activity }) {
+  const quizQuestions =
+    activity.type === ActivityType.QUIZ ? getQuizQuestionFieldDefaults(activity.content) : [];
+
   return (
     <LecturerActionForm action={updateActivityAction} className="rounded-lg border border-ink/10 bg-white p-5 shadow-sm">
       <input name="moduleId" type="hidden" value={activity.moduleId} />
@@ -178,11 +185,17 @@ export function UpdateActivityForm({ activity }: { activity: Activity }) {
       />
       <TextField label="Mission title" name="title" defaultValue={activity.title} />
       <TextAreaField label="Description" name="description" defaultValue={activity.description} />
-      <TextAreaField label="Content or instructions" name="content" defaultValue={activity.content} />
-      <div className="grid gap-4 sm:grid-cols-3">
+      <TextAreaField
+        label="Content or instructions"
+        name="content"
+        defaultValue={activity.type === ActivityType.QUIZ ? "" : activity.content}
+      />
+      <QuizBuilderFields questions={quizQuestions} />
+      <div className="grid gap-4 sm:grid-cols-4">
         <TextField label="Position" name="position" type="number" defaultValue={String(activity.position)} />
         <TextField label="Max score" name="maxScore" type="number" defaultValue={activity.maxScore?.toString()} required={false} />
         <TextField label="Passing score" name="passingScore" type="number" defaultValue={activity.passingScore?.toString()} required={false} />
+        <TextField label="Max attempts" name="maxAttempts" type="number" defaultValue={activity.maxAttempts?.toString()} required={false} />
       </div>
       <TextField label="Due date" name="dueAt" type="date" defaultValue={dateInput(activity.dueAt)} required={false} />
       <div className="flex flex-wrap gap-4">

@@ -24,6 +24,59 @@ const optionalDecimal = z
     message: "Enter a valid number"
   });
 
+const optionalPositiveInt = z
+  .string()
+  .trim()
+  .transform((value) => (value.length > 0 ? Number(value) : undefined))
+  .refine((value) => value === undefined || (Number.isInteger(value) && value > 0), {
+    message: "Enter a positive whole number"
+  });
+
+const optionalQuizField = z.string().optional();
+
+const quizFields = {
+  quizQuestion1Type: optionalQuizField,
+  quizQuestion1Prompt: optionalQuizField,
+  quizQuestion1Option1: optionalQuizField,
+  quizQuestion1Option2: optionalQuizField,
+  quizQuestion1Option3: optionalQuizField,
+  quizQuestion1Option4: optionalQuizField,
+  quizQuestion1CorrectOption: optionalQuizField,
+  quizQuestion1Points: optionalQuizField,
+  quizQuestion2Type: optionalQuizField,
+  quizQuestion2Prompt: optionalQuizField,
+  quizQuestion2Option1: optionalQuizField,
+  quizQuestion2Option2: optionalQuizField,
+  quizQuestion2Option3: optionalQuizField,
+  quizQuestion2Option4: optionalQuizField,
+  quizQuestion2CorrectOption: optionalQuizField,
+  quizQuestion2Points: optionalQuizField,
+  quizQuestion3Type: optionalQuizField,
+  quizQuestion3Prompt: optionalQuizField,
+  quizQuestion3Option1: optionalQuizField,
+  quizQuestion3Option2: optionalQuizField,
+  quizQuestion3Option3: optionalQuizField,
+  quizQuestion3Option4: optionalQuizField,
+  quizQuestion3CorrectOption: optionalQuizField,
+  quizQuestion3Points: optionalQuizField,
+  quizQuestion4Type: optionalQuizField,
+  quizQuestion4Prompt: optionalQuizField,
+  quizQuestion4Option1: optionalQuizField,
+  quizQuestion4Option2: optionalQuizField,
+  quizQuestion4Option3: optionalQuizField,
+  quizQuestion4Option4: optionalQuizField,
+  quizQuestion4CorrectOption: optionalQuizField,
+  quizQuestion4Points: optionalQuizField,
+  quizQuestion5Type: optionalQuizField,
+  quizQuestion5Prompt: optionalQuizField,
+  quizQuestion5Option1: optionalQuizField,
+  quizQuestion5Option2: optionalQuizField,
+  quizQuestion5Option3: optionalQuizField,
+  quizQuestion5Option4: optionalQuizField,
+  quizQuestion5CorrectOption: optionalQuizField,
+  quizQuestion5Points: optionalQuizField
+};
+
 export const createModuleSchema = z.object({
   classId: z.string().min(1),
   title: z.string().trim().min(2, "Title is required"),
@@ -50,9 +103,11 @@ export const createActivitySchema = z.object({
   position: z.coerce.number().int().positive(),
   maxScore: optionalDecimal.optional(),
   passingScore: optionalDecimal.optional(),
+  maxAttempts: optionalPositiveInt.optional(),
   dueAt: optionalDate.optional(),
   isRequired: checkbox.default(false),
-  isPublished: checkbox.default(false)
+  isPublished: checkbox.default(false),
+  ...quizFields
 });
 
 export const updateActivitySchema = createActivitySchema.extend({
