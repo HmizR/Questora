@@ -25,6 +25,6 @@ test("admin can enroll an active student into a realm", async ({ page }) => {
   await page.getByLabel("Student").selectOption({ label: `${e2eUsers.unenrolled.name} (${e2eUsers.unenrolled.email})` });
   await page.getByRole("button", { name: "Enroll student" }).click();
 
-  await expect(page.getByText("Student enrolled.")).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Student enrolled." })).toBeVisible();
   await expect(page.getByText(e2eUsers.unenrolled.name)).toBeVisible();
 });

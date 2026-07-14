@@ -29,6 +29,7 @@ Post-MVP UI refresh completed:
 - Student class Grades tab for own published assignment, project, and quiz grades
 - Shared `/account` page
 - Modern responsive dashboard UI refresh with icons and persisted light/dark theme toggle
+- Structured toast notifications and inline action error summaries
 - Isolated PostgreSQL integration test setup with service and server action coverage
 - Playwright UI-level workflow test setup for admin, lecturer, and student paths
 - Structured quiz attempts with multiple-choice/true-false questions and server-side scoring
@@ -187,6 +188,7 @@ Completed:
 - Build, lint, typecheck, tests, and Prisma validation passing
 - Database-backed integration test configuration and fixtures for critical service/action flows
 - Playwright e2e tests for login, enrollment, lecturer authoring, student submission, grading, quiz attempt caps, and leaderboard profile links
+- Toast feedback coverage in representative admin, lecturer, and student browser workflows
 
 Test count at completion:
 
@@ -197,6 +199,5 @@ Test count at completion:
 ## Recommended Next Steps
 
 - Add richer quiz analytics and per-question review.
-- Add structured toast/error display for server action field errors.
 - Replace in-memory auth rate limiting with Redis for production.
 - Add CI to run lint, typecheck, tests, build, and Prisma validation.

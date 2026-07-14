@@ -1,8 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useRef, useState } from "react";
 
 import { type AdminActionState, initialAdminActionState } from "@/app/admin/action-state";
+import { ActionFeedback, getActionToast } from "@/components/ui/action-feedback";
+import { useToast } from "@/components/ui/toast";
 
 type ActionFormProps = {
   action: (state: AdminActionState, formData: FormData) => Promise<AdminActionState>;
@@ -11,22 +13,33 @@ type ActionFormProps = {
 };
 
 export function ActionForm({ action, children, className }: ActionFormProps) {
-  const [state, formAction, isPending] = useActionState(action, initialAdminActionState);
+  const { showToast } = useToast();
+  const [state, setState] = useState(initialAdminActionState);
+  const [isPending, setIsPending] = useState(false);
+  const stateRef = useRef<AdminActionState>(initialAdminActionState);
+
+  async function formAction(formData: FormData) {
+    setIsPending(true);
+    try {
+      const nextState = await action(stateRef.current, formData);
+      stateRef.current = nextState;
+      setState(nextState);
+
+      const toast = getActionToast(nextState);
+      if (toast) {
+        showToast(toast);
+      }
+    } finally {
+      setIsPending(false);
+    }
+  }
 
   return (
     <form action={formAction} className={className}>
       <fieldset className="space-y-5 disabled:opacity-70" disabled={isPending}>
         {children}
       </fieldset>
-      {!state.ok ? (
-        <div className="mt-4 rounded-md border border-ember/30 bg-ember/10 px-4 py-3 text-sm font-medium text-ember">
-          {state.error.message}
-        </div>
-      ) : state.data.message ? (
-        <div className="mt-4 rounded-md border border-moss/30 bg-moss/10 px-4 py-3 text-sm font-medium text-moss">
-          {state.data.message}
-        </div>
-      ) : null}
+      <ActionFeedback state={state} />
     </form>
   );
 }

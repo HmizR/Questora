@@ -12,6 +12,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Service layer for authorization, activity progress, quest completion, XP transactions, badges, grades, enrollment, lecturer workflows, and student workflows.
 - Shared dashboard app shell with top account navigation and role-aware sidebar navigation.
 - Modern responsive dashboard UI with icon navigation, polished cards, and a persisted light/dark theme toggle.
+- Structured toast notifications and inline action error summaries for admin, lecturer, and student workflows.
 - Lecturer and student class workspaces use compact main-content tabs for regions, missions, quests, grades, and roster views.
 - Lecturer region, mission, and quest creation/editing use dedicated pages and compact action menus to keep management lists clean.
 - Lecturer submission review is mission-specific for assignments and projects, with a class-level Grades matrix.
@@ -173,6 +174,7 @@ student5@questora.dev
 Playwright e2e tests cover login, admin enrollment, lecturer region/mission creation,
 student assignment submission, lecturer grading/publishing, graded submission locking,
 quiz attempt exhaustion, and leaderboard profile links.
+They also assert toast feedback for representative admin, lecturer, and student actions.
 
 ## Quality Checks
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ToastProvider } from "@/components/ui/toast";
 
 export const metadata: Metadata = {
   title: "Questora",
@@ -20,7 +21,7 @@ export default function RootLayout({
               "try{var t=localStorage.getItem('questora-theme');document.documentElement.classList.toggle('dark',t==='dark');document.documentElement.dataset.theme=t||'light'}catch(e){}"
           }}
         />
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   );

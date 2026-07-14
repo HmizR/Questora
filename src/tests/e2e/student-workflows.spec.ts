@@ -18,7 +18,7 @@ test("student submission can be graded and then locks on the student activity pa
   await page.getByLabel("Submission text").fill("This is my e2e assignment answer.");
   await page.getByLabel("File URL").fill("https://example.com/e2e-submission");
   await page.getByRole("button", { name: "Submit assignment" }).click();
-  await expect(page.getByText("Submission sent.")).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Submission sent." })).toBeVisible();
 
   const lecturerContext = await browser.newContext();
   const lecturerPage = await lecturerContext.newPage();
