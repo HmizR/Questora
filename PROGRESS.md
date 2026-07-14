@@ -30,6 +30,7 @@ Post-MVP UI refresh completed:
 - Shared `/account` page
 - Modern responsive dashboard UI refresh with icons and persisted light/dark theme toggle
 - Isolated PostgreSQL integration test setup with service and server action coverage
+- Playwright UI-level workflow test setup for admin, lecturer, and student paths
 - Structured quiz attempts with multiple-choice/true-false questions and server-side scoring
 - Lecturer-configured quiz attempt caps and best-attempt quiz grades
 
@@ -185,6 +186,7 @@ Completed:
 - README updates
 - Build, lint, typecheck, tests, and Prisma validation passing
 - Database-backed integration test configuration and fixtures for critical service/action flows
+- Playwright e2e tests for login, enrollment, lecturer authoring, student submission, grading, quiz attempt caps, and leaderboard profile links
 
 Test count at completion:
 
@@ -194,8 +196,6 @@ Test count at completion:
 
 ## Recommended Next Steps
 
-- Add database-backed integration tests with an isolated test PostgreSQL database.
-- Add UI-level tests for admin, lecturer, and student workflows.
 - Add richer quiz analytics and per-question review.
 - Add structured toast/error display for server action field errors.
 - Replace in-memory auth rate limiting with Redis for production.

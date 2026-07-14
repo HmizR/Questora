@@ -99,9 +99,23 @@ npm run lint
 npm run typecheck
 npm test
 npm run test:integration
+npm run test:e2e
 npm run test:all
 npm run build
 ```
+
+## UI Workflow Tests
+
+Playwright e2e tests run against the real Next.js app with the isolated PostgreSQL test
+database. They seed deterministic users and learning content before each test.
+
+```bash
+npm run db:test:deploy
+npm run test:e2e
+npm run test:e2e:ui
+```
+
+The e2e server uses `questora_test` through `DATABASE_URL_TEST` and starts on port `3100`.
 
 ## Development Credentials
 
@@ -153,6 +167,12 @@ student5@questora.dev
 - Quiz attempts are stored separately, and the highest attempt score is published as the quiz grade.
 - Quiz grades remain separate from XP transactions.
 - Global leaderboards use total profile XP; class leaderboards use quest XP transactions for that class.
+
+## UI Workflow Coverage
+
+Playwright e2e tests cover login, admin enrollment, lecturer region/mission creation,
+student assignment submission, lecturer grading/publishing, graded submission locking,
+quiz attempt exhaustion, and leaderboard profile links.
 
 ## Quality Checks
 

@@ -6,5 +6,7 @@ node_modules
 !.env.example
 !.env.test.example
 coverage
+test-results
+playwright-report
 dist
 *.tsbuildinfo
