@@ -37,6 +37,7 @@ Post-MVP UI refresh completed:
 - Lecturer-configured quiz attempt caps and best-attempt quiz grades
 - Lecturer quiz analytics with participation, pass rate, and question-level answer distribution
 - Student quiz attempt review with guarded correct-answer reveal
+- Deployment readiness documentation and first-admin bootstrap script
 
 Latest verified checks:
 
@@ -198,6 +199,8 @@ Completed:
 - Toast feedback coverage in representative admin, lecturer, and student browser workflows
 - GitHub Actions workflow for pull requests and pushes to `main`
 - CI PostgreSQL service database and Playwright failure artifact upload
+- Production deployment guide for Vercel and hosted PostgreSQL
+- First-admin bootstrap command for production setup
 
 Current automated coverage:
 
@@ -209,4 +212,20 @@ Current automated coverage:
 
 ## Recommended Next Steps
 
-- Replace in-memory auth rate limiting with Redis for production.
+- Deployment readiness:
+  - CI verification on GitHub after the workflow is pushed
+  - first real Vercel deployment dry run
+  - production smoke testing with real production-created data
+- Auth and account polish:
+  - admin password reset or password change flow
+  - clearer account recovery expectations for the MVP
+- Data safety UX:
+  - confirmation dialogs for destructive lecturer/admin actions
+  - clearer empty states and error recovery paths
+  - lightweight visibility for grading/submission state changes
+- Quiz and assignment UX polish:
+  - refine quiz review states and analytics presentation
+  - improve submission history/revision visibility before grading
+  - add small lecturer-facing analytics refinements where useful
+- Production hardening:
+  - replace in-memory auth rate limiting with Redis before public/multi-instance deployment

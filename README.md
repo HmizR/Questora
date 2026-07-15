@@ -126,6 +126,20 @@ npm run test:e2e
 npm run build
 ```
 
+## Deployment
+
+The recommended first production target is Vercel with hosted PostgreSQL.
+Production should use committed migrations and a one-time first-admin bootstrap,
+not the development seed data.
+
+```bash
+npm run db:deploy
+npm run admin:bootstrap
+```
+
+See [docs/deployment.md](docs/deployment.md) for environment variables, Vercel
+setup, production migration flow, first-admin creation, and smoke checks.
+
 ## UI Workflow Tests
 
 Playwright e2e tests run against the real Next.js app with the isolated PostgreSQL test
