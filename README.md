@@ -107,6 +107,25 @@ npm run test:all
 npm run build
 ```
 
+## Continuous Integration
+
+GitHub Actions runs the full quality gate on pull requests and pushes to `main`.
+The workflow uses a disposable PostgreSQL service database named `questora_test`
+and uploads Playwright traces, screenshots, and videos when browser tests fail.
+
+CI runs:
+
+```bash
+npm run prisma:validate
+npm run db:test:deploy
+npm run typecheck
+npm run lint
+npm test
+npm run test:integration
+npm run test:e2e
+npm run build
+```
+
 ## UI Workflow Tests
 
 Playwright e2e tests run against the real Next.js app with the isolated PostgreSQL test
