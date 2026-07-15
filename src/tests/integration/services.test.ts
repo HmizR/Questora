@@ -2,9 +2,12 @@ import { ActivityType, QuestType, UserRole } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 
 import { db } from "@/lib/db";
+import { serializeQuizDefinition } from "@/lib/quiz";
 import { getOwnPublishedGrade, publishGrade } from "@/services/grade-service";
 import { updateActivity, updateModule, updateQuest } from "@/services/lecturer-service";
 import { assertStudentCanAccessActivity, completeActivity } from "@/services/progress-service";
+import { getLecturerQuizAnalytics } from "@/services/quiz-analytics-service";
+import { attemptQuiz } from "@/services/student-service";
 
 import {
   connectQuestActivityFixture,
@@ -203,5 +206,102 @@ describe("database-backed service rules", () => {
     await expect(getOwnPublishedGrade(activity.id, otherStudent.id)).rejects.toMatchObject({
       code: "NOT_FOUND"
     });
+  });
+
+  it("protects lecturer quiz analytics by ownership and mission type", async () => {
+    const otherLecturer = await createUser(UserRole.LECTURER, "Analytics Outsider");
+    const { lecturer, class: teachingClass } = await createClassFixture();
+    const learningModule = await createModuleFixture(teachingClass.id);
+    const quiz = await createActivityFixture(learningModule.id, {
+      type: ActivityType.QUIZ,
+      title: "Analytics Quiz",
+      maxScore: 1
+    });
+    const assignment = await createActivityFixture(learningModule.id, {
+      type: ActivityType.ASSIGNMENT,
+      title: "Not A Quiz",
+      position: 2,
+      maxScore: 10
+    });
+
+    await db.activity.update({
+      where: { id: quiz.id },
+      data: {
+        content: serializeQuizDefinition({
+          version: 1,
+          questions: [
+            {
+              id: "q1",
+              type: "TRUE_FALSE",
+              prompt: "Analytics are read-only.",
+              options: ["True", "False"],
+              correctOptionIndex: 0,
+              points: 1
+            }
+          ]
+        })
+      }
+    });
+
+    await expect(
+      getLecturerQuizAnalytics({
+        lecturerId: otherLecturer.id,
+        classId: teachingClass.id,
+        moduleId: learningModule.id,
+        activityId: quiz.id
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    await expect(
+      getLecturerQuizAnalytics({
+        lecturerId: lecturer.id,
+        classId: teachingClass.id,
+        moduleId: learningModule.id,
+        activityId: assignment.id
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("keeps quiz grades based on the best attempt score", async () => {
+    const { lecturer, class: teachingClass } = await createClassFixture();
+    const { student } = await enrollStudentFixture(teachingClass.id);
+    const learningModule = await createModuleFixture(teachingClass.id);
+    const quiz = await createActivityFixture(learningModule.id, {
+      type: ActivityType.QUIZ,
+      title: "Best Attempt Quiz",
+      maxScore: 10,
+      maxAttempts: 2
+    });
+
+    await db.activity.update({
+      where: { id: quiz.id },
+      data: {
+        passingScore: 10,
+        content: serializeQuizDefinition({
+          version: 1,
+          questions: [
+            {
+              id: "q1",
+              type: "TRUE_FALSE",
+              prompt: "The second answer is correct.",
+              options: ["True", "False"],
+              correctOptionIndex: 1,
+              points: 10
+            }
+          ]
+        })
+      }
+    });
+
+    await attemptQuiz({ activityId: quiz.id, studentId: student.id, answer_q1: "0" });
+    await attemptQuiz({ activityId: quiz.id, studentId: student.id, answer_q1: "1" });
+
+    const grade = await db.grade.findUniqueOrThrow({
+      where: { activityId_studentId: { activityId: quiz.id, studentId: student.id } }
+    });
+
+    expect(grade.gradedById).toBe(lecturer.id);
+    expect(grade.score.toString()).toBe("10");
+    expect(grade.publishedAt).not.toBeNull();
   });
 });

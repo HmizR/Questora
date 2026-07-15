@@ -58,8 +58,25 @@ test("student quiz attempt limit hides questions after attempts are exhausted", 
   await page.getByRole("button", { name: "Submit quiz attempt" }).click();
 
   await expect(page.getByText("You have used all attempts for this quiz.")).toBeVisible();
-  await expect(page.getByText("Questora is a learning realm.")).toHaveCount(0);
+  await expect(page.getByRole("radio", { name: "True" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Submit quiz attempt" })).toHaveCount(0);
+});
+
+test("student quiz review hides correct answers until attempts are exhausted", async ({ page }) => {
+  await loginAs(page, e2eUsers.student.email);
+  await page.goto(`/student/classes/${seed.class.id}/activities/${seed.activities.reviewQuiz.id}`);
+
+  await page.getByLabel("False").check();
+  await page.getByRole("button", { name: "Submit quiz attempt" }).click();
+  await page.getByText("Review attempt 1").click();
+  await expect(page.getByText("Correct answer hidden while attempts remain.")).toBeVisible();
+  await expect(page.getByText("Correct answer: True")).toHaveCount(0);
+
+  await page.getByLabel("False").check();
+  await page.getByRole("button", { name: "Submit quiz attempt" }).click();
+  await expect(page.getByText("You have used all attempts for this quiz.")).toBeVisible();
+  await page.getByText("Review attempt 2").click();
+  await expect(page.getByText("Correct answer: True").first()).toBeVisible();
 });
 
 test("leaderboard names link to public student profiles", async ({ page }) => {

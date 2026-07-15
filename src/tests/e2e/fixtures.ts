@@ -160,6 +160,34 @@ export async function resetE2eDatabase() {
     }
   });
 
+  const reviewQuiz = await db.activity.create({
+    data: {
+      moduleId: learningModule.id,
+      type: ActivityType.QUIZ,
+      title: "E2E Review Quiz",
+      description: "Two attempt quiz for answer review.",
+      content: JSON.stringify({
+        version: 1,
+        questions: [
+          {
+            id: "q1",
+            type: "TRUE_FALSE",
+            prompt: "Analytics can hide correct answers.",
+            options: ["True", "False"],
+            correctOptionIndex: 0,
+            points: 5
+          }
+        ]
+      }),
+      position: 3,
+      maxScore: 5,
+      passingScore: 5,
+      maxAttempts: 2,
+      isRequired: true,
+      isPublished: true
+    }
+  });
+
   const quest = await db.quest.create({
     data: {
       classId: teachingClass.id,
@@ -208,7 +236,7 @@ export async function resetE2eDatabase() {
     users: { admin, lecturer, student, rival, unenrolled },
     class: teachingClass,
     module: learningModule,
-    activities: { assignment, quiz },
+    activities: { assignment, quiz, reviewQuiz },
     quest
   };
 }

@@ -161,6 +161,23 @@ export default async function LecturerModulesPage({
                           </Link>
                         </div>
                       </div>
+                    ) : activity.type === ActivityType.QUIZ ? (
+                      <div className="rounded-lg border border-ink/10 bg-parchment/50 p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="text-sm font-bold">Quiz analytics</p>
+                            <p className="mt-1 text-sm text-ink/65">
+                              Review attempts, scores, pass rate, and question results.
+                            </p>
+                          </div>
+                          <Link
+                            className="rounded-md border border-ink/20 bg-white px-3 py-2 text-sm font-semibold hover:bg-ink hover:text-white"
+                            href={`/lecturer/classes/${classId}/modules/${module.id}/activities/${activity.id}/quiz`}
+                          >
+                            View quiz analytics
+                          </Link>
+                        </div>
+                      </div>
                     ) : (
                       <div className="rounded-lg border border-ink/10 bg-parchment/50 p-4 text-sm text-ink/65">
                         No submission review needed for this mission type.

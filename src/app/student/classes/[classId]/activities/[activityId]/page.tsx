@@ -12,8 +12,19 @@ import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { requireClassEnrollment } from "@/lib/authorization-service";
 import { canStudentEditSubmission } from "@/lib/domain-rules";
 import { db } from "@/lib/db";
+import { canRevealQuizCorrectAnswers, parseStoredQuizAttempt } from "@/lib/quiz-analytics";
 import { parseQuizDefinition } from "@/lib/quiz";
 import { assertStudentCanAccessActivity } from "@/services/progress-service";
+
+function formatDateTime(date: Date) {
+  return date.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
 
 export default async function StudentActivityPage({
   params
@@ -63,6 +74,15 @@ export default async function StudentActivityPage({
       : null;
   const hasQuizAttemptsRemaining = remainingAttempts === null || remainingAttempts > 0;
   const canEditSubmission = canStudentEditSubmission(submission?.status);
+  const hasPassedQuiz = quizAttempts.some((attempt) => attempt.passed);
+  const revealQuizAnswers = canRevealQuizCorrectAnswers({
+    hasPassed: hasPassedQuiz,
+    remainingAttempts
+  });
+  const parsedQuizAttempts =
+    activity.type === ActivityType.QUIZ && quiz
+      ? quizAttempts.map((attempt) => parseStoredQuizAttempt(attempt))
+      : [];
 
   return (
     <DashboardShell title={activity.title} subtitle={`${activity.type} mission in ${activity.module.title}`}>
@@ -145,15 +165,74 @@ export default async function StudentActivityPage({
             )
           ) : activity.type === ActivityType.QUIZ && quizAttempts.length > 0 ? (
             <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-sm">
-              <h2 className="font-bold">Recent attempts</h2>
-              <div className="mt-3 space-y-2 text-sm">
-                {quizAttempts.map((attempt) => (
-                  <div className="flex justify-between gap-3" key={attempt.id}>
-                    <span>Attempt {attempt.attemptNo}</span>
-                    <span className={attempt.passed ? "font-semibold text-moss" : "text-ink/65"}>
-                      {attempt.score.toString()} / {attempt.maxScore.toString()}
-                    </span>
-                  </div>
+              <h2 className="font-bold">Attempt history</h2>
+              <div className="mt-3 overflow-x-auto">
+                <table className="w-full min-w-[280px] text-left text-sm">
+                  <thead className="text-xs font-bold uppercase tracking-wide text-ink/50">
+                    <tr>
+                      <th className="py-2 pr-3">Attempt</th>
+                      <th className="py-2 pr-3">Score</th>
+                      <th className="py-2">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/80">
+                    {parsedQuizAttempts.map((attempt) => (
+                      <tr key={attempt.id ?? attempt.attemptNo}>
+                        <td className="py-2 pr-3">{attempt.attemptNo}</td>
+                        <td className="py-2 pr-3 font-semibold">
+                          {attempt.score.toString()} / {attempt.maxScore.toString()}
+                        </td>
+                        <td className={attempt.passed ? "py-2 text-moss" : "py-2 text-ink/65"}>
+                          {attempt.passed ? "Passed" : "Not passed"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-4 space-y-3">
+                {parsedQuizAttempts.map((attempt) => (
+                  <details
+                    className="rounded-lg border border-border/80 bg-surface-muted p-3"
+                    key={`review-${attempt.id ?? attempt.attemptNo}`}
+                  >
+                    <summary className="cursor-pointer list-none text-sm font-bold">
+                      Review attempt {attempt.attemptNo}
+                      <span className="ml-2 text-xs font-medium text-ink/55">
+                        {formatDateTime(attempt.submittedAt)}
+                      </span>
+                    </summary>
+                    <div className="mt-3 space-y-3">
+                      {quiz?.questions.map((question, index) => {
+                        const result = attempt.results.find((entry) => entry.questionId === question.id);
+                        const selectedIndex = result?.selectedOptionIndex ?? attempt.selected[question.id];
+                        const selectedAnswer =
+                          selectedIndex !== undefined
+                            ? question.options[selectedIndex] ?? "Unknown option"
+                            : "No answer";
+                        const correctAnswer = question.options[question.correctOptionIndex] ?? "Unknown";
+
+                        return (
+                          <div className="rounded-md border border-border/80 bg-surface p-3 text-sm" key={question.id}>
+                            <p className="font-semibold">
+                              {index + 1}. {question.prompt}
+                            </p>
+                            <p className="mt-2 text-ink/65">Your answer: {selectedAnswer}</p>
+                            {revealQuizAnswers ? (
+                              <p className="mt-1 text-ink/65">Correct answer: {correctAnswer}</p>
+                            ) : (
+                              <p className="mt-1 text-ink/55">
+                                Correct answer hidden while attempts remain.
+                              </p>
+                            )}
+                            <p className={result?.isCorrect ? "mt-1 font-semibold text-moss" : "mt-1 text-ember"}>
+                              {result?.pointsAwarded ?? 0} / {result?.pointsPossible ?? question.points} points
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </details>
                 ))}
               </div>
             </section>

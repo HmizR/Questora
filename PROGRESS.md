@@ -34,6 +34,8 @@ Post-MVP UI refresh completed:
 - Playwright UI-level workflow test setup for admin, lecturer, and student paths
 - Structured quiz attempts with multiple-choice/true-false questions and server-side scoring
 - Lecturer-configured quiz attempt caps and best-attempt quiz grades
+- Lecturer quiz analytics with participation, pass rate, and question-level answer distribution
+- Student quiz attempt review with guarded correct-answer reveal
 
 Latest verified checks:
 
@@ -100,6 +102,7 @@ Completed:
 - Quest completion stats for active students
 - Student roster and progress summary
 - Mission-specific submission review
+- Quiz analytics for quiz missions
 - Class grade matrix across students and non-lesson missions
 - Assignment grading and grade publishing
 - Lecturer ownership checks for all mutations
@@ -115,6 +118,7 @@ Key routes:
 - `/lecturer/classes/[classId]/modules/[moduleId]/activities/new`
 - `/lecturer/classes/[classId]/modules/[moduleId]/activities/[activityId]/edit`
 - `/lecturer/classes/[classId]/modules/[moduleId]/activities/[activityId]/submissions`
+- `/lecturer/classes/[classId]/modules/[moduleId]/activities/[activityId]/quiz`
 - `/lecturer/classes/[classId]/students`
 - `/lecturer/classes/[classId]/quests`
 - `/lecturer/classes/[classId]/quests/new`
@@ -135,6 +139,7 @@ Completed:
 - Edit assignment/project submissions until lecturer grading
 - Attempt structured quizzes with unlimited attempts and best-score progress
 - Attempt structured quizzes with lecturer-configured attempt caps
+- Review quiz attempt history with correct answers revealed after passing or exhausting attempts
 - Quest log
 - Global leaderboard using total profile XP
 - Class leaderboard using quest XP earned in that class
@@ -175,6 +180,7 @@ Completed:
 - Graded assignment/project submissions are locked from further student edits
 - Quiz attempts store attempt history, update best score, and trigger completion rewards only after passing
 - Quiz grades are auto-published from each student's highest quiz attempt score
+- Quiz analytics are read-only and use stored quiz attempt answer JSON
 - RPG-style dashboard cards and progress bars
 
 ## Phase 6: Quality
@@ -198,6 +204,5 @@ Test count at completion:
 
 ## Recommended Next Steps
 
-- Add richer quiz analytics and per-question review.
 - Replace in-memory auth rate limiting with Redis for production.
 - Add CI to run lint, typecheck, tests, build, and Prisma validation.

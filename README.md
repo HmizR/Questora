@@ -20,6 +20,8 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Quest edit pages manage connected missions, while quest lists show connected mission summaries and completion stats.
 - Quiz missions support structured multiple-choice and true/false questions with server-side scoring and attempt history.
 - Lecturers can cap quiz attempts; quiz grades use the highest student attempt score.
+- Lecturer quiz analytics show participation, scores, pass rate, and question-level answer distribution.
+- Students can review quiz attempt history, with correct answers hidden until they pass or use all attempts.
 - Student leaderboards include a global XP ranking and class-specific quest XP ranking.
 - Leaderboard names link to public student profiles with gamification data only.
 - Student class workspaces include a Grades tab for own published assignment, project, and quiz grades.
@@ -150,7 +152,7 @@ student5@questora.dev
 ## Main Pages
 
 - Admin: `/admin`, `/admin/users`, `/admin/classes`
-- Lecturer: `/lecturer`, `/lecturer/classes`, `/lecturer/classes/[classId]/modules`, `/modules/new`, `/modules/[moduleId]/edit`, `/modules/[moduleId]/activities/new`, `/modules/[moduleId]/activities/[activityId]/edit`, `/modules/[moduleId]/activities/[activityId]/submissions`, `/students`, `/quests`, `/quests/new`, `/quests/[questId]/edit`, `/grades`
+- Lecturer: `/lecturer`, `/lecturer/classes`, `/lecturer/classes/[classId]/modules`, `/modules/new`, `/modules/[moduleId]/edit`, `/modules/[moduleId]/activities/new`, `/modules/[moduleId]/activities/[activityId]/edit`, `/modules/[moduleId]/activities/[activityId]/submissions`, `/modules/[moduleId]/activities/[activityId]/quiz`, `/students`, `/quests`, `/quests/new`, `/quests/[questId]/edit`, `/grades`
 - Student: `/student`, `/student/classes`, `/student/leaderboard`, `/student/profiles/[studentId]`, `/student/classes/[classId]`, `/student/classes/[classId]/activities/[activityId]`, `/student/classes/[classId]/quests`, `/student/classes/[classId]/grades`, `/student/classes/[classId]/leaderboard`, `/student/profile`
 - Shared account page: `/account`
 
@@ -167,6 +169,7 @@ student5@questora.dev
 - Quizzes are scored on the server; passing attempts update progress to completed and can trigger quest XP.
 - Quiz attempts are stored separately, and the highest attempt score is published as the quiz grade.
 - Quiz grades remain separate from XP transactions.
+- Quiz analytics read existing attempt records and do not change grades or XP.
 - Global leaderboards use total profile XP; class leaderboards use quest XP transactions for that class.
 
 ## UI Workflow Coverage

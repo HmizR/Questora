@@ -1,0 +1,182 @@
+import { Activity, BarChart3, CheckCircle2, Percent, Trophy, UsersRound } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+
+import { ClassTabs } from "@/components/ui/class-tabs";
+import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { StatCard } from "@/components/ui/stat-card";
+import { requireRole } from "@/lib/authorization-service";
+import { AppError } from "@/lib/errors";
+import { getLecturerQuizAnalytics } from "@/services/quiz-analytics-service";
+
+function formatNumber(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function formatPercent(value: number) {
+  return `${Math.round(value)}%`;
+}
+
+function formatDateTime(date?: Date | null) {
+  if (!date) {
+    return "No attempts";
+  }
+
+  return date.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+export default async function LecturerQuizAnalyticsPage({
+  params
+}: {
+  params: Promise<{ classId: string; moduleId: string; activityId: string }>;
+}) {
+  const { classId, moduleId, activityId } = await params;
+  const user = await requireRole("LECTURER");
+
+  let data;
+  try {
+    data = await getLecturerQuizAnalytics({
+      lecturerId: user.id,
+      classId,
+      moduleId,
+      activityId
+    });
+  } catch (error) {
+    if (error instanceof AppError && error.code !== "FORBIDDEN") {
+      notFound();
+    }
+
+    throw error;
+  }
+
+  return (
+    <DashboardShell
+      title={`${data.activity.title} analytics`}
+      subtitle="Review quiz attempts, pass rate, student performance, and question-level results."
+    >
+      <ClassTabs classId={classId} role="LECTURER" />
+      <div className="mb-5">
+        <Link
+          className="text-sm font-semibold text-ink/65 hover:text-ink"
+          href={`/lecturer/classes/${classId}/modules`}
+        >
+          Back to regions
+        </Link>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <StatCard icon={UsersRound} label="Participants" value={`${data.analytics.participantCount}/${data.activeStudentCount}`} />
+        <StatCard icon={Activity} label="Attempts" value={data.analytics.attemptCount} />
+        <StatCard icon={BarChart3} label="Average score" value={formatNumber(data.analytics.averageScore)} />
+        <StatCard icon={Trophy} label="Best score" value={formatNumber(data.analytics.bestScore)} />
+        <StatCard icon={Percent} label="Pass rate" value={formatPercent(data.analytics.passRate)} />
+      </div>
+
+      <section className="mt-6 rounded-2xl border border-border/80 bg-surface p-6 shadow-sm">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-moss">Question breakdown</p>
+            <h2 className="mt-1 text-xl font-bold">Per-question results</h2>
+          </div>
+          <p className="text-sm text-ink/60">Completion rate: {formatPercent(data.analytics.completionRate)}</p>
+        </div>
+
+        <div className="mt-5 grid gap-4">
+          {data.analytics.questionBreakdown.map((question, index) => (
+            <article className="rounded-xl border border-border/80 bg-surface-muted p-4" key={question.questionId}>
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-moss">
+                    Question {index + 1} - {question.points} point{question.points === 1 ? "" : "s"}
+                  </p>
+                  <h3 className="mt-1 font-bold">{question.prompt}</h3>
+                  <p className="mt-2 text-sm text-ink/65">Correct answer: {question.correctAnswer}</p>
+                </div>
+                <div className="rounded-lg border border-border/80 bg-surface px-3 py-2 text-sm font-bold">
+                  {formatPercent(question.correctRate)} correct
+                </div>
+              </div>
+              <div className="mt-4 grid gap-2">
+                {question.optionCounts.map((option) => {
+                  const width =
+                    question.totalResponses > 0
+                      ? Math.round((option.count / question.totalResponses) * 100)
+                      : 0;
+
+                  return (
+                    <div className="grid gap-2 sm:grid-cols-[180px_1fr_72px]" key={option.optionIndex}>
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        {option.optionIndex === question.correctOptionIndex ? (
+                          <CheckCircle2 aria-hidden className="h-4 w-4 text-moss" />
+                        ) : (
+                          <span className="h-4 w-4" />
+                        )}
+                        {option.option}
+                      </div>
+                      <div className="h-3 overflow-hidden rounded-full bg-border/60">
+                        <div className="h-full bg-accent" style={{ width: `${width}%` }} />
+                      </div>
+                      <p className="text-sm text-ink/65">{option.count} picks</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-6 overflow-x-auto rounded-2xl border border-border/80 bg-surface shadow-sm">
+        <table className="w-full min-w-[900px] text-left text-sm">
+          <thead className="bg-ink text-white">
+            <tr>
+              <th className="px-4 py-3 font-semibold">Student</th>
+              <th className="px-4 py-3 font-semibold">Attempts</th>
+              <th className="px-4 py-3 font-semibold">Best score</th>
+              <th className="px-4 py-3 font-semibold">Latest score</th>
+              <th className="px-4 py-3 font-semibold">Status</th>
+              <th className="px-4 py-3 font-semibold">Last attempted</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/80">
+            {data.studentRows.map((row) => (
+              <tr key={row.studentId}>
+                <td className="px-4 py-3">
+                  <p className="font-semibold">{row.studentName}</p>
+                  <p className="mt-1 text-xs text-ink/55">{row.studentEmail}</p>
+                </td>
+                <td className="px-4 py-3">{row.attemptsUsed}</td>
+                <td className="px-4 py-3">
+                  {row.bestAttempt
+                    ? `${row.bestAttempt.score.toString()} / ${row.bestAttempt.maxScore.toString()}`
+                    : "No attempts"}
+                </td>
+                <td className="px-4 py-3">
+                  {row.latestAttempt
+                    ? `${row.latestAttempt.score.toString()} / ${row.latestAttempt.maxScore.toString()}`
+                    : "No attempts"}
+                </td>
+                <td className="px-4 py-3">
+                  {row.hasPassed ? (
+                    <span className="font-semibold text-moss">Passed</span>
+                  ) : row.attemptsUsed > 0 ? (
+                    <span className="font-semibold text-ember">Not passed</span>
+                  ) : (
+                    <span className="text-ink/55">Not started</span>
+                  )}
+                </td>
+                <td className="px-4 py-3">{formatDateTime(row.latestAttempt?.submittedAt)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+    </DashboardShell>
+  );
+}
