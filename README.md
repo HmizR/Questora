@@ -13,6 +13,8 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Shared dashboard app shell with top account navigation and role-aware sidebar navigation.
 - Modern responsive dashboard UI with icon navigation, polished cards, and a persisted light/dark theme toggle.
 - Structured toast notifications and inline action error summaries for admin, lecturer, and student workflows.
+- Account settings support self-service name/avatar edits and password changes.
+- Admins can reset user passwords for MVP account recovery.
 - Lecturer and student class workspaces use compact main-content tabs for regions, missions, quests, grades, and roster views.
 - Lecturer region, mission, and quest creation/editing use dedicated pages and compact action menus to keep management lists clean.
 - Lecturer submission review is mission-specific for assignments and projects, with a class-level Grades matrix.
@@ -177,6 +179,7 @@ student5@questora.dev
 ## Role Permissions
 
 - Admins manage users, classes, lecturer assignments, and student enrollment.
+- Admins can reset user passwords without changing role or status.
 - Lecturers manage only classes assigned to them, including modules, missions, quests, submissions, and grades.
 - Lecturers can configure mission prerequisites from their class module panel.
 - Students access only enrolled classes, published modules, published activities, their own progress, their own submissions, their own grades, XP, level, and badges.

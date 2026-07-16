@@ -14,6 +14,7 @@ import {
   deactivateUserSchema,
   enrollStudentSchema,
   removeStudentSchema,
+  resetUserPasswordSchema,
   updateClassSchema,
   updateUserSchema
 } from "@/schemas/admin";
@@ -24,6 +25,7 @@ import {
   updateClass
 } from "@/services/class-service";
 import { createUser, deactivateUser, updateUser } from "@/services/user-service";
+import { resetUserPassword } from "@/services/user-service";
 
 function validationError(error: z.ZodError): AdminActionState {
   const fieldErrors = Object.fromEntries(
@@ -99,6 +101,28 @@ export async function deactivateUserAction(
     revalidatePath("/admin/users");
     revalidatePath(`/admin/users/${parsed.data.userId}`);
     return { ok: true, data: { message: "User deactivated." } };
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+}
+
+export async function resetUserPasswordAction(
+  _state: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  const parsed = resetUserPasswordSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) {
+    return validationError(parsed.error);
+  }
+
+  try {
+    await requireAdmin();
+    await resetUserPassword({
+      userId: parsed.data.userId,
+      newPassword: parsed.data.newPassword
+    });
+    revalidatePath(`/admin/users/${parsed.data.userId}`);
+    return { ok: true, data: { message: "Password reset." } };
   } catch (error) {
     return { ok: false, error: toActionError(error) };
   }

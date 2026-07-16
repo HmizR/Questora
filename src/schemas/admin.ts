@@ -1,6 +1,8 @@
 import { ClassStatus, UserRole, UserStatus } from "@prisma/client";
 import { z } from "zod";
 
+import { resetUserPasswordSchema } from "@/schemas/account";
+
 const optionalText = z
   .string()
   .trim()
@@ -35,6 +37,8 @@ export const updateUserSchema = z.object({
 export const deactivateUserSchema = z.object({
   userId: z.string().min(1)
 });
+
+export { resetUserPasswordSchema };
 
 export const createClassSchema = z.object({
   name: z.string().trim().min(2, "Class name is required"),

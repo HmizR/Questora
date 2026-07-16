@@ -9,8 +9,8 @@ export default function LoginPage() {
         <p className="text-sm font-semibold uppercase tracking-wide text-moss">Questora LMS</p>
         <h1 className="mt-3 text-3xl font-bold">Begin your learning quest</h1>
         <p className="mt-3 text-sm leading-6 text-ink/70">
-          Sign in with your development account to manage realms, guide learners, or complete
-          missions.
+          Sign in to manage realms, guide learners, or complete missions. For this MVP, account
+          recovery is handled by an admin password reset.
         </p>
         <div className="mt-8">
           <Suspense fallback={null}>

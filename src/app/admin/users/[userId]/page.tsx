@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
 
-import { DeactivateUserForm, UpdateUserForm } from "@/components/admin/user-form";
+import {
+  DeactivateUserForm,
+  ResetUserPasswordForm,
+  UpdateUserForm
+} from "@/components/admin/user-form";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { requireAdmin } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
@@ -33,6 +37,13 @@ export default async function EditUserPage({
           <div className="mt-5">
             <DeactivateUserForm userId={user.id} />
           </div>
+          <h3 className="mt-6 text-sm font-bold uppercase tracking-wide text-ink/55">
+            Password reset
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-ink/65">
+            Set a temporary password for account recovery. Share it outside Questora.
+          </p>
+          <ResetUserPasswordForm userId={user.id} />
         </aside>
       </div>
     </DashboardShell>

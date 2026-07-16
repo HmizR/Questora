@@ -2,12 +2,15 @@ import { ActivityType, ClassStatus, UserRole } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 
 import { enrollStudentAction } from "@/app/admin/actions";
+import { changeOwnPasswordAction, updateOwnProfileAction } from "@/app/account/actions";
 import { gradeSubmissionAction } from "@/app/lecturer/actions";
 import { completeLessonAction } from "@/app/student/actions";
+import { initialAccountActionState } from "@/app/account/action-state";
 import { initialAdminActionState } from "@/app/admin/action-state";
 import { initialLecturerActionState } from "@/app/lecturer/action-state";
 import { initialStudentActionState } from "@/app/student/action-state";
 import { db } from "@/lib/db";
+import { verifyPassword } from "@/lib/password";
 
 import {
   createActivityFixture,
@@ -17,7 +20,7 @@ import {
   createUser,
   enrollStudentFixture
 } from "./fixtures";
-import { setMockSession } from "./setup";
+import { clearMockSession, setMockSession } from "./setup";
 
 function formData(entries: Record<string, string>) {
   const data = new FormData();
@@ -135,5 +138,145 @@ describe("database-backed server actions", () => {
       error: { code: "VALIDATION_ERROR" }
     });
     expect(await db.class.count()).toBe(0);
+  });
+
+  it("updates only the signed-in user's own profile", async () => {
+    const user = await createUser(UserRole.STUDENT, "Profile Owner");
+    const otherUser = await createUser(UserRole.STUDENT, "Other Profile");
+    setMockSession({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: "STUDENT"
+    });
+
+    const result = await updateOwnProfileAction(
+      initialAccountActionState,
+      formData({
+        userId: otherUser.id,
+        name: "Updated Profile Owner",
+        avatarUrl: "https://example.com/avatar.png"
+      })
+    );
+    const updatedUser = await db.user.findUniqueOrThrow({ where: { id: user.id } });
+    const untouchedUser = await db.user.findUniqueOrThrow({ where: { id: otherUser.id } });
+
+    expect(result).toMatchObject({ ok: true });
+    expect(updatedUser.name).toBe("Updated Profile Owner");
+    expect(updatedUser.avatarUrl).toBe("https://example.com/avatar.png");
+    expect(untouchedUser.name).toBe("Other Profile");
+  });
+
+  it("changes own password only when the current password is valid", async () => {
+    const user = await createUser(UserRole.STUDENT, "Password Owner");
+    setMockSession({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: "STUDENT"
+    });
+
+    const rejected = await changeOwnPasswordAction(
+      initialAccountActionState,
+      formData({
+        currentPassword: "WrongPassword123!",
+        newPassword: "NewPassword123!",
+        confirmPassword: "NewPassword123!"
+      })
+    );
+
+    expect(rejected).toMatchObject({ ok: false, error: { code: "FORBIDDEN" } });
+
+    const accepted = await changeOwnPasswordAction(
+      initialAccountActionState,
+      formData({
+        currentPassword: "Password123!",
+        newPassword: "NewPassword123!",
+        confirmPassword: "NewPassword123!"
+      })
+    );
+    const updatedUser = await db.user.findUniqueOrThrow({ where: { id: user.id } });
+
+    expect(accepted).toMatchObject({ ok: true });
+    expect(await verifyPassword("NewPassword123!", updatedUser.passwordHash)).toBe(true);
+    expect(await verifyPassword("Password123!", updatedUser.passwordHash)).toBe(false);
+  });
+
+  it("requires authentication for account actions", async () => {
+    clearMockSession();
+
+    const result = await updateOwnProfileAction(
+      initialAccountActionState,
+      formData({ name: "Anonymous Update", avatarUrl: "" })
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      error: { code: "AUTHENTICATION_REQUIRED" }
+    });
+  });
+
+  it("allows admins to reset a user password without changing role or status", async () => {
+    const admin = await createUser(UserRole.ADMIN, "Reset Admin");
+    const student = await createUser(UserRole.STUDENT, "Reset Student");
+    await db.user.update({ where: { id: student.id }, data: { status: "INACTIVE" } });
+    setMockSession({
+      id: admin.id,
+      name: admin.name,
+      email: admin.email,
+      role: "ADMIN"
+    });
+
+    const result = await (
+      await import("@/app/admin/actions")
+    ).resetUserPasswordAction(
+      initialAdminActionState,
+      formData({
+        userId: student.id,
+        newPassword: "Temporary123!",
+        confirmPassword: "Temporary123!"
+      })
+    );
+    const updatedStudent = await db.user.findUniqueOrThrow({ where: { id: student.id } });
+
+    expect(result).toMatchObject({ ok: true });
+    expect(updatedStudent.role).toBe("STUDENT");
+    expect(updatedStudent.status).toBe("INACTIVE");
+    expect(await verifyPassword("Temporary123!", updatedStudent.passwordHash)).toBe(true);
+  });
+
+  it("blocks non-admin password resets and returns validation mismatches", async () => {
+    const lecturer = await createUser(UserRole.LECTURER, "Reset Lecturer");
+    const student = await createUser(UserRole.STUDENT, "Blocked Reset Student");
+    setMockSession({
+      id: lecturer.id,
+      name: lecturer.name,
+      email: lecturer.email,
+      role: "LECTURER"
+    });
+
+    const forbidden = await (
+      await import("@/app/admin/actions")
+    ).resetUserPasswordAction(
+      initialAdminActionState,
+      formData({
+        userId: student.id,
+        newPassword: "Temporary123!",
+        confirmPassword: "Temporary123!"
+      })
+    );
+    const invalid = await (
+      await import("@/app/admin/actions")
+    ).resetUserPasswordAction(
+      initialAdminActionState,
+      formData({
+        userId: student.id,
+        newPassword: "Temporary123!",
+        confirmPassword: "Different123!"
+      })
+    );
+
+    expect(forbidden).toMatchObject({ ok: false, error: { code: "FORBIDDEN" } });
+    expect(invalid).toMatchObject({ ok: false, error: { code: "VALIDATION_ERROR" } });
   });
 });

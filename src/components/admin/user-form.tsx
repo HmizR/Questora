@@ -3,6 +3,7 @@ import { UserRole, UserStatus, type User } from "@prisma/client";
 import {
   createUserAction,
   deactivateUserAction,
+  resetUserPasswordAction,
   updateUserAction
 } from "@/app/admin/actions";
 import { ActionForm } from "@/components/admin/action-form";
@@ -51,6 +52,19 @@ export function DeactivateUserForm({ userId }: { userId: string }) {
       <input name="userId" type="hidden" value={userId} />
       <button className="rounded-md border border-ember/30 bg-white px-4 py-2 text-sm font-semibold text-ember hover:bg-ember hover:text-white">
         Deactivate user
+      </button>
+    </ActionForm>
+  );
+}
+
+export function ResetUserPasswordForm({ userId }: { userId: string }) {
+  return (
+    <ActionForm action={resetUserPasswordAction} className="mt-5 border-t border-ink/10 pt-5">
+      <input name="userId" type="hidden" value={userId} />
+      <TextField label="Temporary password" name="newPassword" type="password" />
+      <TextField label="Confirm temporary password" name="confirmPassword" type="password" />
+      <button className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-steel">
+        Reset password
       </button>
     </ActionForm>
   );

@@ -91,3 +91,12 @@ export async function deactivateUser(userId: string) {
     data: { status: UserStatus.INACTIVE }
   });
 }
+
+export async function resetUserPassword(input: { userId: string; newPassword: string }) {
+  return db.user.update({
+    where: { id: input.userId },
+    data: {
+      passwordHash: await hashPassword(input.newPassword)
+    }
+  });
+}

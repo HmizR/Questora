@@ -28,6 +28,8 @@ Post-MVP UI refresh completed:
 - Public student profiles linked from leaderboards
 - Student class Grades tab for own published assignment, project, and quiz grades
 - Shared `/account` page
+- Self-service account profile edits and password changes
+- Admin-assisted password reset for MVP account recovery
 - Modern responsive dashboard UI refresh with icons and persisted light/dark theme toggle
 - Structured toast notifications and inline action error summaries
 - Isolated PostgreSQL integration test setup with service and server action coverage
@@ -71,6 +73,7 @@ Completed:
 
 - Admin dashboard statistics
 - User list, create, edit, deactivate
+- Admin password reset for platform users
 - Class list, create, edit
 - Lecturer assignment
 - Student enrollment and removal from active enrollment
@@ -148,6 +151,7 @@ Completed:
 - Public student profiles with XP, streaks, badges, and recent XP only
 - Class-specific Grades tab with own published assignment, project, and quiz grades
 - Profile with XP, level, badges, XP history, and own published grades
+- Account page profile edits and password changes
 - Student enrollment/publication/prerequisite checks
 
 Key routes:
@@ -197,6 +201,7 @@ Completed:
 - Database-backed integration test configuration and fixtures for critical service/action flows
 - Playwright e2e tests for login, enrollment, lecturer authoring, student submission, grading, quiz attempt caps, and leaderboard profile links
 - Toast feedback coverage in representative admin, lecturer, and student browser workflows
+- Account/password integration and browser workflow coverage
 - GitHub Actions workflow for pull requests and pushes to `main`
 - CI PostgreSQL service database and Playwright failure artifact upload
 - Production deployment guide for Vercel and hosted PostgreSQL
