@@ -199,7 +199,7 @@ describe("upload presign APIs", () => {
   });
 
   it("authorizes protected download URLs by intent and storage scope", async () => {
-    const { class: teachingClass } = await createClassFixture();
+    const { lecturer, class: teachingClass } = await createClassFixture();
     const { student } = await enrollStudentFixture(teachingClass.id);
     const otherStudent = await createUser(UserRole.STUDENT, "Other Download Student");
     const learningModule = await createModuleFixture(teachingClass.id);
@@ -232,5 +232,22 @@ describe("upload presign APIs", () => {
     expect(accepted.status).toBe(200);
     expect(acceptedBody.downloadUrl).toEqual(expect.stringContaining("questora-test"));
     expect(rejected.status).toBe(403);
+
+    setMockSession({
+      id: lecturer.id,
+      name: lecturer.name,
+      email: lecturer.email,
+      role: "LECTURER"
+    });
+
+    const lecturerDownload = await downloadUpload(
+      jsonRequest({
+        intent: "SUBMISSION",
+        activityId: assignment.id,
+        storageRef: `s3:submissions/${assignment.id}/${student.id}/file.pdf`
+      })
+    );
+
+    expect(lecturerDownload.status).toBe(200);
   });
 });

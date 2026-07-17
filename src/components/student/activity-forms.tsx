@@ -5,6 +5,7 @@ import {
   submitAssignmentAction
 } from "@/app/student/actions";
 import { StudentActionForm } from "@/components/student/action-form";
+import { StudentSubmissionFileUpload } from "@/components/student/submission-file-upload";
 import type { QuizDefinition } from "@/lib/quiz";
 
 export function StartActivityForm({ activityId }: { activityId: string }) {
@@ -49,14 +50,7 @@ export function SubmitAssignmentForm({
           defaultValue={defaultText ?? ""}
         />
       </label>
-      <label className="block text-sm font-medium">
-        File URL
-        <input
-          className="mt-2 w-full rounded-md border border-ink/15 bg-white px-3 py-2 outline-none ring-moss/40 focus:ring-4"
-          name="fileUrl"
-          defaultValue={defaultFileUrl ?? ""}
-        />
-      </label>
+      <StudentSubmissionFileUpload activityId={activityId} defaultFileUrl={defaultFileUrl} />
       <button className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-steel">
         Submit assignment
       </button>

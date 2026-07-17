@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { GradeSubmissionForm, PublishGradeForm } from "@/components/lecturer/forms";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { ProtectedFileLink } from "@/components/ui/protected-file-link";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireClassLecturer } from "@/lib/authorization-service";
 import { formatTimestampLabel } from "@/lib/date-format";
@@ -213,12 +214,14 @@ export default async function MissionSubmissionsPage({
                 </div>
               ) : null}
               {submission.fileUrl ? (
-                <a
-                  className="mt-4 inline-block text-sm font-semibold text-moss hover:underline"
-                  href={submission.fileUrl}
-                >
-                  Submitted file
-                </a>
+                <div className="mt-4">
+                  <ProtectedFileLink
+                    activityId={activityId}
+                    fileUrl={submission.fileUrl}
+                    intent="SUBMISSION"
+                    label="Open submitted file"
+                  />
+                </div>
               ) : null}
 
               <div className="mt-6">

@@ -93,20 +93,58 @@ export async function authorizeStorageRef(input: {
   key: string;
   activityId?: string;
 }) {
-  const authorization = await authorizeUploadIntent({
-    intent: input.intent,
-    activityId: input.activityId
-  });
+  const user = await requireUser();
 
-  if (input.intent === "AVATAR" && !input.key.startsWith(`avatars/${authorization.user.id}/`)) {
+  if (input.intent === "AVATAR" && !input.key.startsWith(`avatars/${user.id}/`)) {
     throw new AppError("FORBIDDEN", "You do not have access to this file.");
   }
 
-  if (
-    input.intent === "SUBMISSION" &&
-    (!input.activityId ||
-      !input.key.startsWith(`submissions/${input.activityId}/${authorization.user.id}/`))
-  ) {
+  if (input.intent === "AVATAR") {
+    return { user, keyUserId: user.id };
+  }
+
+  if (!input.activityId) {
+    throw new AppError("VALIDATION_ERROR", "Activity is required for this file.");
+  }
+
+  if (input.intent === "SUBMISSION") {
+    const activity = await requireSubmissionActivity(input.activityId);
+
+    if (!input.key.startsWith(`submissions/${input.activityId}/`)) {
+      throw new AppError("FORBIDDEN", "You do not have access to this file.");
+    }
+
+    if (user.role === UserRole.STUDENT) {
+      const enrollment = await db.classStudent.findFirst({
+        where: {
+          classId: activity.module.classId,
+          studentId: user.id,
+          status: "ACTIVE"
+        }
+      });
+
+      if (!enrollment || !input.key.startsWith(`submissions/${input.activityId}/${user.id}/`)) {
+        throw new AppError("FORBIDDEN", "You do not have access to this file.");
+      }
+
+      return { user, activity, keyUserId: user.id };
+    }
+
+    if (user.role === UserRole.LECTURER) {
+      const teachingClass = await db.class.findFirst({
+        where: {
+          id: activity.module.classId,
+          lecturerId: user.id
+        }
+      });
+
+      if (!teachingClass) {
+        throw new AppError("FORBIDDEN", "You do not have access to this file.");
+      }
+
+      return { user, activity, keyUserId: user.id };
+    }
+
     throw new AppError("FORBIDDEN", "You do not have access to this file.");
   }
 
@@ -117,5 +155,8 @@ export async function authorizeStorageRef(input: {
     throw new AppError("FORBIDDEN", "You do not have access to this file.");
   }
 
-  return authorization;
+  return authorizeUploadIntent({
+    intent: input.intent,
+    activityId: input.activityId
+  });
 }

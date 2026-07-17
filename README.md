@@ -30,7 +30,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Student leaderboards include a global XP ranking and class-specific quest XP ranking.
 - Leaderboard names link to public student profiles with gamification data only.
 - Student class workspaces include a Grades tab for own published assignment, project, and quiz grades.
-- Protected S3 upload foundation supports short-lived upload/download URLs for future avatar, submission, and mission-resource files.
+- Protected S3 uploads support student assignment/project files with short-lived upload/download URLs.
 - Seed data with one admin, two lecturers, five students, two classes, example modules, activities, quests, badges, and student profiles.
 
 ## Tech Stack
@@ -61,10 +61,10 @@ S3_SECRET_ACCESS_KEY="replace-with-secret-key"
 # S3_FORCE_PATH_STYLE="false"
 ```
 
-The S3 variables power the protected upload foundation. Questora currently exposes
-presigned API endpoints for future upload UI, but the visible avatar/submission forms still
-accept URLs until the next upload integration pass. Browser-based PUT uploads require bucket
-CORS that allows `PUT` from your Questora app origin and the `Content-Type` header.
+The S3 variables power protected uploads. Student assignment/project submissions can upload
+one file through presigned URLs while still accepting pasted URLs or `s3:` references for
+development compatibility. Browser-based PUT uploads require bucket CORS that allows `PUT`
+from your Questora app origin and the `Content-Type` header.
 
 ## Database
 
@@ -222,7 +222,7 @@ student5@questora.dev
 - Quiz grades remain separate from XP transactions.
 - Quiz analytics read existing attempt records and do not change grades or XP.
 - Global leaderboards use total profile XP; class leaderboards use quest XP transactions for that class.
-- Protected uploads use `s3:<object-key>` storage references and short-lived signed download URLs.
+- Protected submission uploads use `s3:<object-key>` storage references and short-lived signed download URLs.
 
 ## UI Workflow Coverage
 

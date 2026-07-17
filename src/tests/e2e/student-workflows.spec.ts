@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { e2eUsers, resetE2eDatabase, type E2eSeed } from "./fixtures";
 import { loginAs } from "./helpers";
@@ -9,14 +9,51 @@ test.beforeEach(async () => {
   seed = await resetE2eDatabase();
 });
 
+async function mockSubmissionUpload(page: Page) {
+  await page.route("**/api/uploads/presign", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        uploadUrl: "https://uploads.questora.test/e2e-submission.pdf",
+        storageRef: `s3:submissions/${seed.activities.assignment.id}/${seed.users.student.id}/e2e-submission.pdf`,
+        key: `submissions/${seed.activities.assignment.id}/${seed.users.student.id}/e2e-submission.pdf`,
+        expiresIn: 300
+      })
+    });
+  });
+  await page.route("https://uploads.questora.test/e2e-submission.pdf", async (route) => {
+    await route.fulfill({ status: 200, body: "" });
+  });
+}
+
+async function mockSubmissionDownload(page: Page) {
+  await page.route("**/api/uploads/download", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        downloadUrl: "https://downloads.questora.test/e2e-submission.pdf",
+        expiresIn: 300
+      })
+    });
+  });
+}
+
 test("student submission can be graded and then locks on the student activity page", async ({
   browser,
   page
 }) => {
+  await mockSubmissionUpload(page);
+  await mockSubmissionDownload(page);
   await loginAs(page, e2eUsers.student.email);
   await page.goto(`/student/classes/${seed.class.id}/activities/${seed.activities.assignment.id}`);
   await page.getByLabel("Submission text").fill("This is my e2e assignment answer.");
-  await page.getByLabel("File URL").fill("https://example.com/e2e-submission");
+  await page.setInputFiles("#submission-file", {
+    name: "e2e-submission.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("E2E submission file")
+  });
+  await expect(page.getByRole("status").filter({ hasText: "File uploaded." })).toBeVisible();
+  await expect(page.getByText("e2e-submission.pdf (protected)")).toBeVisible();
   await page.getByRole("button", { name: "Submit assignment" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Submission sent." })).toBeVisible();
   await expect(page.getByText("Submitted").first()).toBeVisible();
@@ -24,6 +61,7 @@ test("student submission can be graded and then locks on the student activity pa
 
   const lecturerContext = await browser.newContext();
   const lecturerPage = await lecturerContext.newPage();
+  await mockSubmissionDownload(lecturerPage);
   await loginAs(lecturerPage, e2eUsers.lecturer.email);
   await lecturerPage.goto(
     `/lecturer/classes/${seed.class.id}/modules/${seed.module.id}/activities/` +
@@ -32,6 +70,7 @@ test("student submission can be graded and then locks on the student activity pa
   await expect(lecturerPage.getByText("This is my e2e assignment answer.")).toBeVisible();
   await expect(lecturerPage.getByText("Submitted").first()).toBeVisible();
   await expect(lecturerPage.getByText("Ungraded").first()).toBeVisible();
+  await expect(lecturerPage.getByRole("button", { name: "Open submitted file" })).toBeVisible();
   await lecturerPage.getByLabel("Score").fill("88");
   await lecturerPage.getByLabel("Feedback").fill("Solid work from the e2e flow.");
   await lecturerPage.getByRole("button", { name: "Grade" }).click();
@@ -46,6 +85,7 @@ test("student submission can be graded and then locks on the student activity pa
   await expect(page.getByRole("heading", { name: "Submission locked" })).toBeVisible();
   await expect(page.getByText("Graded").first()).toBeVisible();
   await expect(page.getByText("This work has been graded and can no longer be edited.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Open submitted file" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit assignment" })).toHaveCount(0);
 
   await page.goto(`/student/classes/${seed.class.id}/grades`);
@@ -55,6 +95,16 @@ test("student submission can be graded and then locks on the student activity pa
   await expect(page.getByRole("row", { name: /E2E Assignment/ })).toContainText(
     "Solid work from the e2e flow."
   );
+});
+
+test("student can still submit an assignment with a pasted file URL", async ({ page }) => {
+  await loginAs(page, e2eUsers.student.email);
+  await page.goto(`/student/classes/${seed.class.id}/activities/${seed.activities.assignment.id}`);
+
+  await page.getByLabel("File URL").fill("https://example.com/e2e-submission");
+  await page.getByRole("button", { name: "Submit assignment" }).click();
+
+  await expect(page.getByRole("status").filter({ hasText: "Submission sent." })).toBeVisible();
 });
 
 test("student quiz attempt limit hides questions after attempts are exhausted", async ({ page }) => {

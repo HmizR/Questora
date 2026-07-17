@@ -9,6 +9,7 @@ import {
 } from "@/components/student/activity-forms";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { ProtectedFileLink } from "@/components/ui/protected-file-link";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireClassEnrollment } from "@/lib/authorization-service";
 import { formatDateTime, formatTimestampLabel } from "@/lib/date-format";
@@ -191,7 +192,14 @@ export default async function StudentActivityPage({
                   </div>
                 ) : null}
                 {submission?.fileUrl ? (
-                  <p className="mt-3 break-all text-sm text-ink/65">File URL: {submission.fileUrl}</p>
+                  <div className="mt-3">
+                    <ProtectedFileLink
+                      activityId={activity.id}
+                      fileUrl={submission.fileUrl}
+                      intent="SUBMISSION"
+                      label="Open submitted file"
+                    />
+                  </div>
                 ) : null}
               </section>
             )

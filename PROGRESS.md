@@ -35,6 +35,7 @@ Post-MVP UI refresh completed:
 - Data-safety UX with confirmation dialogs and shared empty states
 - Lightweight submission and grading visibility with consistent status badges and timestamps
 - Protected S3 upload foundation for future avatars, submission files, and lecturer mission resources
+- Student assignment/project file uploads wired into the protected S3 foundation
 - Isolated PostgreSQL integration test setup with service and server action coverage
 - Playwright UI-level workflow test setup for admin, lecturer, and student paths
 - GitHub Actions CI quality gate for Prisma validation, typecheck, lint, tests, e2e, and build
@@ -211,14 +212,14 @@ Completed:
 - CI PostgreSQL service database and Playwright failure artifact upload
 - Production deployment guide for Vercel and hosted PostgreSQL
 - First-admin bootstrap command for production setup
-- Protected S3 upload foundation and tests
+- Protected S3 upload foundation and student submission upload UI
 
 Current automated coverage:
 
 ```text
 27 unit tests passing
-21 integration tests passing
-15 e2e tests passing
+22 integration tests passing
+16 e2e tests passing
 ```
 
 ## Recommended Next Steps
@@ -228,7 +229,6 @@ Current automated coverage:
   - first real Vercel deployment dry run
   - production smoke testing with real production-created data
 - S3-backed upload capability:
-  - support student assignment/project file uploads using the existing `Submission.fileUrl`
   - replace raw avatar URL entry with avatar image upload while still storing `User.avatarUrl`
   - add lecturer-uploaded mission resources for files such as PDFs, slides, and documents
   - keep the first pass simple: one submission file per submission and mission-scoped resources only

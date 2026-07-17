@@ -5,11 +5,17 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { z } from "zod";
 
 import { AppError } from "@/lib/errors";
+import {
+  isAllowedUploadSize,
+  isAllowedUploadType,
+  type UploadIntent
+} from "@/lib/upload-rules";
+
+export type { UploadIntent } from "@/lib/upload-rules";
 
 export const STORAGE_URL_EXPIRES_IN = 300;
 
 export const uploadIntentSchema = z.enum(["AVATAR", "SUBMISSION", "MISSION_RESOURCE"]);
-export type UploadIntent = z.infer<typeof uploadIntentSchema>;
 
 const baseUploadSchema = z.object({
   intent: uploadIntentSchema,
@@ -35,58 +41,16 @@ export const presignDownloadSchema = z.object({
   activityId: z.string().trim().min(1).optional()
 });
 
-type UploadRule = {
-  maxBytes: number;
-  contentTypes: Set<string>;
-};
-
-const officeTypes = [
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.ms-powerpoint",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  "application/vnd.ms-excel",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-];
-
-const documentTypes = [
-  "application/pdf",
-  "text/plain",
-  "text/csv",
-  "application/zip",
-  "application/x-zip-compressed",
-  ...officeTypes
-];
-
-const imageTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-
-export const uploadRules: Record<UploadIntent, UploadRule> = {
-  AVATAR: {
-    maxBytes: 2 * 1024 * 1024,
-    contentTypes: new Set(imageTypes)
-  },
-  SUBMISSION: {
-    maxBytes: 25 * 1024 * 1024,
-    contentTypes: new Set([...imageTypes, ...documentTypes])
-  },
-  MISSION_RESOURCE: {
-    maxBytes: 50 * 1024 * 1024,
-    contentTypes: new Set([...imageTypes, ...documentTypes])
-  }
-};
-
 export function validateUploadFile(input: {
   intent: UploadIntent;
   contentType: string;
   size: number;
 }) {
-  const rule = uploadRules[input.intent];
-
-  if (!rule.contentTypes.has(input.contentType)) {
+  if (!isAllowedUploadType(input.intent, input.contentType)) {
     throw new AppError("VALIDATION_ERROR", "This file type is not allowed for that upload.");
   }
 
-  if (input.size > rule.maxBytes) {
+  if (!isAllowedUploadSize(input.intent, input.size)) {
     throw new AppError("VALIDATION_ERROR", "This file is larger than the allowed upload limit.");
   }
 }

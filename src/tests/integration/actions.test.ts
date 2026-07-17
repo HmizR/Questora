@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { enrollStudentAction } from "@/app/admin/actions";
 import { changeOwnPasswordAction, updateOwnProfileAction } from "@/app/account/actions";
 import { gradeSubmissionAction } from "@/app/lecturer/actions";
-import { completeLessonAction } from "@/app/student/actions";
+import { completeLessonAction, submitAssignmentAction } from "@/app/student/actions";
 import { initialAccountActionState } from "@/app/account/action-state";
 import { initialAdminActionState } from "@/app/admin/action-state";
 import { initialLecturerActionState } from "@/app/lecturer/action-state";
@@ -85,6 +85,33 @@ describe("database-backed server actions", () => {
     expect(result).toMatchObject({ ok: true });
     expect(sessionProgress?.status).toBe("COMPLETED");
     expect(spoofedProgress).toBeNull();
+  });
+
+  it("accepts protected s3 storage references for assignment submissions", async () => {
+    const { class: teachingClass } = await createClassFixture();
+    const { student } = await enrollStudentFixture(teachingClass.id);
+    const learningModule = await createModuleFixture(teachingClass.id);
+    const activity = await createActivityFixture(learningModule.id, {
+      type: ActivityType.ASSIGNMENT
+    });
+    const storageRef = `s3:submissions/${activity.id}/${student.id}/submission.pdf`;
+    setMockSession({
+      id: student.id,
+      name: student.name,
+      email: student.email,
+      role: "STUDENT"
+    });
+
+    const result = await submitAssignmentAction(
+      initialStudentActionState,
+      formData({ activityId: activity.id, fileUrl: storageRef, textContent: "" })
+    );
+    const submission = await db.submission.findUnique({
+      where: { activityId_studentId: { activityId: activity.id, studentId: student.id } }
+    });
+
+    expect(result).toMatchObject({ ok: true });
+    expect(submission?.fileUrl).toBe(storageRef);
   });
 
   it("rejects grading by a lecturer who does not own the class", async () => {

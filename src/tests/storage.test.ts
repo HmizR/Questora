@@ -8,6 +8,7 @@ import {
   toStorageRef,
   validateUploadFile
 } from "@/lib/storage";
+import { isProtectedStorageRef } from "@/lib/upload-rules";
 
 function expectAppError(fn: () => unknown, code = "VALIDATION_ERROR") {
   try {
@@ -108,6 +109,8 @@ describe("storage helpers", () => {
     expect(parseStorageRef(toStorageRef("avatars/user_1/file.png"))).toBe(
       "avatars/user_1/file.png"
     );
+    expect(isProtectedStorageRef("s3:avatars/user_1/file.png")).toBe(true);
+    expect(isProtectedStorageRef("https://example.com/file.png")).toBe(false);
 
     expectAppError(() => parseStorageRef("https://example.com/file.png"));
     expectAppError(() => parseStorageRef("s3:../file.png"));
