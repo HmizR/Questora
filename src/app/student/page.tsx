@@ -3,6 +3,7 @@ import { BookOpen, CheckCircle2, Gauge } from "lucide-react";
 import { QuestCard } from "@/components/gamification/quest-card";
 import { LevelProgress } from "@/components/gamification/level-progress";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { EmptyState } from "@/components/ui/empty-state";
 import { StatCard } from "@/components/ui/stat-card";
 import { requireRole } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
@@ -100,9 +101,12 @@ export default async function StudentDashboardPage() {
           <h2 className="mb-4 text-xl font-bold">Current quests</h2>
           <div className="grid gap-4 md:grid-cols-2">
             {quests.length === 0 ? (
-              <div className="rounded-2xl border border-border/80 bg-surface p-5 text-sm text-ink/65 shadow-sm">
-                No active quests yet.
-              </div>
+              <EmptyState
+                actionHref="/student/classes"
+                actionLabel="Open realms"
+                description="Published quests from your enrolled realms will appear here."
+                title="No active quests yet"
+              />
             ) : (
               quests.map((quest) => {
                 const completed = quest.activities.filter((link) =>
@@ -127,7 +131,10 @@ export default async function StudentDashboardPage() {
           <h2 className="text-xl font-bold">Recent grades</h2>
           <div className="mt-4 space-y-3">
             {recentGrades.length === 0 ? (
-              <p className="text-sm text-ink/65">No published grades yet.</p>
+              <EmptyState
+                description="Published scores and feedback will appear after your lecturers release grades."
+                title="No published grades yet"
+              />
             ) : (
               recentGrades.map((grade) => (
                 <div key={grade.id}>

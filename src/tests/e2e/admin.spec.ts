@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { e2eUsers, resetE2eDatabase, type E2eSeed } from "./fixtures";
 import { loginAs } from "./helpers";
+import { db } from "../../lib/db";
 
 let seed: E2eSeed;
 
@@ -27,4 +28,35 @@ test("admin can enroll an active student into a realm", async ({ page }) => {
 
   await expect(page.getByRole("status").filter({ hasText: "Student enrolled." })).toBeVisible();
   await expect(page.getByText(e2eUsers.unenrolled.name)).toBeVisible();
+});
+
+test("admin destructive actions require confirmation", async ({ page }) => {
+  await loginAs(page, e2eUsers.admin.email);
+  await page.goto(`/admin/users/${seed.users.unenrolled.id}`);
+
+  await page.getByRole("button", { name: "Deactivate user" }).click();
+  await expect(page.getByRole("dialog")).toContainText("Deactivate this user?");
+  await page.getByRole("dialog").getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(
+    await db.user.findUniqueOrThrow({ where: { id: seed.users.unenrolled.id } })
+  ).toMatchObject({ status: "ACTIVE" });
+
+  await page.getByRole("button", { name: "Deactivate user" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Deactivate user" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "User deactivated." })).toBeVisible();
+  await expect(
+    await db.user.findUniqueOrThrow({ where: { id: seed.users.unenrolled.id } })
+  ).toMatchObject({ status: "INACTIVE" });
+});
+
+test("admin remove-student action can be canceled", async ({ page }) => {
+  await loginAs(page, e2eUsers.admin.email);
+  await page.goto(`/admin/classes/${seed.class.id}`);
+
+  await page.getByRole("button", { name: "Remove student" }).first().click();
+  await expect(page.getByRole("dialog")).toContainText("Remove this student from the realm?");
+  await page.getByRole("dialog").getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByText(e2eUsers.student.name)).toBeVisible();
 });

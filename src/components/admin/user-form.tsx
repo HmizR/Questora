@@ -8,6 +8,7 @@ import {
 } from "@/app/admin/actions";
 import { ActionForm } from "@/components/admin/action-form";
 import { roleOptions, SelectField, TextField, userStatusOptions } from "@/components/admin/form-fields";
+import { ConfirmAction } from "@/components/ui/confirm-action";
 
 export function CreateUserForm() {
   return (
@@ -50,9 +51,13 @@ export function DeactivateUserForm({ userId }: { userId: string }) {
   return (
     <ActionForm action={deactivateUserAction}>
       <input name="userId" type="hidden" value={userId} />
-      <button className="rounded-md border border-ember/30 bg-white px-4 py-2 text-sm font-semibold text-ember hover:bg-ember hover:text-white">
-        Deactivate user
-      </button>
+      <ConfirmAction
+        className="rounded-md border border-ember/30 bg-white px-4 py-2 text-sm font-semibold text-ember hover:bg-ember hover:text-white"
+        confirmLabel="Deactivate user"
+        description="This prevents the user from signing in while preserving their historical records."
+        label="Deactivate user"
+        title="Deactivate this user?"
+      />
     </ActionForm>
   );
 }

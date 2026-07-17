@@ -13,6 +13,7 @@ import {
 import { ActionMenu } from "@/components/ui/action-menu";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Expander } from "@/components/ui/expander";
 import { requireClassLecturer } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
@@ -76,7 +77,15 @@ export default async function LecturerModulesPage({
         </Link>
       </div>
       <div className="mt-6 space-y-6">
-        {teachingClass.modules.map((module, moduleIndex) => (
+        {teachingClass.modules.length === 0 ? (
+          <EmptyState
+            actionHref={`/lecturer/classes/${classId}/modules/new`}
+            actionLabel="New region"
+            description="Create the first region before adding missions for students."
+            title="No regions yet"
+          />
+        ) : (
+          teachingClass.modules.map((module, moduleIndex) => (
           <Expander
             defaultOpen={moduleIndex === 0}
             key={module.id}
@@ -110,7 +119,15 @@ export default async function LecturerModulesPage({
               </ActionMenu>
             </div>
             <div className="mt-6 space-y-4">
-              {module.activities.map((activity) => {
+              {module.activities.length === 0 ? (
+                <EmptyState
+                  actionHref={`/lecturer/classes/${classId}/modules/${module.id}/activities/new`}
+                  actionLabel="New mission"
+                  description="This region is ready for its first mission."
+                  title="No missions in this region"
+                />
+              ) : (
+                module.activities.map((activity) => {
                 const submittedCount = activity.submissions.filter((submission) =>
                   activeStudentIds.has(submission.studentId)
                 ).length;
@@ -185,10 +202,10 @@ export default async function LecturerModulesPage({
                     )}
                   </Expander>
                 );
-              })}
+              }))}
             </div>
           </Expander>
-        ))}
+        )))}
       </div>
     </DashboardShell>
   );

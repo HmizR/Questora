@@ -13,6 +13,7 @@ import {
   TextAreaField,
   TextField
 } from "@/components/admin/form-fields";
+import { ConfirmAction } from "@/components/ui/confirm-action";
 
 function toDateInputValue(value?: Date | null) {
   return value ? value.toISOString().slice(0, 10) : "";
@@ -127,9 +128,13 @@ export function RemoveStudentForm({ classId, studentId }: { classId: string; stu
     <ActionForm action={removeStudentAction}>
       <input name="classId" type="hidden" value={classId} />
       <input name="studentId" type="hidden" value={studentId} />
-      <button className="rounded-md border border-ember/30 bg-white px-3 py-1.5 text-xs font-semibold text-ember hover:bg-ember hover:text-white">
-        Remove
-      </button>
+      <ConfirmAction
+        className="rounded-md border border-ember/30 bg-white px-3 py-1.5 text-xs font-semibold text-ember hover:bg-ember hover:text-white"
+        confirmLabel="Remove student"
+        description="This removes the student's active enrollment while keeping historical records intact."
+        label="Remove student"
+        title="Remove this student from the realm?"
+      />
     </ActionForm>
   );
 }

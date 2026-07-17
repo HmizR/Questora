@@ -1,5 +1,6 @@
 import { LevelProgress } from "@/components/gamification/level-progress";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { EmptyState } from "@/components/ui/empty-state";
 import { StatCard } from "@/components/ui/stat-card";
 import { requireRole } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
@@ -42,7 +43,10 @@ export default async function StudentProfilePage() {
           <h2 className="text-lg font-bold">Badges</h2>
           <div className="mt-4 space-y-3">
             {badges.length === 0 ? (
-              <p className="text-sm text-ink/65">No badges yet.</p>
+              <EmptyState
+                description="Badges appear as you complete missions, quests, and special goals."
+                title="No badges yet"
+              />
             ) : (
               badges.map((entry) => (
                 <div key={entry.badgeId}>
@@ -57,7 +61,10 @@ export default async function StudentProfilePage() {
           <h2 className="text-lg font-bold">Recent XP</h2>
           <div className="mt-4 space-y-3">
             {xpTransactions.length === 0 ? (
-              <p className="text-sm text-ink/65">No XP transactions yet.</p>
+              <EmptyState
+                description="XP awards will appear here after quest completion."
+                title="No XP transactions yet"
+              />
             ) : (
               xpTransactions.map((transaction) => (
                 <div key={transaction.id}>
@@ -72,7 +79,10 @@ export default async function StudentProfilePage() {
           <h2 className="text-lg font-bold">Published grades</h2>
           <div className="mt-4 space-y-3">
             {grades.length === 0 ? (
-              <p className="text-sm text-ink/65">No published grades yet.</p>
+              <EmptyState
+                description="Published grades will appear here after lecturer review."
+                title="No published grades yet"
+              />
             ) : (
               grades.map((grade) => (
                 <div key={grade.id}>

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { ActivityType, ClassStatus } from "@prisma/client";
 
 import { e2eUsers, resetE2eDatabase, type E2eSeed } from "./fixtures";
 import { loginAs } from "./helpers";
@@ -117,4 +118,57 @@ test("lecturer opens quiz analytics from regions", async ({ page }) => {
   await expect(page.getByText("50% correct")).toBeVisible();
   await expect(page.getByRole("row", { name: /E2E Student/ })).toContainText("Passed");
   await expect(page.getByRole("row", { name: /E2E Rival/ })).toContainText("Not passed");
+});
+
+test("lecturer mission deletion requires confirmation", async ({ page }) => {
+  const disposableMission = await db.activity.create({
+    data: {
+      moduleId: seed.module.id,
+      type: ActivityType.LESSON,
+      title: "E2E Disposable Mission",
+      content: "Temporary mission for deletion safety.",
+      position: 4,
+      isRequired: true,
+      isPublished: true
+    }
+  });
+
+  await loginAs(page, e2eUsers.lecturer.email);
+  await page.goto(`/lecturer/classes/${seed.class.id}/modules`);
+  await page.getByText("4. E2E Disposable Mission").click();
+  await page.getByLabel("Actions for E2E Disposable Mission").click();
+  await page.getByRole("button", { name: "Delete mission" }).click();
+  await expect(page.getByRole("dialog")).toContainText("Delete this mission?");
+  await page.getByRole("dialog").getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByText("4. E2E Disposable Mission")).toBeVisible();
+  await expect(await db.activity.findUnique({ where: { id: disposableMission.id } })).not.toBeNull();
+
+  await page.reload();
+  await page.getByText("4. E2E Disposable Mission").click();
+  await page.getByLabel("Actions for E2E Disposable Mission").click();
+  await expect(page.getByRole("button", { name: "Delete mission" })).toBeVisible();
+  await page.getByRole("button", { name: "Delete mission" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Delete mission" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Mission deleted." })).toBeVisible();
+  await expect(page.getByText("4. E2E Disposable Mission")).toHaveCount(0);
+  await expect(await db.activity.findUnique({ where: { id: disposableMission.id } })).toBeNull();
+});
+
+test("lecturer sees an empty state when a realm has no regions", async ({ page }) => {
+  const emptyClass = await db.class.create({
+    data: {
+      name: "E2E Empty Realm",
+      code: "E2E-EMPTY",
+      lecturerId: seed.users.lecturer.id,
+      createdById: seed.users.admin.id,
+      status: ClassStatus.ACTIVE
+    }
+  });
+
+  await loginAs(page, e2eUsers.lecturer.email);
+  await page.goto(`/lecturer/classes/${emptyClass.id}/modules`);
+
+  await expect(page.getByRole("heading", { name: "No regions yet" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "New region" }).last()).toBeVisible();
 });

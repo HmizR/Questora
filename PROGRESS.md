@@ -32,6 +32,7 @@ Post-MVP UI refresh completed:
 - Admin-assisted password reset for MVP account recovery
 - Modern responsive dashboard UI refresh with icons and persisted light/dark theme toggle
 - Structured toast notifications and inline action error summaries
+- Data-safety UX with confirmation dialogs and shared empty states
 - Isolated PostgreSQL integration test setup with service and server action coverage
 - Playwright UI-level workflow test setup for admin, lecturer, and student paths
 - GitHub Actions CI quality gate for Prisma validation, typecheck, lint, tests, e2e, and build
@@ -202,6 +203,7 @@ Completed:
 - Playwright e2e tests for login, enrollment, lecturer authoring, student submission, grading, quiz attempt caps, and leaderboard profile links
 - Toast feedback coverage in representative admin, lecturer, and student browser workflows
 - Account/password integration and browser workflow coverage
+- Destructive-action confirmation and empty-state browser workflow coverage
 - GitHub Actions workflow for pull requests and pushes to `main`
 - CI PostgreSQL service database and Playwright failure artifact upload
 - Production deployment guide for Vercel and hosted PostgreSQL
@@ -211,8 +213,8 @@ Current automated coverage:
 
 ```text
 23 unit tests passing
-10 integration tests passing
-9 e2e tests passing
+15 integration tests passing
+15 e2e tests passing
 ```
 
 ## Recommended Next Steps
@@ -221,13 +223,14 @@ Current automated coverage:
   - CI verification on GitHub after the workflow is pushed
   - first real Vercel deployment dry run
   - production smoke testing with real production-created data
-- Auth and account polish:
-  - admin password reset or password change flow
-  - clearer account recovery expectations for the MVP
 - Data safety UX:
-  - confirmation dialogs for destructive lecturer/admin actions
-  - clearer empty states and error recovery paths
   - lightweight visibility for grading/submission state changes
+- S3-backed upload capability:
+  - add S3 storage configuration and upload helpers with file type/size validation
+  - support student assignment/project file uploads using the existing `Submission.fileUrl`
+  - replace raw avatar URL entry with avatar image upload while still storing `User.avatarUrl`
+  - add lecturer-uploaded mission resources for files such as PDFs, slides, and documents
+  - keep the first pass simple: one submission file per submission and mission-scoped resources only
 - Quiz and assignment UX polish:
   - refine quiz review states and analytics presentation
   - improve submission history/revision visibility before grading

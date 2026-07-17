@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { EmptyState } from "@/components/ui/empty-state";
 import { requireClassEnrollment } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
 
@@ -92,12 +93,10 @@ export default async function StudentClassGradesPage({
       <ClassTabs classId={classId} role="STUDENT" />
 
       {missions.length === 0 ? (
-        <section className="rounded-2xl border border-border/80 bg-surface p-6 shadow-sm">
-          <h2 className="text-lg font-bold">No graded missions yet</h2>
-          <p className="mt-2 text-sm text-ink/65">
-            Published assignments, projects, and quizzes will appear here once your lecturer adds them.
-          </p>
-        </section>
+        <EmptyState
+          description="Published assignments, projects, and quizzes will appear here once your lecturer adds them."
+          title="No graded missions yet"
+        />
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-border/80 bg-surface shadow-sm">
           <table className="w-full min-w-[980px] text-left text-sm">

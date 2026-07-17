@@ -22,6 +22,7 @@ import {
 } from "@/app/lecturer/actions";
 import { LecturerActionForm } from "@/components/lecturer/action-form";
 import { SelectField, TextAreaField, TextField } from "@/components/admin/form-fields";
+import { ConfirmAction } from "@/components/ui/confirm-action";
 import { QuizBuilderFields } from "@/components/lecturer/quiz-builder-fields";
 import { getQuizQuestionFieldDefaults } from "@/lib/quiz";
 
@@ -126,9 +127,13 @@ export function DeleteModuleForm({
   return (
     <LecturerActionForm action={deleteModuleAction}>
       <input name="moduleId" type="hidden" value={moduleId} />
-      <button className={buttonClassName}>
-        Delete
-      </button>
+      <ConfirmAction
+        className={buttonClassName}
+        confirmLabel="Delete region"
+        description="This deletes the region and its connected mission content according to the current database rules."
+        label="Delete region"
+        title="Delete this region?"
+      />
     </LecturerActionForm>
   );
 }
@@ -240,9 +245,13 @@ export function DeleteActivityForm({
   return (
     <LecturerActionForm action={deleteActivityAction}>
       <input name="activityId" type="hidden" value={activityId} />
-      <button className={buttonClassName}>
-        Delete
-      </button>
+      <ConfirmAction
+        className={buttonClassName}
+        confirmLabel="Delete mission"
+        description="This deletes the mission and related records according to the current database rules."
+        label="Delete mission"
+        title="Delete this mission?"
+      />
     </LecturerActionForm>
   );
 }
@@ -290,9 +299,13 @@ export function ActivityPrerequisiteForm({
                   type="hidden"
                   value={prerequisite.requiredActivityId}
                 />
-                <button className="rounded-md border border-ember/30 bg-white px-3 py-1.5 text-xs font-semibold text-ember hover:bg-ember hover:text-white">
-                  Remove
-                </button>
+                <ConfirmAction
+                  className="rounded-md border border-ember/30 bg-white px-3 py-1.5 text-xs font-semibold text-ember hover:bg-ember hover:text-white"
+                  confirmLabel="Remove prerequisite"
+                  description="This removes the prerequisite link. It does not delete either mission."
+                  label="Remove prerequisite"
+                  title="Remove this prerequisite?"
+                />
               </LecturerActionForm>
             </div>
           ))
@@ -408,9 +421,13 @@ export function DeleteQuestForm({
   return (
     <LecturerActionForm action={deleteQuestAction}>
       <input name="questId" type="hidden" value={questId} />
-      <button className={buttonClassName}>
-        Delete
-      </button>
+      <ConfirmAction
+        className={buttonClassName}
+        confirmLabel="Delete quest"
+        description="This deletes the quest and its mission connections. Existing XP transaction history stays untouched."
+        label="Delete quest"
+        title="Delete this quest?"
+      />
     </LecturerActionForm>
   );
 }
@@ -454,9 +471,13 @@ export function RemoveQuestActivityForm({
       <input name="classId" type="hidden" value={classId} />
       <input name="questId" type="hidden" value={questId} />
       <input name="activityId" type="hidden" value={activityId} />
-      <button className="rounded-md border border-ember/30 bg-white px-3 py-1.5 text-xs font-semibold text-ember hover:bg-ember hover:text-white">
-        Remove
-      </button>
+      <ConfirmAction
+        className="rounded-md border border-ember/30 bg-white px-3 py-1.5 text-xs font-semibold text-ember hover:bg-ember hover:text-white"
+        confirmLabel="Remove from quest"
+        description="This removes the mission from this quest. It does not delete the mission itself."
+        label="Remove from quest"
+        title="Remove this mission from the quest?"
+      />
     </LecturerActionForm>
   );
 }

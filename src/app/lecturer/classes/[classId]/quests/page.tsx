@@ -11,6 +11,7 @@ import {
 import { ActionMenu } from "@/components/ui/action-menu";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Expander } from "@/components/ui/expander";
 import { requireClassLecturer } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
@@ -70,7 +71,15 @@ export default async function LecturerQuestsPage({
         </Link>
       </div>
       <div className="mt-6 grid gap-6">
-        {teachingClass.quests.map((quest, index) => {
+        {teachingClass.quests.length === 0 ? (
+          <EmptyState
+            actionHref={`/lecturer/classes/${classId}/quests/new`}
+            actionLabel="New quest"
+            description="Create a quest and connect missions to start awarding XP."
+            title="No quests yet"
+          />
+        ) : (
+          teachingClass.quests.map((quest, index) => {
           const requiredLinks = quest.activities.filter((link) => link.activity.isRequired);
           const completedCount =
             quest.isPublished && requiredLinks.length > 0
@@ -116,7 +125,12 @@ export default async function LecturerQuestsPage({
                   <h3 className="font-bold">Connected missions</h3>
                   <div className="mt-3 space-y-2">
                     {quest.activities.length === 0 ? (
-                      <p className="text-sm text-ink/65">No missions connected yet.</p>
+                      <EmptyState
+                        actionHref={`/lecturer/classes/${classId}/quests/${quest.id}/edit`}
+                        actionLabel="Manage connections"
+                        description="Connect one or more missions from the quest edit page."
+                        title="No missions connected"
+                      />
                     ) : (
                       quest.activities.map((link) => (
                         <p className="text-sm" key={link.activityId}>
@@ -138,7 +152,7 @@ export default async function LecturerQuestsPage({
               </div>
             </Expander>
           );
-        })}
+        }))}
       </div>
     </DashboardShell>
   );

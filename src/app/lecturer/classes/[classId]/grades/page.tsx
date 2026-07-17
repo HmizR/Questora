@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { EmptyState } from "@/components/ui/empty-state";
 import { requireClassLecturer } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
 
@@ -50,7 +51,20 @@ export default async function LecturerGradesPage({
   return (
     <DashboardShell title="Grades" subtitle="Review grade coverage across students and missions.">
       <ClassTabs classId={classId} role="LECTURER" />
-      <div className="overflow-x-auto rounded-lg border border-ink/10 bg-white shadow-sm">
+      {teachingClass.students.length === 0 ? (
+        <EmptyState
+          description="Enroll students before grade coverage can appear."
+          title="No active students enrolled"
+        />
+      ) : missions.length === 0 ? (
+        <EmptyState
+          actionHref={`/lecturer/classes/${classId}/modules`}
+          actionLabel="Open regions"
+          description="Assignments, projects, and quizzes will appear here after you add them."
+          title="No gradable missions yet"
+        />
+      ) : (
+        <div className="overflow-x-auto rounded-lg border border-ink/10 bg-white shadow-sm">
         <table className="w-full min-w-[900px] text-left text-sm">
           <thead className="bg-ink text-white">
             <tr>
@@ -66,20 +80,7 @@ export default async function LecturerGradesPage({
             </tr>
           </thead>
           <tbody className="divide-y divide-ink/10">
-            {teachingClass.students.length === 0 ? (
-              <tr>
-                <td className="px-4 py-4 text-ink/65" colSpan={Math.max(missions.length + 1, 1)}>
-                  No active students enrolled.
-                </td>
-              </tr>
-            ) : missions.length === 0 ? (
-              <tr>
-                <td className="px-4 py-4 text-ink/65" colSpan={1}>
-                  No gradable missions yet.
-                </td>
-              </tr>
-            ) : (
-              teachingClass.students.map((enrollment) => (
+            {teachingClass.students.map((enrollment) => (
                 <tr key={enrollment.studentId}>
                   <th className="sticky left-0 bg-white px-4 py-3 font-semibold">
                     <span className="block">{enrollment.student.name}</span>
@@ -118,11 +119,11 @@ export default async function LecturerGradesPage({
                     );
                   })}
                 </tr>
-              ))
-            )}
+              ))}
           </tbody>
         </table>
       </div>
+      )}
     </DashboardShell>
   );
 }
