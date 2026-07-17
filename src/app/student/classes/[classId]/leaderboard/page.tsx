@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { AvatarImage } from "@/components/ui/avatar-image";
 import { requireClassEnrollment } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
 
@@ -99,6 +100,7 @@ export default async function StudentClassLeaderboardPage({
 
       return {
         studentId: enrollment.studentId,
+        avatarUrl: enrollment.student.avatarUrl,
         name: enrollment.student.name,
         xp: xpByStudentId.get(enrollment.studentId) ?? 0,
         completedMissions,
@@ -131,12 +133,15 @@ export default async function StudentClassLeaderboardPage({
               <tr key={row.studentId}>
                 <td className="px-4 py-3 font-bold">#{index + 1}</td>
                 <td className="px-4 py-3 font-semibold">
-                  <Link
-                    className="text-ink hover:text-moss hover:underline"
-                    href={`/student/profiles/${row.studentId}`}
-                  >
-                    {row.name}
-                  </Link>
+                  <div className="flex items-center gap-3">
+                    <AvatarImage avatarUrl={row.avatarUrl} name={row.name} size="sm" />
+                    <Link
+                      className="text-ink hover:text-moss hover:underline"
+                      href={`/student/profiles/${row.studentId}`}
+                    >
+                      {row.name}
+                    </Link>
+                  </div>
                 </td>
                 <td className="px-4 py-3">{row.xp}</td>
                 <td className="px-4 py-3">

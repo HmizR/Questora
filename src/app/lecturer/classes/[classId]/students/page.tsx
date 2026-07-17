@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { AvatarImage } from "@/components/ui/avatar-image";
 import { requireClassLecturer } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
 
@@ -70,8 +71,17 @@ export default async function LecturerStudentsPage({
               return (
                 <tr key={entry.studentId}>
                   <td className="px-4 py-3">
-                    <p className="font-semibold">{entry.student.name}</p>
-                    <p className="text-xs text-ink/60">{entry.student.email}</p>
+                    <div className="flex items-center gap-3">
+                      <AvatarImage
+                        avatarUrl={entry.student.avatarUrl}
+                        name={entry.student.name}
+                        size="sm"
+                      />
+                      <div className="min-w-0">
+                        <p className="font-semibold">{entry.student.name}</p>
+                        <p className="truncate text-xs text-ink/60">{entry.student.email}</p>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-4 py-3">{entry.student.profile?.totalXp ?? 0}</td>
                   <td className="px-4 py-3">{entry.student.profile?.level ?? 1}</td>

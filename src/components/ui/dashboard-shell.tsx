@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { ChevronDown, Menu, Sparkles, UserCircle } from "lucide-react";
+import { ChevronDown, Menu, Sparkles } from "lucide-react";
 import { signOut } from "@/lib/auth";
 import { requireUser } from "@/lib/authorization-service";
+import { db } from "@/lib/db";
 import { AppNav } from "@/components/ui/app-nav";
+import { AvatarImage } from "@/components/ui/avatar-image";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 type DashboardShellProps = {
@@ -19,6 +21,16 @@ const roleLabels = {
 
 export async function DashboardShell({ title, subtitle, children }: DashboardShellProps) {
   const user = await requireUser();
+  const currentUser = await db.user.findUnique({
+    where: { id: user.id },
+    select: {
+      avatarUrl: true,
+      email: true,
+      name: true
+    }
+  });
+  const displayName = currentUser?.name ?? user.name ?? "User";
+  const displayEmail = currentUser?.email ?? user.email ?? "";
 
   return (
     <div className="min-h-screen bg-parchment">
@@ -52,19 +64,19 @@ export async function DashboardShell({ title, subtitle, children }: DashboardShe
             </span>
             <details className="relative">
               <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg border border-border/80 bg-surface px-3 py-2 text-left text-sm font-semibold shadow-sm hover:bg-surface-muted">
-                <UserCircle aria-hidden className="h-4 w-4 text-moss" />
+                <AvatarImage avatarUrl={currentUser?.avatarUrl} name={displayName} size="sm" />
                 <span className="hidden min-w-0 sm:block">
-                  <span className="block max-w-36 truncate">{user.name}</span>
+                  <span className="block max-w-36 truncate">{displayName}</span>
                   <span className="block max-w-36 truncate text-xs font-medium text-ink/55">
-                    {user.email}
+                    {displayEmail}
                   </span>
                 </span>
                 <ChevronDown aria-hidden className="h-4 w-4 text-ink/45" />
               </summary>
               <div className="absolute right-0 mt-2 w-64 rounded-xl border border-border/80 bg-surface p-3 shadow-lg">
                 <div className="border-b border-border/80 pb-3">
-                  <p className="font-semibold">{user.name}</p>
-                  <p className="mt-1 truncate text-sm text-ink/60">{user.email}</p>
+                  <p className="font-semibold">{displayName}</p>
+                  <p className="mt-1 truncate text-sm text-ink/60">{displayEmail}</p>
                 </div>
                 <Link
                   className="mt-3 block rounded-lg px-3 py-2 text-sm font-semibold hover:bg-surface-muted"

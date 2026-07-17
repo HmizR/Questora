@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { LevelProgress } from "@/components/gamification/level-progress";
+import { AvatarImage } from "@/components/ui/avatar-image";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { StatCard } from "@/components/ui/stat-card";
 import { requireRole } from "@/lib/authorization-service";
@@ -46,6 +47,13 @@ export default async function PublicStudentProfilePage({
           Back to leaderboard
         </Link>
       </div>
+      <section className="mb-6 flex items-center gap-4 rounded-lg border border-ink/10 bg-white p-5 shadow-sm">
+        <AvatarImage avatarUrl={student.avatarUrl} name={student.name} />
+        <div className="min-w-0">
+          <h2 className="text-xl font-bold">{student.name}</h2>
+          <p className="mt-1 text-sm text-ink/60">Level {profile?.level ?? 1} adventurer</p>
+        </div>
+      </section>
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
         <LevelProgress totalXp={profile?.totalXp ?? 0} />
         <div className="grid gap-4 sm:grid-cols-2">

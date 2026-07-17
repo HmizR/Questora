@@ -1,4 +1,5 @@
 import { LevelProgress } from "@/components/gamification/level-progress";
+import { AvatarImage } from "@/components/ui/avatar-image";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatCard } from "@/components/ui/stat-card";
@@ -8,7 +9,11 @@ import { db } from "@/lib/db";
 export default async function StudentProfilePage() {
   const user = await requireRole("STUDENT");
 
-  const [profile, badges, xpTransactions, grades] = await Promise.all([
+  const [currentUser, profile, badges, xpTransactions, grades] = await Promise.all([
+    db.user.findUniqueOrThrow({
+      where: { id: user.id },
+      select: { avatarUrl: true, name: true }
+    }),
     db.studentProfile.findUnique({ where: { studentId: user.id } }),
     db.studentBadge.findMany({
       where: { studentId: user.id },
@@ -30,6 +35,13 @@ export default async function StudentProfilePage() {
 
   return (
     <DashboardShell title="Adventurer profile" subtitle="Your own XP, level, badges, and published grades.">
+      <section className="mb-6 flex items-center gap-4 rounded-lg border border-ink/10 bg-white p-5 shadow-sm">
+        <AvatarImage avatarUrl={currentUser.avatarUrl} name={currentUser.name} />
+        <div className="min-w-0">
+          <h2 className="text-xl font-bold">{currentUser.name}</h2>
+          <p className="mt-1 text-sm text-ink/60">Level {profile?.level ?? 1} adventurer</p>
+        </div>
+      </section>
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
         <LevelProgress totalXp={profile?.totalXp ?? 0} />
         <div className="grid gap-4 sm:grid-cols-2">

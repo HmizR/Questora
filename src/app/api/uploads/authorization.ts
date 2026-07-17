@@ -95,11 +95,24 @@ export async function authorizeStorageRef(input: {
 }) {
   const user = await requireUser();
 
-  if (input.intent === "AVATAR" && !input.key.startsWith(`avatars/${user.id}/`)) {
-    throw new AppError("FORBIDDEN", "You do not have access to this file.");
-  }
-
   if (input.intent === "AVATAR") {
+    const [, avatarOwnerId] = input.key.match(/^avatars\/([^/]+)\//) ?? [];
+    if (!avatarOwnerId) {
+      throw new AppError("FORBIDDEN", "You do not have access to this file.");
+    }
+
+    const avatarOwner = await db.user.findFirst({
+      where: {
+        id: avatarOwnerId,
+        status: "ACTIVE"
+      },
+      select: { id: true }
+    });
+
+    if (!avatarOwner) {
+      throw new AppError("FORBIDDEN", "You do not have access to this file.");
+    }
+
     return { user, keyUserId: user.id };
   }
 

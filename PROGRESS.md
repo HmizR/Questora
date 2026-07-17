@@ -37,6 +37,7 @@ Post-MVP UI refresh completed:
 - Protected S3 upload foundation for future avatars, submission files, and lecturer mission resources
 - Student assignment/project file uploads wired into the protected S3 foundation
 - Self-service avatar image uploads wired into the protected S3 foundation
+- Avatar display across account navigation, leaderboards, profiles, rosters, and submission review
 - Isolated PostgreSQL integration test setup with service and server action coverage
 - Playwright UI-level workflow test setup for admin, lecturer, and student paths
 - GitHub Actions CI quality gate for Prisma validation, typecheck, lint, tests, e2e, and build
@@ -220,7 +221,7 @@ Current automated coverage:
 
 ```text
 27 unit tests passing
-23 integration tests passing
+24 integration tests passing
 17 e2e tests passing
 ```
 

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { POST as downloadUpload } from "@/app/api/uploads/download/route";
 import { POST as presignUpload } from "@/app/api/uploads/presign/route";
+import { db } from "@/lib/db";
 
 import {
   createActivityFixture,
@@ -80,6 +81,36 @@ describe("upload presign APIs", () => {
     expect(body.storageRef).not.toEqual(expect.stringContaining("spoofed-user"));
     expect(body.uploadUrl).toEqual(expect.stringContaining("questora-test"));
   });
+
+  it("allows authenticated users to download active users' protected avatars only", async () => {
+    const viewer = await createUser(UserRole.STUDENT, "Avatar Viewer");
+    const avatarOwner = await createUser(UserRole.STUDENT, "Avatar Owner");
+    const inactiveOwner = await createUser(UserRole.STUDENT, "Inactive Avatar Owner");
+    await db.user.update({ where: { id: inactiveOwner.id }, data: { status: "INACTIVE" } });
+    setMockSession({
+      id: viewer.id,
+      name: viewer.name,
+      email: viewer.email,
+      role: "STUDENT"
+    });
+
+    const accepted = await downloadUpload(
+      jsonRequest({
+        intent: "AVATAR",
+        storageRef: `s3:avatars/${avatarOwner.id}/avatar.png`
+      })
+    );
+    const rejected = await downloadUpload(
+      jsonRequest({
+        intent: "AVATAR",
+        storageRef: `s3:avatars/${inactiveOwner.id}/avatar.png`
+      })
+    );
+
+    expect(accepted.status).toBe(200);
+    expect(rejected.status).toBe(403);
+  });
+
 
   it("allows enrolled students to presign assignment submissions only", async () => {
     const { class: teachingClass } = await createClassFixture();

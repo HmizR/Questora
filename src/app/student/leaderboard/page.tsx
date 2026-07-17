@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { AvatarImage } from "@/components/ui/avatar-image";
 import { requireRole } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
 
@@ -19,6 +20,7 @@ export default async function StudentLeaderboardPage() {
   const rankedStudents = students
     .map((student) => ({
       id: student.id,
+      avatarUrl: student.avatarUrl,
       name: student.name,
       xp: student.profile?.totalXp ?? 0,
       level: student.profile?.level ?? 1,
@@ -47,12 +49,15 @@ export default async function StudentLeaderboardPage() {
               <tr key={student.id}>
                 <td className="px-4 py-3 font-bold">#{index + 1}</td>
                 <td className="px-4 py-3 font-semibold">
-                  <Link
-                    className="text-ink hover:text-moss hover:underline"
-                    href={`/student/profiles/${student.id}`}
-                  >
-                    {student.name}
-                  </Link>
+                  <div className="flex items-center gap-3">
+                    <AvatarImage avatarUrl={student.avatarUrl} name={student.name} size="sm" />
+                    <Link
+                      className="text-ink hover:text-moss hover:underline"
+                      href={`/student/profiles/${student.id}`}
+                    >
+                      {student.name}
+                    </Link>
+                  </div>
                 </td>
                 <td className="px-4 py-3">{student.xp}</td>
                 <td className="px-4 py-3">{student.level}</td>

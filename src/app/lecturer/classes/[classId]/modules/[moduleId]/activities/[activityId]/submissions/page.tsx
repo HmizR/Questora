@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { GradeSubmissionForm, PublishGradeForm } from "@/components/lecturer/forms";
+import { AvatarImage } from "@/components/ui/avatar-image";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { ProtectedFileLink } from "@/components/ui/protected-file-link";
@@ -133,7 +134,15 @@ export default async function MissionSubmissionsPage({
                     href={`/lecturer/classes/${classId}/modules/${moduleId}/activities/${activityId}/submissions?studentId=${enrollment.studentId}`}
                     key={enrollment.studentId}
                   >
-                    <span className="block font-semibold">{enrollment.student.name}</span>
+                    <span className="flex items-center gap-2">
+                      <AvatarImage
+                        avatarUrl={enrollment.student.avatarUrl}
+                        className={isSelected ? "border-white/25" : ""}
+                        name={enrollment.student.name}
+                        size="sm"
+                      />
+                      <span className="min-w-0 truncate font-semibold">{enrollment.student.name}</span>
+                    </span>
                     <span className={isSelected ? "text-white/75" : "text-ink/60"}>
                       {studentSubmission ? (
                         <span className="flex flex-wrap items-center gap-2">
@@ -183,6 +192,17 @@ export default async function MissionSubmissionsPage({
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <h2 className="text-lg font-bold">{submission.student.name}</h2>
+                  <div className="mt-3 flex items-center gap-3">
+                    <AvatarImage
+                      avatarUrl={submission.student.avatarUrl}
+                      name={submission.student.name}
+                      size="md"
+                    />
+                    <div className="min-w-0">
+                      <p className="font-semibold">{submission.student.name}</p>
+                      <p className="text-sm text-ink/60">{submission.student.email}</p>
+                    </div>
+                  </div>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-ink/65">
                     <StatusBadge tone="success">{readableStatus(submission.status)}</StatusBadge>
                     {submission.submittedAt ? (
