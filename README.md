@@ -30,6 +30,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Student leaderboards include a global XP ranking and class-specific quest XP ranking.
 - Leaderboard names link to public student profiles with gamification data only.
 - Student class workspaces include a Grades tab for own published assignment, project, and quiz grades.
+- Protected S3 upload foundation supports short-lived upload/download URLs for future avatar, submission, and mission-resource files.
 - Seed data with one admin, two lecturers, five students, two classes, example modules, activities, quests, badges, and student profiles.
 
 ## Tech Stack
@@ -52,7 +53,18 @@ Copy `.env.example` to `.env` and set:
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/questora?schema=public"
 AUTH_SECRET="replace-with-a-long-random-secret"
 AUTH_URL="http://localhost:3000"
+S3_BUCKET="questora-uploads"
+S3_REGION="us-east-1"
+S3_ACCESS_KEY_ID="replace-with-access-key"
+S3_SECRET_ACCESS_KEY="replace-with-secret-key"
+# S3_ENDPOINT="https://s3-compatible-provider.example.com"
+# S3_FORCE_PATH_STYLE="false"
 ```
+
+The S3 variables power the protected upload foundation. Questora currently exposes
+presigned API endpoints for future upload UI, but the visible avatar/submission forms still
+accept URLs until the next upload integration pass. Browser-based PUT uploads require bucket
+CORS that allows `PUT` from your Questora app origin and the `Content-Type` header.
 
 ## Database
 
@@ -210,6 +222,7 @@ student5@questora.dev
 - Quiz grades remain separate from XP transactions.
 - Quiz analytics read existing attempt records and do not change grades or XP.
 - Global leaderboards use total profile XP; class leaderboards use quest XP transactions for that class.
+- Protected uploads use `s3:<object-key>` storage references and short-lived signed download URLs.
 
 ## UI Workflow Coverage
 
