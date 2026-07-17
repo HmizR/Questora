@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { ActivityPrerequisiteForm, UpdateActivityForm } from "@/components/lecturer/forms";
+import {
+  ActivityPrerequisiteForm,
+  MissionResourcesPanel,
+  UpdateActivityForm
+} from "@/components/lecturer/forms";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { requireClassLecturer } from "@/lib/authorization-service";
@@ -32,6 +36,9 @@ export default async function EditMissionPage({
             position: "asc"
           }
         }
+      },
+      resources: {
+        orderBy: { position: "asc" }
       }
     }
   });
@@ -56,12 +63,20 @@ export default async function EditMissionPage({
       </div>
       <div className="grid gap-6 xl:grid-cols-[1fr_420px]">
         <UpdateActivityForm activity={activity} />
-        <ActivityPrerequisiteForm
-          activities={allActivities}
-          activityId={activity.id}
-          classId={classId}
-          prerequisites={activity.prerequisites}
-        />
+        <div className="space-y-6">
+          <ActivityPrerequisiteForm
+            activities={allActivities}
+            activityId={activity.id}
+            classId={classId}
+            prerequisites={activity.prerequisites}
+          />
+          <MissionResourcesPanel
+            activityId={activity.id}
+            classId={classId}
+            moduleId={moduleId}
+            resources={activity.resources}
+          />
+        </div>
       </div>
     </DashboardShell>
   );

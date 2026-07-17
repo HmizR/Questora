@@ -1,12 +1,21 @@
-import { ActivityType, QuestType, type Activity, type Module, type Quest } from "@prisma/client";
+import {
+  ActivityType,
+  QuestType,
+  type Activity,
+  type ActivityResource,
+  type Module,
+  type Quest
+} from "@prisma/client";
 
 import {
   addActivityPrerequisiteAction,
   connectQuestActivityAction,
   createActivityAction,
+  createActivityResourceAction,
   createModuleAction,
   createQuestAction,
   deleteActivityAction,
+  deleteActivityResourceAction,
   deleteModuleAction,
   deleteQuestAction,
   gradeSubmissionAction,
@@ -21,8 +30,10 @@ import {
   updateQuestAction
 } from "@/app/lecturer/actions";
 import { LecturerActionForm } from "@/components/lecturer/action-form";
+import { MissionResourceUpload } from "@/components/lecturer/mission-resource-upload";
 import { SelectField, TextAreaField, TextField } from "@/components/admin/form-fields";
 import { ConfirmAction } from "@/components/ui/confirm-action";
+import { ProtectedFileLink } from "@/components/ui/protected-file-link";
 import { QuizBuilderFields } from "@/components/lecturer/quiz-builder-fields";
 import { getQuizQuestionFieldDefaults } from "@/lib/quiz";
 
@@ -327,6 +338,88 @@ export function ActivityPrerequisiteForm({
       ) : (
         <p className="mt-3 text-sm text-ink/60">No available prerequisite candidates.</p>
       )}
+    </div>
+  );
+}
+
+export function MissionResourcesPanel({
+  activityId,
+  classId,
+  moduleId,
+  resources
+}: {
+  activityId: string;
+  classId: string;
+  moduleId: string;
+  resources: ActivityResource[];
+}) {
+  return (
+    <div className="rounded-lg border border-ink/10 bg-parchment/50 p-4">
+      <h4 className="text-sm font-bold">Resources</h4>
+      <p className="mt-1 text-sm text-ink/60">
+        Upload files students can download from this mission.
+      </p>
+      <div className="mt-3 space-y-2">
+        {resources.length === 0 ? (
+          <p className="text-sm text-ink/60">No resources added yet.</p>
+        ) : (
+          resources.map((resource) => (
+            <div
+              className="flex min-w-0 flex-col gap-3 rounded-md border border-ink/10 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
+              key={resource.id}
+            >
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold" title={resource.title}>
+                  {resource.position}. {resource.title}
+                </p>
+                <p className="truncate text-xs text-ink/55" title={resource.fileName}>
+                  {resource.fileName}
+                </p>
+                <div className="mt-2">
+                  <ProtectedFileLink
+                    activityId={activityId}
+                    fileUrl={resource.fileUrl}
+                    intent="MISSION_RESOURCE"
+                    label="Open resource"
+                  />
+                </div>
+              </div>
+              <LecturerActionForm action={deleteActivityResourceAction}>
+                <input name="classId" type="hidden" value={classId} />
+                <input name="moduleId" type="hidden" value={moduleId} />
+                <input name="activityId" type="hidden" value={activityId} />
+                <input name="resourceId" type="hidden" value={resource.id} />
+                <ConfirmAction
+                  className="rounded-md border border-ember/30 bg-white px-3 py-1.5 text-xs font-semibold text-ember hover:bg-ember hover:text-white"
+                  confirmLabel="Remove resource"
+                  description="This removes the resource from the mission. The uploaded object is not deleted from storage in this pass."
+                  label="Remove resource"
+                  title="Remove this resource?"
+                />
+              </LecturerActionForm>
+            </div>
+          ))
+        )}
+      </div>
+      <LecturerActionForm
+        action={createActivityResourceAction}
+        className="mt-4 border-t border-ink/10 pt-4"
+      >
+        <input name="classId" type="hidden" value={classId} />
+        <input name="moduleId" type="hidden" value={moduleId} />
+        <input name="activityId" type="hidden" value={activityId} />
+        <TextField label="Resource title" name="title" />
+        <TextField
+          defaultValue={String(resources.length + 1)}
+          label="Position"
+          name="position"
+          type="number"
+        />
+        <MissionResourceUpload activityId={activityId} />
+        <button className="rounded-md border border-ink/20 bg-white px-3 py-2 text-sm font-semibold hover:bg-ink hover:text-white">
+          Add resource
+        </button>
+      </LecturerActionForm>
     </div>
   );
 }

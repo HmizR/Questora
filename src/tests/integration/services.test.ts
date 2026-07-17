@@ -4,7 +4,13 @@ import { describe, expect, it } from "vitest";
 import { db } from "@/lib/db";
 import { serializeQuizDefinition } from "@/lib/quiz";
 import { getOwnPublishedGrade, publishGrade } from "@/services/grade-service";
-import { updateActivity, updateModule, updateQuest } from "@/services/lecturer-service";
+import {
+  createActivityResource,
+  deleteActivityResource,
+  updateActivity,
+  updateModule,
+  updateQuest
+} from "@/services/lecturer-service";
 import { assertStudentCanAccessActivity, completeActivity } from "@/services/progress-service";
 import { getLecturerQuizAnalytics } from "@/services/quiz-analytics-service";
 import { attemptQuiz } from "@/services/student-service";
@@ -42,7 +48,7 @@ describe("database-backed service rules", () => {
       updateActivity({
         lecturerId: otherLecturer.id,
         activityId: activity.id,
-        moduleId: module.id,
+        moduleId: learningModule.id,
         type: ActivityType.LESSON,
         title: "Hijacked Mission",
         position: 1,
@@ -67,6 +73,53 @@ describe("database-backed service rules", () => {
 
     const unchangedClass = await db.class.findUniqueOrThrow({ where: { id: teachingClass.id } });
     expect(unchangedClass.lecturerId).toBe(lecturer.id);
+  });
+
+  it("allows lecturers to create and remove resources only for their own missions", async () => {
+    const otherLecturer = await createUser(UserRole.LECTURER, "Other Resource Owner");
+    const { lecturer, class: teachingClass } = await createClassFixture();
+    const learningModule = await createModuleFixture(teachingClass.id);
+    const activity = await createActivityFixture(learningModule.id);
+
+    await expect(
+      createActivityResource({
+        lecturerId: otherLecturer.id,
+        activityId: activity.id,
+        title: "Other Slides",
+        fileName: "slides.pdf",
+        fileUrl: `s3:mission-resources/${activity.id}/slides.pdf`,
+        contentType: "application/pdf",
+        size: 1000,
+        position: 1
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    const resource = await createActivityResource({
+      lecturerId: lecturer.id,
+      activityId: activity.id,
+      title: "Lecture Slides",
+      fileName: "slides.pdf",
+      fileUrl: `s3:mission-resources/${activity.id}/slides.pdf`,
+      contentType: "application/pdf",
+      size: 1000,
+      position: 1
+    });
+
+    await expect(
+      deleteActivityResource({
+        lecturerId: otherLecturer.id,
+        activityId: activity.id,
+        resourceId: resource.id
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    await deleteActivityResource({
+      lecturerId: lecturer.id,
+      activityId: activity.id,
+      resourceId: resource.id
+    });
+
+    await expect(db.activityResource.findUnique({ where: { id: resource.id } })).resolves.toBeNull();
   });
 
   it("blocks student activity access when not enrolled or content is unpublished", async () => {

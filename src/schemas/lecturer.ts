@@ -131,6 +131,25 @@ export const removeActivityPrerequisiteSchema = z.object({
   requiredActivityId: z.string().min(1)
 });
 
+export const createActivityResourceSchema = z.object({
+  classId: z.string().min(1),
+  moduleId: z.string().min(1),
+  activityId: z.string().min(1),
+  title: z.string().trim().min(2, "Title is required"),
+  fileName: z.string().trim().min(1, "File name is required").max(180),
+  fileUrl: z.string().trim().min(1, "Upload or paste a file reference first"),
+  contentType: z.string().trim().min(1).max(120),
+  size: z.coerce.number().int().nonnegative(),
+  position: z.coerce.number().int().positive()
+});
+
+export const deleteActivityResourceSchema = z.object({
+  classId: z.string().min(1),
+  moduleId: z.string().min(1),
+  activityId: z.string().min(1),
+  resourceId: z.string().min(1)
+});
+
 export const createQuestSchema = z.object({
   classId: z.string().min(1),
   title: z.string().trim().min(2, "Title is required"),

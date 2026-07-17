@@ -226,6 +226,54 @@ export async function deleteActivity(activityId: string, lecturerId: string) {
   return db.activity.delete({ where: { id: activityId } });
 }
 
+export async function createActivityResource(input: {
+  lecturerId: string;
+  activityId: string;
+  title: string;
+  fileName: string;
+  fileUrl: string;
+  contentType: string;
+  size: number;
+  position: number;
+}) {
+  await getActivityForLecturer(input.activityId, input.lecturerId);
+
+  try {
+    return await db.activityResource.create({
+      data: {
+        activityId: input.activityId,
+        title: input.title,
+        fileName: input.fileName,
+        fileUrl: input.fileUrl,
+        contentType: input.contentType,
+        size: input.size,
+        position: input.position,
+        createdById: input.lecturerId
+      }
+    });
+  } catch (error) {
+    throw prismaErrorToAppError(error);
+  }
+}
+
+export async function deleteActivityResource(input: {
+  lecturerId: string;
+  activityId: string;
+  resourceId: string;
+}) {
+  await getActivityForLecturer(input.activityId, input.lecturerId);
+
+  const resource = await db.activityResource.findUnique({
+    where: { id: input.resourceId }
+  });
+
+  if (!resource || resource.activityId !== input.activityId) {
+    throw new AppError("NOT_FOUND", "Resource not found.");
+  }
+
+  return db.activityResource.delete({ where: { id: input.resourceId } });
+}
+
 export async function addActivityPrerequisite(input: {
   lecturerId: string;
   activityId: string;

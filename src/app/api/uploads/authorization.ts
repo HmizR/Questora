@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import type { UploadIntent } from "@/lib/storage";
+import { assertStudentCanAccessActivity } from "@/services/progress-service";
 
 async function requireSubmissionActivity(activityId: string) {
   const activity = await db.activity.findUnique({
@@ -161,15 +162,33 @@ export async function authorizeStorageRef(input: {
     throw new AppError("FORBIDDEN", "You do not have access to this file.");
   }
 
-  if (
-    input.intent === "MISSION_RESOURCE" &&
-    (!input.activityId || !input.key.startsWith(`mission-resources/${input.activityId}/`))
-  ) {
-    throw new AppError("FORBIDDEN", "You do not have access to this file.");
+  if (input.intent === "MISSION_RESOURCE") {
+    if (!input.activityId || !input.key.startsWith(`mission-resources/${input.activityId}/`)) {
+      throw new AppError("FORBIDDEN", "You do not have access to this file.");
+    }
+
+    const activity = await requireActivity(input.activityId);
+
+    if (user.role === UserRole.LECTURER) {
+      const teachingClass = await db.class.findFirst({
+        where: {
+          id: activity.module.classId,
+          lecturerId: user.id
+        }
+      });
+
+      if (!teachingClass) {
+        throw new AppError("FORBIDDEN", "You do not have access to this file.");
+      }
+
+      return { user, activity, keyUserId: user.id };
+    }
+
+    if (user.role === UserRole.STUDENT) {
+      await assertStudentCanAccessActivity(input.activityId, user.id);
+      return { user, activity, keyUserId: user.id };
+    }
   }
 
-  return authorizeUploadIntent({
-    intent: input.intent,
-    activityId: input.activityId
-  });
+  throw new AppError("FORBIDDEN", "You do not have access to this file.");
 }

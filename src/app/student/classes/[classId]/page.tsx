@@ -29,6 +29,7 @@ export default async function StudentClassPage({
             include: {
               progresses: { where: { studentId: user.id } },
               grades: { where: { studentId: user.id, publishedAt: { not: null } } },
+              resources: { select: { id: true } },
               prerequisites: {
                 include: {
                   requiredActivity: {
@@ -91,6 +92,11 @@ export default async function StudentClassPage({
                         {activity.type} - {progress?.status ?? "NOT_STARTED"}
                       </p>
                       <p className="mt-1 text-sm text-ink/55">Due: {dueDate}</p>
+                      {activity.resources.length > 0 ? (
+                        <p className="mt-1 text-sm font-medium text-moss">
+                          {activity.resources.length} resource{activity.resources.length === 1 ? "" : "s"} available
+                        </p>
+                      ) : null}
                       {!isUnlocked ? (
                         <p className="mt-1 text-sm font-medium text-ember">
                           Locked until prerequisite missions are complete.

@@ -120,6 +120,74 @@ test("lecturer opens quiz analytics from regions", async ({ page }) => {
   await expect(page.getByRole("row", { name: /E2E Rival/ })).toContainText("Not passed");
 });
 
+test("lecturer uploads and removes a mission resource", async ({ page }) => {
+  await page.route("**/api/uploads/presign", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        uploadUrl: "https://uploads.questora.test/e2e-resource.pdf",
+        storageRef: `s3:mission-resources/${seed.activities.assignment.id}/e2e-resource.pdf`,
+        key: `mission-resources/${seed.activities.assignment.id}/e2e-resource.pdf`,
+        expiresIn: 300
+      })
+    });
+  });
+  await page.route("https://uploads.questora.test/e2e-resource.pdf", async (route) => {
+    await route.fulfill({ status: 200, body: "" });
+  });
+
+  await loginAs(page, e2eUsers.lecturer.email);
+  await page.goto(
+    `/lecturer/classes/${seed.class.id}/modules/${seed.module.id}/activities/${seed.activities.assignment.id}/edit`
+  );
+
+  await page.getByLabel("Resource title").fill("E2E Resource Pack");
+  await page.getByLabel("Position").last().fill("1");
+  await page.setInputFiles("#mission-resource-file", {
+    name: "e2e-resource.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("E2E resource")
+  });
+  await expect(page.getByRole("status").filter({ hasText: "Resource uploaded." })).toBeVisible();
+  await page.getByRole("button", { name: "Add resource" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Resource added." })).toBeVisible();
+  await expect(page.getByText("E2E Resource Pack")).toBeVisible();
+
+  await page.goto(`/lecturer/classes/${seed.class.id}/modules`);
+  await page.getByText("1. E2E Assignment").click();
+  await expect(page.getByText("1 resource")).toBeVisible();
+
+  await loginAs(page, e2eUsers.student.email);
+  await page.goto(`/student/classes/${seed.class.id}`);
+  await expect(page.getByText("1 resource available")).toBeVisible();
+
+  let downloadRequested = false;
+  await page.route("**/api/uploads/download", async (route) => {
+    downloadRequested = true;
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        downloadUrl: "https://downloads.questora.test/e2e-resource.pdf",
+        expiresIn: 300
+      })
+    });
+  });
+  await page.getByRole("link", { name: /E2E Assignment/ }).click();
+  await expect(page.getByRole("heading", { name: "Resources" })).toBeVisible();
+  await expect(page.getByText("E2E Resource Pack")).toBeVisible();
+  await page.getByRole("button", { name: "Open resource" }).click();
+  await expect.poll(() => downloadRequested).toBe(true);
+
+  await loginAs(page, e2eUsers.lecturer.email);
+  await page.goto(
+    `/lecturer/classes/${seed.class.id}/modules/${seed.module.id}/activities/${seed.activities.assignment.id}/edit`
+  );
+  await page.getByRole("button", { name: "Remove resource" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Remove resource" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Resource removed." })).toBeVisible();
+  await expect(page.getByText("E2E Resource Pack")).toHaveCount(0);
+});
+
 test("lecturer mission deletion requires confirmation", async ({ page }) => {
   const disposableMission = await db.activity.create({
     data: {

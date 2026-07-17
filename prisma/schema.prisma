@@ -62,42 +62,43 @@ enum QuestType {
 }
 
 model User {
-  id              String             @id @default(cuid())
-  name            String
-  email           String             @unique
-  passwordHash    String
-  role            UserRole
-  status          UserStatus         @default(ACTIVE)
-  avatarUrl       String?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-  taughtClasses   Class[]            @relation("ClassLecturer")
-  createdClasses  Class[]            @relation("ClassCreator")
-  enrollments     ClassStudent[]
-  progresses      ActivityProgress[]
-  submissions     Submission[]
-  grades          Grade[]            @relation("StudentGrades")
-  gradedGrades    Grade[]            @relation("GradedBy")
-  profile         StudentProfile?
-  xpTransactions  XPTransaction[]
-  badges          StudentBadge[]
-  quizAttempts    QuizAttempt[]
+  id               String             @id @default(cuid())
+  name             String
+  email            String             @unique
+  passwordHash     String
+  role             UserRole
+  status           UserStatus         @default(ACTIVE)
+  avatarUrl        String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  taughtClasses    Class[]            @relation("ClassLecturer")
+  createdClasses   Class[]            @relation("ClassCreator")
+  enrollments      ClassStudent[]
+  progresses       ActivityProgress[]
+  submissions      Submission[]
+  grades           Grade[]            @relation("StudentGrades")
+  gradedGrades     Grade[]            @relation("GradedBy")
+  profile          StudentProfile?
+  xpTransactions   XPTransaction[]
+  badges           StudentBadge[]
+  quizAttempts     QuizAttempt[]
+  createdResources ActivityResource[] @relation("ActivityResourceCreator")
 }
 
 model Class {
-  id             String             @id @default(cuid())
+  id             String          @id @default(cuid())
   name           String
-  code           String             @unique
+  code           String          @unique
   description    String?
   lecturerId     String
-  status         ClassStatus        @default(DRAFT)
+  status         ClassStatus     @default(DRAFT)
   startDate      DateTime?
   endDate        DateTime?
   createdById    String
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-  lecturer       User               @relation("ClassLecturer", fields: [lecturerId], references: [id])
-  createdBy      User               @relation("ClassCreator", fields: [createdById], references: [id])
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  lecturer       User            @relation("ClassLecturer", fields: [lecturerId], references: [id])
+  createdBy      User            @relation("ClassCreator", fields: [createdById], references: [id])
   students       ClassStudent[]
   modules        Module[]
   quests         Quest[]
@@ -133,29 +134,30 @@ model Module {
 }
 
 model Activity {
-  id                    String                 @id @default(cuid())
-  moduleId              String
-  type                  ActivityType
-  title                 String
-  description           String?
-  content               String?
-  position              Int
-  maxScore              Decimal?               @db.Decimal(8, 2)
-  passingScore          Decimal?               @db.Decimal(8, 2)
-  maxAttempts           Int?
-  dueAt                 DateTime?
-  isRequired            Boolean                @default(true)
-  isPublished           Boolean                @default(false)
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
-  module                Module                 @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  prerequisites         ActivityPrerequisite[] @relation("ActivityPrerequisites")
-  requiredBy            ActivityPrerequisite[] @relation("RequiredActivity")
-  progresses            ActivityProgress[]
-  submissions           Submission[]
-  grades                Grade[]
-  questLinks            QuestActivity[]
-  quizAttempts          QuizAttempt[]
+  id            String                 @id @default(cuid())
+  moduleId      String
+  type          ActivityType
+  title         String
+  description   String?
+  content       String?
+  position      Int
+  maxScore      Decimal?               @db.Decimal(8, 2)
+  passingScore  Decimal?               @db.Decimal(8, 2)
+  maxAttempts   Int?
+  dueAt         DateTime?
+  isRequired    Boolean                @default(true)
+  isPublished   Boolean                @default(false)
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  module        Module                 @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  prerequisites ActivityPrerequisite[] @relation("ActivityPrerequisites")
+  requiredBy    ActivityPrerequisite[] @relation("RequiredActivity")
+  progresses    ActivityProgress[]
+  submissions   Submission[]
+  grades        Grade[]
+  questLinks    QuestActivity[]
+  quizAttempts  QuizAttempt[]
+  resources     ActivityResource[]
 
   @@unique([moduleId, position])
 }
@@ -175,6 +177,24 @@ model QuizAttempt {
 
   @@unique([activityId, studentId, attemptNo])
   @@index([activityId, studentId])
+}
+
+model ActivityResource {
+  id          String   @id @default(cuid())
+  activityId  String
+  title       String
+  fileName    String
+  fileUrl     String
+  contentType String
+  size        Int
+  position    Int
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  activity    Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  createdBy   User     @relation("ActivityResourceCreator", fields: [createdById], references: [id])
+
+  @@unique([activityId, position])
 }
 
 model ActivityPrerequisite {

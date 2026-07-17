@@ -229,6 +229,109 @@ describe("upload presign APIs", () => {
     expect(rejected.status).toBe(403);
   });
 
+  it("allows enrolled students to download published mission resources only", async () => {
+    const { lecturer, class: teachingClass } = await createClassFixture();
+    const { student } = await enrollStudentFixture(teachingClass.id);
+    const otherStudent = await createUser(UserRole.STUDENT, "Other Resource Student");
+    const learningModule = await createModuleFixture(teachingClass.id, { isPublished: true });
+    const activity = await createActivityFixture(learningModule.id, {
+      isPublished: true,
+      type: ActivityType.LESSON
+    });
+
+    setMockSession({
+      id: student.id,
+      name: student.name,
+      email: student.email,
+      role: "STUDENT"
+    });
+
+    const accepted = await downloadUpload(
+      jsonRequest({
+        intent: "MISSION_RESOURCE",
+        activityId: activity.id,
+        storageRef: `s3:mission-resources/${activity.id}/slides.pdf`
+      })
+    );
+
+    setMockSession({
+      id: otherStudent.id,
+      name: otherStudent.name,
+      email: otherStudent.email,
+      role: "STUDENT"
+    });
+
+    const rejected = await downloadUpload(
+      jsonRequest({
+        intent: "MISSION_RESOURCE",
+        activityId: activity.id,
+        storageRef: `s3:mission-resources/${activity.id}/slides.pdf`
+      })
+    );
+
+    setMockSession({
+      id: lecturer.id,
+      name: lecturer.name,
+      email: lecturer.email,
+      role: "LECTURER"
+    });
+
+    const lecturerDownload = await downloadUpload(
+      jsonRequest({
+        intent: "MISSION_RESOURCE",
+        activityId: activity.id,
+        storageRef: `s3:mission-resources/${activity.id}/slides.pdf`
+      })
+    );
+
+    expect(accepted.status).toBe(200);
+    expect(rejected.status).toBe(403);
+    expect(lecturerDownload.status).toBe(200);
+  });
+
+  it("blocks student mission resource downloads for unpublished content", async () => {
+    const { class: teachingClass } = await createClassFixture();
+    const { student } = await enrollStudentFixture(teachingClass.id);
+    const unpublishedModule = await createModuleFixture(teachingClass.id, {
+      isPublished: false
+    });
+    const publishedModule = await createModuleFixture(teachingClass.id, {
+      isPublished: true,
+      position: 2
+    });
+    const hiddenByModule = await createActivityFixture(unpublishedModule.id, {
+      isPublished: true
+    });
+    const hiddenActivity = await createActivityFixture(publishedModule.id, {
+      isPublished: false,
+      position: 2
+    });
+    setMockSession({
+      id: student.id,
+      name: student.name,
+      email: student.email,
+      role: "STUDENT"
+    });
+
+    const moduleRejected = await downloadUpload(
+      jsonRequest({
+        intent: "MISSION_RESOURCE",
+        activityId: hiddenByModule.id,
+        storageRef: `s3:mission-resources/${hiddenByModule.id}/resource.pdf`
+      })
+    );
+    const activityRejected = await downloadUpload(
+      jsonRequest({
+        intent: "MISSION_RESOURCE",
+        activityId: hiddenActivity.id,
+        storageRef: `s3:mission-resources/${hiddenActivity.id}/resource.pdf`
+      })
+    );
+
+    expect(moduleRejected.status).toBe(403);
+    expect(activityRejected.status).toBe(403);
+  });
+
   it("authorizes protected download URLs by intent and storage scope", async () => {
     const { lecturer, class: teachingClass } = await createClassFixture();
     const { student } = await enrollStudentFixture(teachingClass.id);

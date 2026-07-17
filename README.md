@@ -30,7 +30,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Student leaderboards include a global XP ranking and class-specific quest XP ranking.
 - Leaderboard names link to public student profiles with gamification data only.
 - Student class workspaces include a Grades tab for own published assignment, project, and quiz grades.
-- Protected S3 uploads support student assignment/project files and self-service avatar images with short-lived upload/download URLs.
+- Protected S3 uploads support student assignment/project files, self-service avatar images, and lecturer mission resources with short-lived upload/download URLs.
 - User avatars appear in account menus, leaderboards, profiles, lecturer rosters, and submission review.
 - Seed data with one admin, two lecturers, five students, two classes, example modules, activities, quests, badges, and student profiles.
 
@@ -62,9 +62,9 @@ S3_SECRET_ACCESS_KEY="replace-with-secret-key"
 # S3_FORCE_PATH_STYLE="false"
 ```
 
-The S3 variables power protected uploads. Student assignment/project submissions and account
-avatars can upload one file through presigned URLs while still accepting pasted URLs or `s3:`
-references for development compatibility. Browser-based PUT uploads require bucket CORS that
+The S3 variables power protected uploads. Student assignment/project submissions, account
+avatars, and lecturer mission resources upload through presigned URLs while still accepting
+pasted URLs or `s3:` references for development compatibility. Browser-based PUT uploads require bucket CORS that
 allows `PUT` from your Questora app origin and the `Content-Type` header.
 
 ## Database
@@ -224,6 +224,7 @@ student5@questora.dev
 - Quiz analytics read existing attempt records and do not change grades or XP.
 - Global leaderboards use total profile XP; class leaderboards use quest XP transactions for that class.
 - Protected submission uploads use `s3:<object-key>` storage references and short-lived signed download URLs.
+- Lecturer mission resources use `s3:<object-key>` storage references and are available only to assigned lecturers or enrolled students who can access the published mission.
 
 ## UI Workflow Coverage
 

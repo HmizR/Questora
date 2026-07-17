@@ -48,6 +48,9 @@ export default async function LecturerModulesPage({
                   }
                 },
                 select: { studentId: true }
+              },
+              resources: {
+                select: { id: true }
               }
             },
             orderBy: { position: "asc" }
@@ -139,7 +142,10 @@ export default async function LecturerModulesPage({
                     meta={`${activity.type} - ${activity.isPublished ? "Published" : "Draft"}`}
                     title={`${activity.position}. ${activity.title}`}
                   >
-                    <div className="mb-4 flex justify-end">
+                    <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="text-sm text-ink/60">
+                        {activity.resources.length} resource{activity.resources.length === 1 ? "" : "s"}
+                      </p>
                       <ActionMenu label={`Actions for ${activity.title}`}>
                         <Link
                           className={lecturerMenuItemClassName}
@@ -200,6 +206,14 @@ export default async function LecturerModulesPage({
                         No submission review needed for this mission type.
                       </div>
                     )}
+                    <div className="mt-3 flex justify-end">
+                      <Link
+                        className="rounded-md border border-ink/20 bg-white px-3 py-2 text-sm font-semibold hover:bg-ink hover:text-white"
+                        href={`/lecturer/classes/${classId}/modules/${module.id}/activities/${activity.id}/edit`}
+                      >
+                        Manage resources
+                      </Link>
+                    </div>
                   </Expander>
                 );
               }))}

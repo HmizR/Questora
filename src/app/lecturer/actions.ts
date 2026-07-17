@@ -18,9 +18,11 @@ import {
   activityIdSchema,
   activityPrerequisiteSchema,
   connectQuestActivitySchema,
+  createActivityResourceSchema,
   createActivitySchema,
   createModuleSchema,
   createQuestSchema,
+  deleteActivityResourceSchema,
   gradeSubmissionSchema,
   moduleIdSchema,
   publishGradeSchema,
@@ -36,9 +38,11 @@ import {
   addActivityPrerequisite,
   connectActivityToQuest,
   createActivity,
+  createActivityResource,
   createModule,
   createQuest,
   deleteActivity,
+  deleteActivityResource,
   deleteModule,
   deleteQuest,
   gradeSubmission,
@@ -293,6 +297,46 @@ export async function removeActivityPrerequisiteAction(
     await removeActivityPrerequisite({ ...parsed.data, lecturerId: user.id });
     revalidatePath(`/lecturer/classes/${parsed.data.classId}/modules`);
     return { ok: true, data: { message: "Prerequisite removed." } };
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+}
+
+export async function createActivityResourceAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = createActivityResourceSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  try {
+    const user = await requireRole("LECTURER");
+    await createActivityResource({ ...parsed.data, lecturerId: user.id });
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}/modules`);
+    revalidatePath(
+      `/lecturer/classes/${parsed.data.classId}/modules/${parsed.data.moduleId}/activities/${parsed.data.activityId}/edit`
+    );
+    return { ok: true, data: { message: "Resource added." } };
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+}
+
+export async function deleteActivityResourceAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = deleteActivityResourceSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  try {
+    const user = await requireRole("LECTURER");
+    await deleteActivityResource({ ...parsed.data, lecturerId: user.id });
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}/modules`);
+    revalidatePath(
+      `/lecturer/classes/${parsed.data.classId}/modules/${parsed.data.moduleId}/activities/${parsed.data.activityId}/edit`
+    );
+    return { ok: true, data: { message: "Resource removed." } };
   } catch (error) {
     return { ok: false, error: toActionError(error) };
   }

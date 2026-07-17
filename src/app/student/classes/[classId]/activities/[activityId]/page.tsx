@@ -37,7 +37,7 @@ export default async function StudentActivityPage({
 
   if (activity.module.classId !== classId) notFound();
 
-  const [progress, submission, grade, quizAttempts] = await Promise.all([
+  const [progress, submission, grade, quizAttempts, resources] = await Promise.all([
     db.activityProgress.findUnique({
       where: { activityId_studentId: { activityId, studentId: user.id } }
     }),
@@ -51,6 +51,10 @@ export default async function StudentActivityPage({
       where: { activityId, studentId: user.id },
       orderBy: { attemptNo: "desc" },
       take: 5
+    }),
+    db.activityResource.findMany({
+      where: { activityId },
+      orderBy: { position: "asc" }
     })
   ]);
 
@@ -89,6 +93,34 @@ export default async function StudentActivityPage({
             <div className="mt-5 whitespace-pre-wrap rounded-md bg-parchment p-5 text-sm leading-6">
               {displayContent}
             </div>
+          ) : null}
+          {resources.length > 0 ? (
+            <section className="mt-5 rounded-lg border border-ink/10 bg-surface-muted p-5">
+              <h2 className="font-bold">Resources</h2>
+              <div className="mt-3 grid gap-3">
+                {resources.map((resource) => (
+                  <div
+                    className="flex min-w-0 flex-col gap-2 rounded-md border border-border/80 bg-surface p-3 sm:flex-row sm:items-center sm:justify-between"
+                    key={resource.id}
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold" title={resource.title}>
+                        {resource.position}. {resource.title}
+                      </p>
+                      <p className="truncate text-xs text-ink/55" title={resource.fileName}>
+                        {resource.fileName}
+                      </p>
+                    </div>
+                    <ProtectedFileLink
+                      activityId={activity.id}
+                      fileUrl={resource.fileUrl}
+                      intent="MISSION_RESOURCE"
+                      label="Open resource"
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
           ) : null}
           {activity.type === ActivityType.QUIZ && hasQuizAttemptsRemaining ? (
             <div className="mt-6">
