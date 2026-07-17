@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { e2ePassword, e2eUsers, resetE2eDatabase, type E2eSeed } from "./fixtures";
 import { loginAs, logout } from "./helpers";
@@ -9,12 +9,49 @@ test.beforeEach(async () => {
   seed = await resetE2eDatabase();
 });
 
+async function mockAvatarUpload(page: Page) {
+  await page.route("**/api/uploads/presign", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        uploadUrl: "https://uploads.questora.test/e2e-avatar.png",
+        storageRef: `s3:avatars/${seed.users.student.id}/e2e-avatar.png`,
+        key: `avatars/${seed.users.student.id}/e2e-avatar.png`,
+        expiresIn: 300
+      })
+    });
+  });
+  await page.route("https://uploads.questora.test/e2e-avatar.png", async (route) => {
+    await route.fulfill({ status: 200, body: "" });
+  });
+}
+
+async function mockAvatarDownload(page: Page) {
+  await page.route("**/api/uploads/download", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        downloadUrl: "https://downloads.questora.test/e2e-avatar.png",
+        expiresIn: 300
+      })
+    });
+  });
+}
+
 test("user updates profile and changes own password", async ({ page }) => {
+  await mockAvatarUpload(page);
+  await mockAvatarDownload(page);
   await loginAs(page, e2eUsers.student.email);
   await page.goto("/account");
 
   await page.getByLabel("Name").fill("E2E Student Updated");
-  await page.getByLabel("Avatar URL").fill("https://example.com/e2e-avatar.png");
+  await page.setInputFiles("#avatar-file", {
+    name: "e2e-avatar.png",
+    mimeType: "image/png",
+    buffer: Buffer.from("E2E avatar image")
+  });
+  await expect(page.getByRole("status").filter({ hasText: "Avatar uploaded." })).toBeVisible();
+  await expect(page.getByText("e2e-avatar.png (protected)")).toBeVisible();
   await page.getByRole("button", { name: "Save profile" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Profile updated." })).toBeVisible();
   await expect(page.getByText("E2E Student Updated")).toBeVisible();
@@ -35,6 +72,16 @@ test("user updates profile and changes own password", async ({ page }) => {
   await page.getByLabel("Password").fill(e2ePassword);
   await page.getByRole("button", { name: "Enter Questora" }).click();
   await expect(page.getByText("Invalid credentials or inactive account.")).toBeVisible();
+});
+
+test("user can still save a pasted avatar URL", async ({ page }) => {
+  await loginAs(page, e2eUsers.student.email);
+  await page.goto("/account");
+
+  await page.getByLabel("Avatar URL").fill("https://example.com/e2e-avatar.png");
+  await page.getByRole("button", { name: "Save profile" }).click();
+
+  await expect(page.getByRole("status").filter({ hasText: "Profile updated." })).toBeVisible();
 });
 
 test("admin resets a student password", async ({ page }) => {

@@ -194,6 +194,29 @@ describe("database-backed server actions", () => {
     expect(untouchedUser.name).toBe("Other Profile");
   });
 
+  it("accepts protected s3 storage references for own avatar", async () => {
+    const user = await createUser(UserRole.STUDENT, "Avatar Owner");
+    const storageRef = `s3:avatars/${user.id}/avatar.png`;
+    setMockSession({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: "STUDENT"
+    });
+
+    const result = await updateOwnProfileAction(
+      initialAccountActionState,
+      formData({
+        name: "Avatar Owner Updated",
+        avatarUrl: storageRef
+      })
+    );
+    const updatedUser = await db.user.findUniqueOrThrow({ where: { id: user.id } });
+
+    expect(result).toMatchObject({ ok: true });
+    expect(updatedUser.avatarUrl).toBe(storageRef);
+  });
+
   it("changes own password only when the current password is valid", async () => {
     const user = await createUser(UserRole.STUDENT, "Password Owner");
     setMockSession({

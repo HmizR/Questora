@@ -4,6 +4,7 @@ import {
   ChangeOwnPasswordForm,
   UpdateOwnProfileForm
 } from "@/components/account/account-forms";
+import { AvatarImage } from "@/components/ui/avatar-image";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { requireUser } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
@@ -45,7 +46,13 @@ export default async function AccountPage() {
           </section>
         </div>
         <aside className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-bold">Account details</h2>
+          <div className="flex items-center gap-4">
+            <AvatarImage avatarUrl={user.avatarUrl} name={user.name} />
+            <div className="min-w-0">
+              <h2 className="text-lg font-bold">Account details</h2>
+              <p className="mt-1 truncate text-sm text-ink/60">{user.email}</p>
+            </div>
+          </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {[
               ["Name", user.name ?? "Unnamed user"],

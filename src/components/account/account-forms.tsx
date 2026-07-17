@@ -5,18 +5,14 @@ import {
   updateOwnProfileAction
 } from "@/app/account/actions";
 import { AccountActionForm } from "@/components/account/action-form";
+import { AvatarUpload } from "@/components/account/avatar-upload";
 import { TextField } from "@/components/admin/form-fields";
 
 export function UpdateOwnProfileForm({ user }: { user: Pick<User, "name" | "avatarUrl"> }) {
   return (
     <AccountActionForm action={updateOwnProfileAction} className="mt-5 space-y-5">
       <TextField label="Name" name="name" defaultValue={user.name} />
-      <TextField
-        label="Avatar URL"
-        name="avatarUrl"
-        defaultValue={user.avatarUrl}
-        required={false}
-      />
+      <AvatarUpload defaultAvatarUrl={user.avatarUrl} name={user.name} />
       <button className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-steel">
         Save profile
       </button>

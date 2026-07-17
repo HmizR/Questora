@@ -30,7 +30,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Student leaderboards include a global XP ranking and class-specific quest XP ranking.
 - Leaderboard names link to public student profiles with gamification data only.
 - Student class workspaces include a Grades tab for own published assignment, project, and quiz grades.
-- Protected S3 uploads support student assignment/project files with short-lived upload/download URLs.
+- Protected S3 uploads support student assignment/project files and self-service avatar images with short-lived upload/download URLs.
 - Seed data with one admin, two lecturers, five students, two classes, example modules, activities, quests, badges, and student profiles.
 
 ## Tech Stack
@@ -61,10 +61,10 @@ S3_SECRET_ACCESS_KEY="replace-with-secret-key"
 # S3_FORCE_PATH_STYLE="false"
 ```
 
-The S3 variables power protected uploads. Student assignment/project submissions can upload
-one file through presigned URLs while still accepting pasted URLs or `s3:` references for
-development compatibility. Browser-based PUT uploads require bucket CORS that allows `PUT`
-from your Questora app origin and the `Content-Type` header.
+The S3 variables power protected uploads. Student assignment/project submissions and account
+avatars can upload one file through presigned URLs while still accepting pasted URLs or `s3:`
+references for development compatibility. Browser-based PUT uploads require bucket CORS that
+allows `PUT` from your Questora app origin and the `Content-Type` header.
 
 ## Database
 
