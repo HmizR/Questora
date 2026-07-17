@@ -9,22 +9,15 @@ import {
 } from "@/components/student/activity-forms";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { requireClassEnrollment } from "@/lib/authorization-service";
+import { formatDateTime, formatTimestampLabel } from "@/lib/date-format";
 import { canStudentEditSubmission } from "@/lib/domain-rules";
 import { db } from "@/lib/db";
 import { canRevealQuizCorrectAnswers, parseStoredQuizAttempt } from "@/lib/quiz-analytics";
 import { parseQuizDefinition } from "@/lib/quiz";
+import { readableStatus } from "@/lib/status-label";
 import { assertStudentCanAccessActivity } from "@/services/progress-service";
-
-function formatDateTime(date: Date) {
-  return date.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit"
-  });
-}
 
 export default async function StudentActivityPage({
   params
@@ -110,11 +103,22 @@ export default async function StudentActivityPage({
         <aside className="space-y-5">
           <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-sm">
             <h2 className="font-bold">Mission status</h2>
-            <p className="mt-2 text-sm text-ink/65">{progress?.status ?? "NOT_STARTED"}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <StatusBadge tone={progress?.status === "COMPLETED" ? "success" : "neutral"}>
+                {readableStatus(progress?.status ?? "NOT_STARTED")}
+              </StatusBadge>
+              {publishedGrade ? <StatusBadge tone="success">Published grade</StatusBadge> : null}
+              {!publishedGrade ? <StatusBadge>No published grade</StatusBadge> : null}
+            </div>
             <p className="mt-1 text-sm text-ink/65">{progress?.progressPercent ?? 0}% progress</p>
             {publishedGrade ? (
               <p className="mt-3 text-sm font-semibold text-moss">
                 Grade: {publishedGrade.score.toString()}
+              </p>
+            ) : null}
+            {!publishedGrade ? (
+              <p className="mt-3 text-sm text-ink/65">
+                A grade will appear here after your lecturer publishes it.
               </p>
             ) : null}
             {publishedGrade?.feedback ? (
@@ -142,17 +146,45 @@ export default async function StudentActivityPage({
             <CompleteLessonForm activityId={activity.id} />
           ) : activity.type === ActivityType.ASSIGNMENT || activity.type === ActivityType.PROJECT ? (
             canEditSubmission ? (
-              <SubmitAssignmentForm
-                activityId={activity.id}
-                defaultText={submission?.textContent}
-                defaultFileUrl={submission?.fileUrl}
-              />
+              <div className="space-y-3">
+                {submission ? (
+                  <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-sm">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusBadge tone="success">{readableStatus(submission.status)}</StatusBadge>
+                      <StatusBadge tone="info">Editable until graded</StatusBadge>
+                    </div>
+                    <p className="mt-2 text-sm text-ink/65">
+                      {formatTimestampLabel("Submitted", submission.submittedAt)}
+                    </p>
+                  </section>
+                ) : (
+                  <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-sm">
+                    <StatusBadge>Not submitted</StatusBadge>
+                    <p className="mt-2 text-sm text-ink/65">
+                      You can edit your submission until a lecturer grades it.
+                    </p>
+                  </section>
+                )}
+                <SubmitAssignmentForm
+                  activityId={activity.id}
+                  defaultText={submission?.textContent}
+                  defaultFileUrl={submission?.fileUrl}
+                />
+              </div>
             ) : (
               <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-sm">
-                <h2 className="font-bold">Submission locked</h2>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="font-bold">Submission locked</h2>
+                  <StatusBadge tone="success">Graded</StatusBadge>
+                </div>
                 <p className="mt-2 text-sm text-ink/65">
                   This work has been graded and can no longer be edited.
                 </p>
+                {submission?.submittedAt ? (
+                  <p className="mt-2 text-sm text-ink/65">
+                    {formatTimestampLabel("Submitted", submission.submittedAt)}
+                  </p>
+                ) : null}
                 {submission?.textContent ? (
                   <div className="mt-4 whitespace-pre-wrap rounded-md bg-parchment p-4 text-sm leading-6">
                     {submission.textContent}
@@ -172,7 +204,8 @@ export default async function StudentActivityPage({
                     <tr>
                       <th className="py-2 pr-3">Attempt</th>
                       <th className="py-2 pr-3">Score</th>
-                      <th className="py-2">Status</th>
+                      <th className="py-2 pr-3">Status</th>
+                      <th className="py-2">Submitted</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/80">
@@ -182,8 +215,13 @@ export default async function StudentActivityPage({
                         <td className="py-2 pr-3 font-semibold">
                           {attempt.score.toString()} / {attempt.maxScore.toString()}
                         </td>
-                        <td className={attempt.passed ? "py-2 text-moss" : "py-2 text-ink/65"}>
-                          {attempt.passed ? "Passed" : "Not passed"}
+                        <td className="py-2 pr-3">
+                          <StatusBadge tone={attempt.passed ? "success" : "warning"}>
+                            {attempt.passed ? "Passed" : "Not passed"}
+                          </StatusBadge>
+                        </td>
+                        <td className="py-2 text-ink/65">
+                          {formatDateTime(attempt.submittedAt)}
                         </td>
                       </tr>
                     ))}

@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { EmptyState } from "@/components/ui/empty-state";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { requireClassLecturer } from "@/lib/authorization-service";
+import { formatTimestampLabel } from "@/lib/date-format";
 import { db } from "@/lib/db";
 
 export default async function LecturerGradesPage({
@@ -99,21 +101,44 @@ export default async function LecturerGradesPage({
                     return (
                       <td className="px-4 py-3" key={mission.id}>
                         {grade ? (
-                          <span className="font-semibold text-ink">
-                            {grade.score.toString()}
-                            {!grade.publishedAt ? (
-                              <span className="ml-2 rounded bg-parchment px-2 py-1 text-xs text-ink/65">
-                                Draft
+                          <div
+                            className="space-y-1"
+                            title={
+                              grade.publishedAt
+                                ? formatTimestampLabel("Published", grade.publishedAt)
+                                : grade.gradedAt
+                                  ? formatTimestampLabel("Graded", grade.gradedAt)
+                                  : undefined
+                            }
+                          >
+                            <span className="block font-semibold text-ink">
+                              {grade.score.toString()}
+                            </span>
+                            <StatusBadge tone={grade.publishedAt ? "success" : "info"}>
+                              {grade.publishedAt ? "Published" : "Draft grade"}
+                            </StatusBadge>
+                            <span className="block text-xs text-ink/55">
+                              {grade.publishedAt
+                                ? formatTimestampLabel("Published", grade.publishedAt)
+                                : grade.gradedAt
+                                  ? formatTimestampLabel("Graded", grade.gradedAt)
+                                  : "Graded"}
+                            </span>
+                          </div>
+                        ) : submission ? (
+                          <div className="space-y-1">
+                            <StatusBadge tone="warning">Ungraded</StatusBadge>
+                            {submission.submittedAt ? (
+                              <span className="block text-xs text-ink/55">
+                                {formatTimestampLabel("Submitted", submission.submittedAt)}
                               </span>
                             ) : null}
-                          </span>
-                        ) : submission ? (
-                          <span className="text-ember">Ungraded</span>
+                          </div>
                         ) : mission.type === ActivityType.ASSIGNMENT ||
                           mission.type === ActivityType.PROJECT ? (
-                          <span className="text-ink/55">Not submitted</span>
+                          <StatusBadge>Not submitted</StatusBadge>
                         ) : (
-                          <span className="text-ink/55">No grade</span>
+                          <StatusBadge>No grade</StatusBadge>
                         )}
                       </td>
                     );

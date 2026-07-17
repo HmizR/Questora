@@ -33,6 +33,7 @@ Post-MVP UI refresh completed:
 - Modern responsive dashboard UI refresh with icons and persisted light/dark theme toggle
 - Structured toast notifications and inline action error summaries
 - Data-safety UX with confirmation dialogs and shared empty states
+- Lightweight submission and grading visibility with consistent status badges and timestamps
 - Isolated PostgreSQL integration test setup with service and server action coverage
 - Playwright UI-level workflow test setup for admin, lecturer, and student paths
 - GitHub Actions CI quality gate for Prisma validation, typecheck, lint, tests, e2e, and build
@@ -204,6 +205,7 @@ Completed:
 - Toast feedback coverage in representative admin, lecturer, and student browser workflows
 - Account/password integration and browser workflow coverage
 - Destructive-action confirmation and empty-state browser workflow coverage
+- Submission/grading status visibility coverage for lecturer and student workflows
 - GitHub Actions workflow for pull requests and pushes to `main`
 - CI PostgreSQL service database and Playwright failure artifact upload
 - Production deployment guide for Vercel and hosted PostgreSQL
@@ -223,8 +225,6 @@ Current automated coverage:
   - CI verification on GitHub after the workflow is pushed
   - first real Vercel deployment dry run
   - production smoke testing with real production-created data
-- Data safety UX:
-  - lightweight visibility for grading/submission state changes
 - S3-backed upload capability:
   - add S3 storage configuration and upload helpers with file type/size validation
   - support student assignment/project file uploads using the existing `Submission.fileUrl`

@@ -5,34 +5,11 @@ import { notFound } from "next/navigation";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { EmptyState } from "@/components/ui/empty-state";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { requireClassEnrollment } from "@/lib/authorization-service";
+import { formatDate, formatDateTime, formatTimestampLabel } from "@/lib/date-format";
 import { db } from "@/lib/db";
-
-function formatDate(date: Date | null | undefined) {
-  if (!date) {
-    return "No date";
-  }
-
-  return date.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric"
-  });
-}
-
-function formatDateTime(date: Date | null | undefined) {
-  if (!date) {
-    return "No timestamp";
-  }
-
-  return date.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit"
-  });
-}
+import { readableStatus } from "@/lib/status-label";
 
 export default async function StudentClassGradesPage({
   params
@@ -117,15 +94,6 @@ export default async function StudentClassGradesPage({
                 const submission = mission.submissions[0];
                 const bestAttempt = mission.quizAttempts[0];
                 const isQuiz = mission.type === ActivityType.QUIZ;
-                const submissionStatus = isQuiz
-                  ? bestAttempt
-                    ? `${mission.quizAttempts.length} attempt${
-                        mission.quizAttempts.length === 1 ? "" : "s"
-                      }, best ${bestAttempt.score.toString()} / ${bestAttempt.maxScore.toString()}`
-                    : "No attempts yet"
-                  : submission
-                    ? `${submission.status} ${submission.submittedAt ? `on ${formatDateTime(submission.submittedAt)}` : ""}`
-                    : "Not submitted";
 
                 return (
                   <tr className="align-top" key={mission.id}>
@@ -140,21 +108,58 @@ export default async function StudentClassGradesPage({
                     </td>
                     <td className="px-4 py-3">{mission.type}</td>
                     <td className="px-4 py-3">{formatDate(mission.dueAt)}</td>
-                    <td className="px-4 py-3 text-ink/70">{submissionStatus}</td>
+                    <td className="px-4 py-3 text-ink/70">
+                      {isQuiz ? (
+                        bestAttempt ? (
+                          <div className="space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <StatusBadge tone={bestAttempt.passed ? "success" : "warning"}>
+                                {bestAttempt.passed ? "Passed" : "Not passed"}
+                              </StatusBadge>
+                              <span>
+                                {mission.quizAttempts.length} attempt
+                                {mission.quizAttempts.length === 1 ? "" : "s"}
+                              </span>
+                            </div>
+                            <span className="block text-xs text-ink/55">
+                              Best {bestAttempt.score.toString()} / {bestAttempt.maxScore.toString()}
+                            </span>
+                          </div>
+                        ) : (
+                          <StatusBadge>No attempts yet</StatusBadge>
+                        )
+                      ) : submission ? (
+                        <div className="space-y-1">
+                          <StatusBadge tone="success">{readableStatus(submission.status)}</StatusBadge>
+                          {submission.submittedAt ? (
+                            <span className="block text-xs text-ink/55">
+                              {formatTimestampLabel("Submitted", submission.submittedAt)}
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <StatusBadge>Not submitted</StatusBadge>
+                      )}
+                    </td>
                     <td className="px-4 py-3 font-semibold">
                       {grade ? (
-                        <>
-                          {grade.score.toString()}
-                          {mission.maxScore ? ` / ${mission.maxScore.toString()}` : ""}
-                        </>
+                        <div className="space-y-1">
+                          <span className="block">
+                            {grade.score.toString()}
+                            {mission.maxScore ? ` / ${mission.maxScore.toString()}` : ""}
+                          </span>
+                          <StatusBadge tone="success">Published</StatusBadge>
+                        </div>
                       ) : (
-                        <span className="font-normal text-ink/55">Not published</span>
+                        <StatusBadge>Not published</StatusBadge>
                       )}
                     </td>
                     <td className="max-w-[280px] px-4 py-3 text-ink/70">
                       {grade?.feedback ? grade.feedback : "No feedback yet"}
                     </td>
-                    <td className="px-4 py-3 text-ink/70">{formatDate(grade?.publishedAt)}</td>
+                    <td className="px-4 py-3 text-ink/70">
+                      {grade?.publishedAt ? formatDateTime(grade.publishedAt) : "Not published"}
+                    </td>
                   </tr>
                 );
               })}

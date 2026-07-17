@@ -19,6 +19,8 @@ test("student submission can be graded and then locks on the student activity pa
   await page.getByLabel("File URL").fill("https://example.com/e2e-submission");
   await page.getByRole("button", { name: "Submit assignment" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Submission sent." })).toBeVisible();
+  await expect(page.getByText("Submitted").first()).toBeVisible();
+  await expect(page.getByText("Editable until graded")).toBeVisible();
 
   const lecturerContext = await browser.newContext();
   const lecturerPage = await lecturerContext.newPage();
@@ -28,22 +30,28 @@ test("student submission can be graded and then locks on the student activity pa
       `${seed.activities.assignment.id}/submissions?studentId=${seed.users.student.id}`
   );
   await expect(lecturerPage.getByText("This is my e2e assignment answer.")).toBeVisible();
+  await expect(lecturerPage.getByText("Submitted").first()).toBeVisible();
+  await expect(lecturerPage.getByText("Ungraded").first()).toBeVisible();
   await lecturerPage.getByLabel("Score").fill("88");
   await lecturerPage.getByLabel("Feedback").fill("Solid work from the e2e flow.");
   await lecturerPage.getByRole("button", { name: "Grade" }).click();
   await expect(lecturerPage.getByRole("button", { name: "Publish grade" })).toBeVisible();
+  await expect(lecturerPage.getByText("Draft grade").first()).toBeVisible();
   await lecturerPage.getByRole("button", { name: "Publish grade" }).click();
-  await expect(lecturerPage.getByText("88 published")).toBeVisible();
+  await expect(lecturerPage.getByText("Published").first()).toBeVisible();
+  await expect(lecturerPage.getByText("Score 88").first()).toBeVisible();
   await lecturerContext.close();
 
   await page.reload();
   await expect(page.getByRole("heading", { name: "Submission locked" })).toBeVisible();
+  await expect(page.getByText("Graded").first()).toBeVisible();
   await expect(page.getByText("This work has been graded and can no longer be edited.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit assignment" })).toHaveCount(0);
 
   await page.goto(`/student/classes/${seed.class.id}/grades`);
   await expect(page.getByRole("heading", { name: "E2E Realm grades" })).toBeVisible();
   await expect(page.getByRole("row", { name: /E2E Assignment/ })).toContainText("88 / 100");
+  await expect(page.getByRole("row", { name: /E2E Assignment/ })).toContainText("Published");
   await expect(page.getByRole("row", { name: /E2E Assignment/ })).toContainText(
     "Solid work from the e2e flow."
   );

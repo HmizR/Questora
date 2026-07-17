@@ -15,6 +15,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Structured toast notifications and inline action error summaries for admin, lecturer, and student workflows.
 - Confirmation dialogs protect destructive admin and lecturer actions.
 - Shared empty states make low-data dashboards and workspaces easier to recover from.
+- Consistent status badges and timestamps clarify submission, grading, and publishing states.
 - Account settings support self-service name/avatar edits and password changes.
 - Admins can reset user passwords for MVP account recovery.
 - Lecturer and student class workspaces use compact main-content tabs for regions, missions, quests, grades, and roster views.
@@ -217,6 +218,7 @@ student assignment submission, lecturer grading/publishing, graded submission lo
 quiz attempt exhaustion, and leaderboard profile links.
 They also assert toast feedback for representative admin, lecturer, and student actions.
 Data-safety workflows cover destructive-action confirmation and empty-state rendering.
+Submission and grading workflows also assert visible status labels for draft, published, locked, and submitted states.
 
 ## Quality Checks
 

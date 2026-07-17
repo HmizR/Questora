@@ -5,8 +5,11 @@ import { notFound } from "next/navigation";
 import { GradeSubmissionForm, PublishGradeForm } from "@/components/lecturer/forms";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { requireClassLecturer } from "@/lib/authorization-service";
+import { formatTimestampLabel } from "@/lib/date-format";
 import { db } from "@/lib/db";
+import { readableStatus } from "@/lib/status-label";
 
 export default async function MissionSubmissionsPage({
   params,
@@ -74,6 +77,25 @@ export default async function MissionSubmissionsPage({
     ? `/lecturer/classes/${classId}/modules/${moduleId}/activities/${activityId}/submissions?studentId=${selectedStudentId}`
     : `/lecturer/classes/${classId}/modules/${moduleId}/activities/${activityId}/submissions`;
 
+  function gradeBadge(gradeEntry: typeof grade, isSelected = false) {
+    if (!gradeEntry) {
+      return (
+        <StatusBadge className={isSelected ? "border-white/25 bg-white/15 text-white" : ""} tone="warning">
+          Ungraded
+        </StatusBadge>
+      );
+    }
+
+    return (
+      <StatusBadge
+        className={isSelected ? "border-white/25 bg-white/15 text-white" : ""}
+        tone={gradeEntry.publishedAt ? "success" : "info"}
+      >
+        {gradeEntry.publishedAt ? "Published" : "Draft grade"}
+      </StatusBadge>
+    );
+  }
+
   return (
     <DashboardShell
       title="Mission submissions"
@@ -112,16 +134,33 @@ export default async function MissionSubmissionsPage({
                   >
                     <span className="block font-semibold">{enrollment.student.name}</span>
                     <span className={isSelected ? "text-white/75" : "text-ink/60"}>
-                      {studentSubmission
-                        ? `Submitted ${studentSubmission.submittedAt?.toLocaleDateString() ?? ""}`
-                        : "Not submitted"}
+                      {studentSubmission ? (
+                        <span className="flex flex-wrap items-center gap-2">
+                          <StatusBadge
+                            className={isSelected ? "border-white/25 bg-white/15 text-white" : ""}
+                            tone="success"
+                          >
+                            Submitted
+                          </StatusBadge>
+                          <span>
+                            {studentSubmission.submittedAt
+                              ? formatTimestampLabel("Submitted", studentSubmission.submittedAt)
+                              : "Submitted"}
+                          </span>
+                        </span>
+                      ) : (
+                        <StatusBadge
+                          className={isSelected ? "border-white/25 bg-white/15 text-white" : ""}
+                        >
+                          Not submitted
+                        </StatusBadge>
+                      )}
                     </span>
                     <span className={isSelected ? "mt-1 block text-white/75" : "mt-1 block text-ink/60"}>
-                      {studentGrade
-                        ? studentGrade.publishedAt
-                          ? `Grade ${studentGrade.score.toString()}`
-                          : `Draft grade ${studentGrade.score.toString()}`
-                        : "Ungraded"}
+                      <span className="flex flex-wrap items-center gap-2">
+                        {gradeBadge(studentGrade, isSelected)}
+                        {studentGrade ? <span>Score {studentGrade.score.toString()}</span> : null}
+                      </span>
                     </span>
                   </Link>
                 );
@@ -143,19 +182,28 @@ export default async function MissionSubmissionsPage({
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <h2 className="text-lg font-bold">{submission.student.name}</h2>
-                  <p className="mt-1 text-sm text-ink/65">
-                    {submission.status}{" "}
-                    {submission.submittedAt
-                      ? `- ${submission.submittedAt.toLocaleString()}`
-                      : ""}
-                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-ink/65">
+                    <StatusBadge tone="success">{readableStatus(submission.status)}</StatusBadge>
+                    {submission.submittedAt ? (
+                      <span>{formatTimestampLabel("Submitted", submission.submittedAt)}</span>
+                    ) : null}
+                  </div>
                 </div>
-                <div className="text-sm font-semibold text-ink/65">
-                  {grade
-                    ? `${grade.score.toString()} ${
-                        grade.publishedAt ? "published" : "draft"
-                      }`
-                    : "Ungraded"}
+                <div className="flex flex-col items-start gap-2 text-sm font-semibold text-ink/65 lg:items-end">
+                  {gradeBadge(grade)}
+                  {grade ? (
+                    <>
+                      <span>Score {grade.score.toString()}</span>
+                      <span className="font-medium">
+                        {grade.gradedAt ? formatTimestampLabel("Graded", grade.gradedAt) : "Graded"}
+                      </span>
+                      {grade.publishedAt ? (
+                        <span className="font-medium">
+                          {formatTimestampLabel("Published", grade.publishedAt)}
+                        </span>
+                      ) : null}
+                    </>
+                  ) : null}
                 </div>
               </div>
 
