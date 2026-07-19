@@ -10,6 +10,7 @@ import {
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { ProtectedFileLink } from "@/components/ui/protected-file-link";
+import { ResourceFileCard } from "@/components/ui/resource-file-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireClassEnrollment } from "@/lib/authorization-service";
 import { formatDateTime, formatTimestampLabel } from "@/lib/date-format";
@@ -99,25 +100,18 @@ export default async function StudentActivityPage({
               <h2 className="font-bold">Resources</h2>
               <div className="mt-3 grid gap-3">
                 {resources.map((resource) => (
-                  <div
-                    className="flex min-w-0 flex-col gap-2 rounded-md border border-border/80 bg-surface p-3 sm:flex-row sm:items-center sm:justify-between"
+                  <ResourceFileCard
+                    activityId={activity.id}
+                    contentType={resource.contentType}
+                    createdAt={resource.createdAt}
+                    fileName={resource.fileName}
+                    fileUrl={resource.fileUrl}
+                    intent="MISSION_RESOURCE"
                     key={resource.id}
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold" title={resource.title}>
-                        {resource.position}. {resource.title}
-                      </p>
-                      <p className="truncate text-xs text-ink/55" title={resource.fileName}>
-                        {resource.fileName}
-                      </p>
-                    </div>
-                    <ProtectedFileLink
-                      activityId={activity.id}
-                      fileUrl={resource.fileUrl}
-                      intent="MISSION_RESOURCE"
-                      label="Open resource"
-                    />
-                  </div>
+                    position={resource.position}
+                    size={resource.size}
+                    title={resource.title}
+                  />
                 ))}
               </div>
             </section>

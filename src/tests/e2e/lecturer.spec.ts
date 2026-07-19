@@ -121,6 +121,9 @@ test("lecturer opens quiz analytics from regions", async ({ page }) => {
 });
 
 test("lecturer uploads and removes a mission resource", async ({ page }) => {
+  const longResourceFileName =
+    "e2e-resource-pack-with-a-very-long-name-that-should-stay-inside-the-card.pdf";
+
   await page.route("**/api/uploads/presign", async (route) => {
     await route.fulfill({
       contentType: "application/json",
@@ -144,7 +147,7 @@ test("lecturer uploads and removes a mission resource", async ({ page }) => {
   await page.getByLabel("Resource title").fill("E2E Resource Pack");
   await page.getByLabel("Position").last().fill("1");
   await page.setInputFiles("#mission-resource-file", {
-    name: "e2e-resource.pdf",
+    name: longResourceFileName,
     mimeType: "application/pdf",
     buffer: Buffer.from("E2E resource")
   });
@@ -152,6 +155,9 @@ test("lecturer uploads and removes a mission resource", async ({ page }) => {
   await page.getByRole("button", { name: "Add resource" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Resource added." })).toBeVisible();
   await expect(page.getByText("E2E Resource Pack")).toBeVisible();
+  await expect(page.getByText(longResourceFileName).first()).toBeVisible();
+  await expect(page.getByText("PDF").first()).toBeVisible();
+  await expect(page.getByText("12 B").first()).toBeVisible();
 
   await page.goto(`/lecturer/classes/${seed.class.id}/modules`);
   await page.getByText("1. E2E Assignment").click();
@@ -175,6 +181,9 @@ test("lecturer uploads and removes a mission resource", async ({ page }) => {
   await page.getByRole("link", { name: /E2E Assignment/ }).click();
   await expect(page.getByRole("heading", { name: "Resources" })).toBeVisible();
   await expect(page.getByText("E2E Resource Pack")).toBeVisible();
+  await expect(page.getByText(longResourceFileName).first()).toBeVisible();
+  await expect(page.getByText("PDF").first()).toBeVisible();
+  await expect(page.getByText("12 B").first()).toBeVisible();
   await page.getByRole("button", { name: "Open resource" }).click();
   await expect.poll(() => downloadRequested).toBe(true);
 

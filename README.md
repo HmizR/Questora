@@ -31,6 +31,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Leaderboard names link to public student profiles with gamification data only.
 - Student class workspaces include a Grades tab for own published assignment, project, and quiz grades.
 - Protected S3 uploads support student assignment/project files, self-service avatar images, and lecturer mission resources with short-lived upload/download URLs.
+- Uploaded mission resources show file type, readable size, original filename, and upload date.
 - User avatars appear in account menus, leaderboards, profiles, lecturer rosters, and submission review.
 - Seed data with one admin, two lecturers, five students, two classes, example modules, activities, quests, badges, and student profiles.
 
@@ -66,6 +67,11 @@ The S3 variables power protected uploads. Student assignment/project submissions
 avatars, and lecturer mission resources upload through presigned URLs while still accepting
 pasted URLs or `s3:` references for development compatibility. Browser-based PUT uploads require bucket CORS that
 allows `PUT` from your Questora app origin and the `Content-Type` header.
+
+Removing a lecturer mission resource currently removes the Questora database record only.
+The physical S3/RustFS object is intentionally left in storage for this MVP to avoid unsafe
+deletion edge cases. Add a reviewed orphan-cleanup script or storage lifecycle policy before
+relying on automatic physical object cleanup in production.
 
 ## Database
 

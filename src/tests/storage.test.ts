@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { AppError } from "@/lib/errors";
+import { formatFileSize, getFileKind } from "@/lib/file-display";
 import {
   createStorageKey,
   parseStorageRef,
@@ -23,6 +24,26 @@ function expectAppError(fn: () => unknown, code = "VALIDATION_ERROR") {
 }
 
 describe("storage helpers", () => {
+  it("formats file labels for mission resources", () => {
+    expect(getFileKind("application/pdf", "briefing.bin")).toBe("PDF");
+    expect(
+      getFileKind(
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "slides.bin"
+      )
+    ).toBe("Slides");
+    expect(getFileKind("", "report.docx")).toBe("Document");
+    expect(getFileKind("image/png", "map.png")).toBe("Image");
+    expect(getFileKind("application/zip", "assets.zip")).toBe("Zip");
+    expect(getFileKind("application/octet-stream", "unknown.bin")).toBe("File");
+
+    expect(formatFileSize(0)).toBe("Unknown size");
+    expect(formatFileSize(512)).toBe("512 B");
+    expect(formatFileSize(1536)).toBe("1.5 KB");
+    expect(formatFileSize(2 * 1024 * 1024)).toBe("2.0 MB");
+    expect(formatFileSize(3 * 1024 * 1024 * 1024)).toBe("3.0 GB");
+  });
+
   it("validates allowed and disallowed upload file types", () => {
     expect(() =>
       validateUploadFile({ intent: "AVATAR", contentType: "image/png", size: 1024 })

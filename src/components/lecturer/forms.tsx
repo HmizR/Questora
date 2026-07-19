@@ -33,7 +33,7 @@ import { LecturerActionForm } from "@/components/lecturer/action-form";
 import { MissionResourceUpload } from "@/components/lecturer/mission-resource-upload";
 import { SelectField, TextAreaField, TextField } from "@/components/admin/form-fields";
 import { ConfirmAction } from "@/components/ui/confirm-action";
-import { ProtectedFileLink } from "@/components/ui/protected-file-link";
+import { ResourceFileCard } from "@/components/ui/resource-file-card";
 import { QuizBuilderFields } from "@/components/lecturer/quiz-builder-fields";
 import { getQuizQuestionFieldDefaults } from "@/lib/quiz";
 
@@ -364,40 +364,33 @@ export function MissionResourcesPanel({
           <p className="text-sm text-ink/60">No resources added yet.</p>
         ) : (
           resources.map((resource) => (
-            <div
-              className="flex min-w-0 flex-col gap-3 rounded-md border border-ink/10 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
-              key={resource.id}
-            >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold" title={resource.title}>
-                  {resource.position}. {resource.title}
-                </p>
-                <p className="truncate text-xs text-ink/55" title={resource.fileName}>
-                  {resource.fileName}
-                </p>
-                <div className="mt-2">
-                  <ProtectedFileLink
-                    activityId={activityId}
-                    fileUrl={resource.fileUrl}
-                    intent="MISSION_RESOURCE"
-                    label="Open resource"
+            <ResourceFileCard
+              actionSlot={
+                <LecturerActionForm action={deleteActivityResourceAction}>
+                  <input name="classId" type="hidden" value={classId} />
+                  <input name="moduleId" type="hidden" value={moduleId} />
+                  <input name="activityId" type="hidden" value={activityId} />
+                  <input name="resourceId" type="hidden" value={resource.id} />
+                  <ConfirmAction
+                    className="rounded-md border border-ember/30 bg-white px-3 py-1.5 text-xs font-semibold text-ember hover:bg-ember hover:text-white"
+                    confirmLabel="Remove resource"
+                    description="This removes the resource from the mission. The uploaded object is not deleted from storage in this pass."
+                    label="Remove resource"
+                    title="Remove this resource?"
                   />
-                </div>
-              </div>
-              <LecturerActionForm action={deleteActivityResourceAction}>
-                <input name="classId" type="hidden" value={classId} />
-                <input name="moduleId" type="hidden" value={moduleId} />
-                <input name="activityId" type="hidden" value={activityId} />
-                <input name="resourceId" type="hidden" value={resource.id} />
-                <ConfirmAction
-                  className="rounded-md border border-ember/30 bg-white px-3 py-1.5 text-xs font-semibold text-ember hover:bg-ember hover:text-white"
-                  confirmLabel="Remove resource"
-                  description="This removes the resource from the mission. The uploaded object is not deleted from storage in this pass."
-                  label="Remove resource"
-                  title="Remove this resource?"
-                />
-              </LecturerActionForm>
-            </div>
+                </LecturerActionForm>
+              }
+              activityId={activityId}
+              contentType={resource.contentType}
+              createdAt={resource.createdAt}
+              fileName={resource.fileName}
+              fileUrl={resource.fileUrl}
+              intent="MISSION_RESOURCE"
+              key={resource.id}
+              position={resource.position}
+              size={resource.size}
+              title={resource.title}
+            />
           ))
         )}
       </div>
