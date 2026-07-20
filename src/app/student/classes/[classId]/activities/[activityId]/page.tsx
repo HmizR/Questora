@@ -16,6 +16,11 @@ import { requireClassEnrollment } from "@/lib/authorization-service";
 import { formatDateTime, formatTimestampLabel } from "@/lib/date-format";
 import { canStudentEditSubmission } from "@/lib/domain-rules";
 import { db } from "@/lib/db";
+import {
+  quizAttemptLimitLabel,
+  submissionActionLabel,
+  submissionSummaryLabel
+} from "@/lib/learning-display";
 import { canRevealQuizCorrectAnswers, parseStoredQuizAttempt } from "@/lib/quiz-analytics";
 import { parseQuizDefinition } from "@/lib/quiz";
 import { readableStatus } from "@/lib/status-label";
@@ -74,6 +79,10 @@ export default async function StudentActivityPage({
   const hasQuizAttemptsRemaining = remainingAttempts === null || remainingAttempts > 0;
   const canEditSubmission = canStudentEditSubmission(submission?.status);
   const hasPassedQuiz = quizAttempts.some((attempt) => attempt.passed);
+  const bestQuizAttempt = quizAttempts.reduce<(typeof quizAttempts)[number] | null>(
+    (best, attempt) => (!best || Number(attempt.score) > Number(best.score) ? attempt : best),
+    null
+  );
   const revealQuizAnswers = canRevealQuizCorrectAnswers({
     hasPassed: hasPassedQuiz,
     remainingAttempts
@@ -91,9 +100,10 @@ export default async function StudentActivityPage({
           <p className="text-sm font-semibold uppercase tracking-wide text-moss">{activity.type}</p>
           {activity.description ? <p className="mt-3 text-ink/70">{activity.description}</p> : null}
           {displayContent ? (
-            <div className="mt-5 whitespace-pre-wrap rounded-md bg-parchment p-5 text-sm leading-6">
-              {displayContent}
-            </div>
+            <section className="mt-5 rounded-lg border border-border/80 bg-parchment p-5">
+              <h2 className="font-bold">Instructions</h2>
+              <div className="mt-3 whitespace-pre-wrap text-sm leading-6">{displayContent}</div>
+            </section>
           ) : null}
           {resources.length > 0 ? (
             <section className="mt-5 rounded-lg border border-ink/10 bg-surface-muted p-5">
@@ -151,19 +161,32 @@ export default async function StudentActivityPage({
             {publishedGrade?.feedback ? (
               <p className="mt-2 text-sm text-ink/65">{publishedGrade.feedback}</p>
             ) : null}
-            {quizAttempts[0] ? (
-              <p className="mt-3 text-sm text-ink/65">
-                Latest quiz score: {quizAttempts[0].score.toString()} /{" "}
-                {quizAttempts[0].maxScore.toString()} ({quizAttempts[0].passed ? "passed" : "not passed"})
-              </p>
-            ) : null}
             {activity.type === ActivityType.QUIZ ? (
-              <p className="mt-3 text-sm text-ink/65">
-                Attempts: {quizAttempts.length}
-                {activity.maxAttempts
-                  ? ` / ${activity.maxAttempts} (${remainingAttempts} remaining)`
-                  : " / unlimited"}
-              </p>
+              <div className="mt-4 rounded-md border border-border/80 bg-surface-muted p-3 text-sm">
+                <p className="font-semibold">Quiz attempts</p>
+                <p className="mt-1 text-ink/65">
+                  {quizAttemptLimitLabel({
+                    attemptsUsed: quizAttempts.length,
+                    maxAttempts: activity.maxAttempts,
+                    remainingAttempts
+                  })}
+                </p>
+                {bestQuizAttempt ? (
+                  <p className="mt-2 text-ink/65">
+                    Best score: {bestQuizAttempt.score.toString()} / {bestQuizAttempt.maxScore.toString()}
+                  </p>
+                ) : null}
+                {quizAttempts[0] ? (
+                  <p className="mt-1 text-ink/65">
+                    Latest score: {quizAttempts[0].score.toString()} / {quizAttempts[0].maxScore.toString()}
+                  </p>
+                ) : null}
+                <div className="mt-2">
+                  <StatusBadge tone={hasPassedQuiz ? "success" : quizAttempts.length > 0 ? "warning" : "neutral"}>
+                    {hasPassedQuiz ? "Passed" : quizAttempts.length > 0 ? "Not passed" : "Not started"}
+                  </StatusBadge>
+                </div>
+              </div>
             ) : null}
             <div className="mt-4">
               <StartActivityForm activityId={activity.id} />
@@ -174,26 +197,36 @@ export default async function StudentActivityPage({
           ) : activity.type === ActivityType.ASSIGNMENT || activity.type === ActivityType.PROJECT ? (
             canEditSubmission ? (
               <div className="space-y-3">
-                {submission ? (
-                  <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-sm">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <StatusBadge tone="success">{readableStatus(submission.status)}</StatusBadge>
-                      <StatusBadge tone="info">Editable until graded</StatusBadge>
+                <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-sm">
+                  <h2 className="font-bold">Your work</h2>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <StatusBadge tone={submission ? "success" : "neutral"}>
+                      {submissionSummaryLabel(submission?.status)}
+                    </StatusBadge>
+                    {submission ? <StatusBadge tone="info">Editable until graded</StatusBadge> : null}
+                  </div>
+                  <p className="mt-2 text-sm text-ink/65">
+                    {submission
+                      ? formatTimestampLabel("Submitted", submission.submittedAt)
+                      : "No submission has been sent yet."}
+                  </p>
+                  {submission?.fileUrl ? (
+                    <div className="mt-3">
+                      <ProtectedFileLink
+                        activityId={activity.id}
+                        fileUrl={submission.fileUrl}
+                        intent="SUBMISSION"
+                        label="Open current file"
+                      />
                     </div>
-                    <p className="mt-2 text-sm text-ink/65">
-                      {formatTimestampLabel("Submitted", submission.submittedAt)}
-                    </p>
-                  </section>
-                ) : (
-                  <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-sm">
-                    <StatusBadge>Not submitted</StatusBadge>
-                    <p className="mt-2 text-sm text-ink/65">
-                      You can edit your submission until a lecturer grades it.
-                    </p>
-                  </section>
-                )}
+                  ) : null}
+                  <p className="mt-3 text-sm text-ink/65">
+                    Updating your work replaces the current submission until your lecturer grades it.
+                  </p>
+                </section>
                 <SubmitAssignmentForm
                   activityId={activity.id}
+                  buttonLabel={submissionActionLabel(submission?.status)}
                   defaultText={submission?.textContent}
                   defaultFileUrl={submission?.fileUrl}
                 />
@@ -201,8 +234,8 @@ export default async function StudentActivityPage({
             ) : (
               <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-sm">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="font-bold">Submission locked</h2>
-                  <StatusBadge tone="success">Graded</StatusBadge>
+                  <h2 className="font-bold">Your work</h2>
+                  <StatusBadge tone="success">{submissionSummaryLabel(submission?.status)}</StatusBadge>
                 </div>
                 <p className="mt-2 text-sm text-ink/65">
                   This work has been graded and can no longer be edited.
@@ -231,7 +264,12 @@ export default async function StudentActivityPage({
             )
           ) : activity.type === ActivityType.QUIZ && quizAttempts.length > 0 ? (
             <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-sm">
-              <h2 className="font-bold">Attempt history</h2>
+              <h2 className="font-bold">Quiz review</h2>
+              <p className="mt-2 text-sm text-ink/65">
+                {revealQuizAnswers
+                  ? "Correct answers are visible because the quiz is passed or attempts are exhausted."
+                  : "Correct answers stay hidden while attempts remain."}
+              </p>
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full min-w-[280px] text-left text-sm">
                   <thead className="text-xs font-bold uppercase tracking-wide text-ink/50">

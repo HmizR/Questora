@@ -46,6 +46,9 @@ test("student submission can be graded and then locks on the student activity pa
   await mockSubmissionDownload(page);
   await loginAs(page, e2eUsers.student.email);
   await page.goto(`/student/classes/${seed.class.id}/activities/${seed.activities.assignment.id}`);
+  await expect(page.getByRole("heading", { name: "Instructions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your work" })).toBeVisible();
+  await expect(page.getByText("Not submitted")).toBeVisible();
   await page.getByLabel("Submission text").fill("This is my e2e assignment answer.");
   await page.setInputFiles("#submission-file", {
     name: "e2e-submission.pdf",
@@ -57,7 +60,9 @@ test("student submission can be graded and then locks on the student activity pa
   await page.getByRole("button", { name: "Submit assignment" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Submission sent." })).toBeVisible();
   await expect(page.getByText("Submitted").first()).toBeVisible();
-  await expect(page.getByText("Editable until graded")).toBeVisible();
+  await expect(page.getByText("Editable until graded", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Update submission" })).toBeVisible();
 
   const lecturerContext = await browser.newContext();
   const lecturerPage = await lecturerContext.newPage();
@@ -68,6 +73,8 @@ test("student submission can be graded and then locks on the student activity pa
       `${seed.activities.assignment.id}/submissions?studentId=${seed.users.student.id}`
   );
   await expect(lecturerPage.getByText("This is my e2e assignment answer.")).toBeVisible();
+  await expect(lecturerPage.getByText("Not submitted").first()).toBeVisible();
+  await expect(lecturerPage.getByText("Submission timeline")).toBeVisible();
   await expect(lecturerPage.getByText("Submitted").first()).toBeVisible();
   await expect(lecturerPage.getByText("Ungraded").first()).toBeVisible();
   await expect(lecturerPage.getByRole("button", { name: "Open submitted file" })).toBeVisible();
@@ -82,8 +89,8 @@ test("student submission can be graded and then locks on the student activity pa
   await lecturerContext.close();
 
   await page.reload();
-  await expect(page.getByRole("heading", { name: "Submission locked" })).toBeVisible();
-  await expect(page.getByText("Graded").first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your work" })).toBeVisible();
+  await expect(page.getByText("Graded, locked").first()).toBeVisible();
   await expect(page.getByText("This work has been graded and can no longer be edited.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Open submitted file" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit assignment" })).toHaveCount(0);
@@ -111,11 +118,14 @@ test("student quiz attempt limit hides questions after attempts are exhausted", 
   await loginAs(page, e2eUsers.student.email);
   await page.goto(`/student/classes/${seed.class.id}/activities/${seed.activities.quiz.id}`);
 
+  await expect(page.getByText("0 / 1 attempts used (1 remaining)")).toBeVisible();
   await expect(page.getByText("Questora is a learning realm.")).toBeVisible();
   await page.getByLabel("True").check();
   await page.getByRole("button", { name: "Submit quiz attempt" }).click();
 
   await expect(page.getByText("You have used all attempts for this quiz.")).toBeVisible();
+  await expect(page.getByText("1 / 1 attempts used (0 remaining)")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Quiz review" })).toBeVisible();
   await expect(page.getByRole("radio", { name: "True" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Submit quiz attempt" })).toHaveCount(0);
 });

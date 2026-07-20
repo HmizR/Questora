@@ -7,7 +7,7 @@ import { AvatarImage } from "@/components/ui/avatar-image";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { ProtectedFileLink } from "@/components/ui/protected-file-link";
-import { StatusBadge } from "@/components/ui/status-badge";
+import { StatusBadge, type StatusBadgeTone } from "@/components/ui/status-badge";
 import { requireClassLecturer } from "@/lib/authorization-service";
 import { formatTimestampLabel } from "@/lib/date-format";
 import { db } from "@/lib/db";
@@ -78,6 +78,20 @@ export default async function MissionSubmissionsPage({
   const returnTo = selectedStudentId
     ? `/lecturer/classes/${classId}/modules/${moduleId}/activities/${activityId}/submissions?studentId=${selectedStudentId}`
     : `/lecturer/classes/${classId}/modules/${moduleId}/activities/${activityId}/submissions`;
+  const submittedCount = enrollments.filter(
+    (enrollment) => enrollment.student.submissions.length > 0
+  ).length;
+  const gradedCount = enrollments.filter((enrollment) => enrollment.student.grades[0]).length;
+  const publishedCount = enrollments.filter(
+    (enrollment) => enrollment.student.grades[0]?.publishedAt
+  ).length;
+  const notSubmittedCount = Math.max(enrollments.length - submittedCount, 0);
+  const summaryStats: Array<{ label: string; value: number; tone: StatusBadgeTone }> = [
+    { label: "Submitted", value: submittedCount, tone: "success" },
+    { label: "Not submitted", value: notSubmittedCount, tone: "neutral" },
+    { label: "Graded", value: gradedCount, tone: "info" },
+    { label: "Published", value: publishedCount, tone: "success" }
+  ];
 
   function gradeBadge(gradeEntry: typeof grade, isSelected = false) {
     if (!gradeEntry) {
@@ -111,6 +125,14 @@ export default async function MissionSubmissionsPage({
         >
           Back to regions
         </Link>
+      </div>
+      <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {summaryStats.map(({ label, value, tone }) => (
+          <div className="rounded-lg border border-border/80 bg-surface p-4 shadow-sm" key={label}>
+            <StatusBadge tone={tone}>{label}</StatusBadge>
+            <p className="mt-3 text-2xl font-bold">{value}</p>
+          </div>
+        ))}
       </div>
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <aside className="rounded-lg border border-ink/10 bg-white p-4 shadow-sm">
@@ -225,6 +247,20 @@ export default async function MissionSubmissionsPage({
                       ) : null}
                     </>
                   ) : null}
+                </div>
+              </div>
+              <div className="mt-5 rounded-lg border border-border/80 bg-surface-muted p-4">
+                <h3 className="text-sm font-bold">Submission timeline</h3>
+                <div className="mt-3 grid gap-2 text-sm text-ink/65">
+                  <p>{formatTimestampLabel("Submitted", submission.submittedAt)}</p>
+                  {grade?.gradedAt ? <p>{formatTimestampLabel("Graded", grade.gradedAt)}</p> : null}
+                  {grade?.publishedAt ? (
+                    <p>{formatTimestampLabel("Published", grade.publishedAt)}</p>
+                  ) : grade ? (
+                    <p>Grade is saved as draft and is not visible to the student yet.</p>
+                  ) : (
+                    <p>No grade has been saved yet.</p>
+                  )}
                 </div>
               </div>
 

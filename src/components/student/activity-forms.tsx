@@ -32,10 +32,12 @@ export function CompleteLessonForm({ activityId }: { activityId: string }) {
 
 export function SubmitAssignmentForm({
   activityId,
+  buttonLabel = "Submit assignment",
   defaultText,
   defaultFileUrl
 }: {
   activityId: string;
+  buttonLabel?: string;
   defaultText?: string | null;
   defaultFileUrl?: string | null;
 }) {
@@ -52,7 +54,7 @@ export function SubmitAssignmentForm({
       </label>
       <StudentSubmissionFileUpload activityId={activityId} defaultFileUrl={defaultFileUrl} />
       <button className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-steel">
-        Submit assignment
+        {buttonLabel}
       </button>
     </StudentActionForm>
   );

@@ -114,7 +114,10 @@ test("lecturer opens quiz analytics from regions", async ({ page }) => {
   await page.getByRole("link", { name: "View quiz analytics" }).click();
 
   await expect(page.getByRole("heading", { name: "E2E Quiz analytics" })).toBeVisible();
+  await expect(page.getByText("Students with at least one attempt")).toBeVisible();
+  await expect(page.getByText("Total submitted quiz attempts")).toBeVisible();
   await expect(page.getByText("Question breakdown")).toBeVisible();
+  await expect(page.getByText("Completion rate")).toBeVisible();
   await expect(page.getByText("50% correct")).toBeVisible();
   await expect(page.getByRole("row", { name: /E2E Student/ })).toContainText("Passed");
   await expect(page.getByRole("row", { name: /E2E Rival/ })).toContainText("Not passed");

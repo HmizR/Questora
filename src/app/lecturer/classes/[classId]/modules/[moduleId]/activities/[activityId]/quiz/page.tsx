@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { StatCard } from "@/components/ui/stat-card";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { requireRole } from "@/lib/authorization-service";
 import { AppError } from "@/lib/errors";
 import { getLecturerQuizAnalytics } from "@/services/quiz-analytics-service";
@@ -71,11 +72,36 @@ export default async function LecturerQuizAnalyticsPage({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <StatCard icon={UsersRound} label="Participants" value={`${data.analytics.participantCount}/${data.activeStudentCount}`} />
-        <StatCard icon={Activity} label="Attempts" value={data.analytics.attemptCount} />
-        <StatCard icon={BarChart3} label="Average score" value={formatNumber(data.analytics.averageScore)} />
-        <StatCard icon={Trophy} label="Best score" value={formatNumber(data.analytics.bestScore)} />
-        <StatCard icon={Percent} label="Pass rate" value={formatPercent(data.analytics.passRate)} />
+        <StatCard
+          hint="Students with at least one attempt"
+          icon={UsersRound}
+          label="Participants"
+          value={`${data.analytics.participantCount}/${data.activeStudentCount}`}
+        />
+        <StatCard
+          hint="Total submitted quiz attempts"
+          icon={Activity}
+          label="Attempts"
+          value={data.analytics.attemptCount}
+        />
+        <StatCard
+          hint="Across all submitted attempts"
+          icon={BarChart3}
+          label="Average score"
+          value={formatNumber(data.analytics.averageScore)}
+        />
+        <StatCard
+          hint="Highest attempt score"
+          icon={Trophy}
+          label="Best score"
+          value={formatNumber(data.analytics.bestScore)}
+        />
+        <StatCard
+          hint="Students with a passing attempt"
+          icon={Percent}
+          label="Pass rate"
+          value={formatPercent(data.analytics.passRate)}
+        />
       </div>
 
       <section className="mt-6 rounded-2xl border border-border/80 bg-surface p-6 shadow-sm">
@@ -84,7 +110,10 @@ export default async function LecturerQuizAnalyticsPage({
             <p className="text-sm font-semibold uppercase tracking-wide text-moss">Question breakdown</p>
             <h2 className="mt-1 text-xl font-bold">Per-question results</h2>
           </div>
-          <p className="text-sm text-ink/60">Completion rate: {formatPercent(data.analytics.completionRate)}</p>
+          <div className="flex flex-wrap items-center gap-2 text-sm text-ink/60">
+            <span>Completion rate</span>
+            <StatusBadge tone="info">{formatPercent(data.analytics.completionRate)}</StatusBadge>
+          </div>
         </div>
 
         <div className="mt-5 grid gap-4">
@@ -164,11 +193,11 @@ export default async function LecturerQuizAnalyticsPage({
                 </td>
                 <td className="px-4 py-3">
                   {row.hasPassed ? (
-                    <span className="font-semibold text-moss">Passed</span>
+                    <StatusBadge tone="success">Passed</StatusBadge>
                   ) : row.attemptsUsed > 0 ? (
-                    <span className="font-semibold text-ember">Not passed</span>
+                    <StatusBadge tone="warning">Not passed</StatusBadge>
                   ) : (
-                    <span className="text-ink/55">Not started</span>
+                    <StatusBadge>Not started</StatusBadge>
                   )}
                 </td>
                 <td className="px-4 py-3">{formatDateTime(row.latestAttempt?.submittedAt)}</td>
