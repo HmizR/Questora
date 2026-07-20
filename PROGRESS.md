@@ -42,6 +42,7 @@ Post-MVP UI refresh completed:
 - Mission resources display file type icons, readable sizes, filenames, and upload dates
 - Admin/user polish with avatar-aware rosters, role/status badges, compact account details, and clearer account-control guidance
 - Quiz and assignment UX polish with clearer student work states, quiz attempt summaries, submission stats, and analytics labels
+- Lecturer roster, grades, submission review, and quiz analytics filters, sorting, needs-attention highlights, and CSV exports
 - Isolated PostgreSQL integration test setup with service and server action coverage
 - Playwright UI-level workflow test setup for admin, lecturer, and student paths
 - GitHub Actions CI quality gate for Prisma validation, typecheck, lint, tests, e2e, and build
@@ -226,13 +227,14 @@ Completed:
 - Resource file display polish with type labels, sizes, icons, and safer filename truncation
 - Admin user/account polish for clearer rosters, account summaries, and reset/deactivation guidance
 - Quiz and assignment UX polish for student work states, lecturer submission stats, and clearer analytics labels
+- Lecturer analytics usability polish with filters, sorting, needs-attention highlights, and protected CSV exports
 
 Current automated coverage:
 
 ```text
-30 unit tests passing
-27 integration tests passing
-18 e2e tests passing
+33 unit tests passing
+32 integration tests passing
+19 e2e tests passing
 ```
 
 ## Recommended Next Steps
@@ -245,6 +247,5 @@ Current automated coverage:
   - add a reviewed orphan-cleanup script or storage lifecycle policy for removed S3/RustFS objects
 - Quiz and assignment UX polish:
   - consider true submission revision history if replacement-only edits become insufficient
-  - add small lecturer-facing analytics refinements where useful after real class usage
 - Production hardening:
   - replace in-memory auth rate limiting with Redis before public/multi-instance deployment

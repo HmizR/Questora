@@ -73,18 +73,18 @@ test("student submission can be graded and then locks on the student activity pa
       `${seed.activities.assignment.id}/submissions?studentId=${seed.users.student.id}`
   );
   await expect(lecturerPage.getByText("This is my e2e assignment answer.")).toBeVisible();
-  await expect(lecturerPage.getByText("Not submitted").first()).toBeVisible();
+  await expect(lecturerPage.locator("span").filter({ hasText: "Not submitted" }).first()).toBeVisible();
   await expect(lecturerPage.getByText("Submission timeline")).toBeVisible();
-  await expect(lecturerPage.getByText("Submitted").first()).toBeVisible();
-  await expect(lecturerPage.getByText("Ungraded").first()).toBeVisible();
+  await expect(lecturerPage.locator("span").filter({ hasText: "Submitted" }).first()).toBeVisible();
+  await expect(lecturerPage.locator("span").filter({ hasText: "Ungraded" }).first()).toBeVisible();
   await expect(lecturerPage.getByRole("button", { name: "Open submitted file" })).toBeVisible();
-  await lecturerPage.getByLabel("Score").fill("88");
+  await lecturerPage.getByRole("spinbutton", { name: "Score" }).fill("88");
   await lecturerPage.getByLabel("Feedback").fill("Solid work from the e2e flow.");
   await lecturerPage.getByRole("button", { name: "Grade" }).click();
   await expect(lecturerPage.getByRole("button", { name: "Publish grade" })).toBeVisible();
-  await expect(lecturerPage.getByText("Draft grade").first()).toBeVisible();
+  await expect(lecturerPage.locator("span").filter({ hasText: "Draft grade" }).first()).toBeVisible();
   await lecturerPage.getByRole("button", { name: "Publish grade" }).click();
-  await expect(lecturerPage.getByText("Published").first()).toBeVisible();
+  await expect(lecturerPage.locator("span").filter({ hasText: "Published" }).first()).toBeVisible();
   await expect(lecturerPage.getByText("Score 88").first()).toBeVisible();
   await lecturerContext.close();
 

@@ -4,11 +4,24 @@ import { notFound } from "next/navigation";
 
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { AnalyticsControls, SortHeader } from "@/components/ui/analytics-controls";
 import { StatCard } from "@/components/ui/stat-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireRole } from "@/lib/authorization-service";
 import { AppError } from "@/lib/errors";
+import {
+  matchesSearch,
+  missionNeedsAttention,
+  parseAnalyticsQuery,
+  queryHref,
+  sortByDirection
+} from "@/lib/lecturer-analytics";
 import { getLecturerQuizAnalytics } from "@/services/quiz-analytics-service";
+
+const quizSorts = ["name", "attempts", "best", "latest", "last-attempted"] as const;
+const quizStatuses = ["passed", "not-passed", "not-started"] as const;
+type QuizSort = (typeof quizSorts)[number];
+type QuizStatus = (typeof quizStatuses)[number];
 
 function formatNumber(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
@@ -33,11 +46,19 @@ function formatDateTime(date?: Date | null) {
 }
 
 export default async function LecturerQuizAnalyticsPage({
-  params
+  params,
+  searchParams
 }: {
   params: Promise<{ classId: string; moduleId: string; activityId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { classId, moduleId, activityId } = await params;
+  const rawSearchParams = await searchParams;
+  const query = parseAnalyticsQuery<QuizSort, QuizStatus>(rawSearchParams, {
+    defaultSort: "name",
+    allowedSorts: quizSorts,
+    allowedStatuses: quizStatuses
+  });
   const user = await requireRole("LECTURER");
 
   let data;
@@ -55,6 +76,45 @@ export default async function LecturerQuizAnalyticsPage({
 
     throw error;
   }
+  const pathname = `/lecturer/classes/${classId}/modules/${moduleId}/activities/${activityId}/quiz`;
+  const queryRecord = {
+    q: query.q,
+    status: query.status,
+    attention: query.attention,
+    sort: query.sort,
+    dir: query.dir
+  };
+  const rows = data.studentRows.map((row) => {
+    const needsAttention = missionNeedsAttention({
+      type: data.activity.type,
+      dueAt: data.activity.dueAt,
+      attemptsUsed: row.attemptsUsed,
+      maxAttempts: data.activity.maxAttempts,
+      hasPassed: row.hasPassed
+    });
+    const status = row.hasPassed ? "passed" : row.attemptsUsed > 0 ? "not-passed" : "not-started";
+    return { ...row, needsAttention, status };
+  });
+  const filteredRows = rows.filter((row) => {
+    if (!matchesSearch({ name: row.studentName, email: row.studentEmail }, query.q)) return false;
+    if (query.status !== "all" && row.status !== query.status) return false;
+    if (query.attention === "needs-attention" && !row.needsAttention) return false;
+    return true;
+  });
+  const sortedRows = sortByDirection(filteredRows, query.dir, (row) => {
+    switch (query.sort) {
+      case "attempts":
+        return row.attemptsUsed;
+      case "best":
+        return row.bestAttempt ? Number(row.bestAttempt.score) : -1;
+      case "latest":
+        return row.latestAttempt ? Number(row.latestAttempt.score) : -1;
+      case "last-attempted":
+        return row.latestAttempt?.submittedAt ?? null;
+      default:
+        return row.studentName;
+    }
+  });
 
   return (
     <DashboardShell
@@ -70,6 +130,27 @@ export default async function LecturerQuizAnalyticsPage({
           Back to regions
         </Link>
       </div>
+      <AnalyticsControls
+        action={pathname}
+        exportHref={queryHref(
+          `/api/lecturer/classes/${classId}/modules/${moduleId}/activities/${activityId}/quiz/export`,
+          queryRecord,
+          {}
+        )}
+        query={query}
+        sortOptions={[
+          { label: "Name", value: "name" },
+          { label: "Attempts", value: "attempts" },
+          { label: "Best score", value: "best" },
+          { label: "Latest score", value: "latest" },
+          { label: "Last attempted", value: "last-attempted" }
+        ]}
+        statusOptions={[
+          { label: "Passed", value: "passed" },
+          { label: "Not passed", value: "not-passed" },
+          { label: "Not started", value: "not-started" }
+        ]}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard
@@ -165,16 +246,27 @@ export default async function LecturerQuizAnalyticsPage({
         <table className="w-full min-w-[900px] text-left text-sm">
           <thead className="bg-ink text-white">
             <tr>
-              <th className="px-4 py-3 font-semibold">Student</th>
-              <th className="px-4 py-3 font-semibold">Attempts</th>
-              <th className="px-4 py-3 font-semibold">Best score</th>
-              <th className="px-4 py-3 font-semibold">Latest score</th>
+              <th className="px-4 py-3 font-semibold">
+                <SortHeader pathname={pathname} query={query} sort="name">Student</SortHeader>
+              </th>
+              <th className="px-4 py-3 font-semibold">
+                <SortHeader pathname={pathname} query={query} sort="attempts">Attempts</SortHeader>
+              </th>
+              <th className="px-4 py-3 font-semibold">
+                <SortHeader pathname={pathname} query={query} sort="best">Best score</SortHeader>
+              </th>
+              <th className="px-4 py-3 font-semibold">
+                <SortHeader pathname={pathname} query={query} sort="latest">Latest score</SortHeader>
+              </th>
               <th className="px-4 py-3 font-semibold">Status</th>
-              <th className="px-4 py-3 font-semibold">Last attempted</th>
+              <th className="px-4 py-3 font-semibold">
+                <SortHeader pathname={pathname} query={query} sort="last-attempted">Last attempted</SortHeader>
+              </th>
+              <th className="px-4 py-3 font-semibold">Attention</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/80">
-            {data.studentRows.map((row) => (
+            {sortedRows.map((row) => (
               <tr key={row.studentId}>
                 <td className="px-4 py-3">
                   <p className="font-semibold">{row.studentName}</p>
@@ -201,6 +293,13 @@ export default async function LecturerQuizAnalyticsPage({
                   )}
                 </td>
                 <td className="px-4 py-3">{formatDateTime(row.latestAttempt?.submittedAt)}</td>
+                <td className="px-4 py-3">
+                  {row.needsAttention ? (
+                    <StatusBadge tone="warning">Needs attention</StatusBadge>
+                  ) : (
+                    <StatusBadge>Clear</StatusBadge>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>

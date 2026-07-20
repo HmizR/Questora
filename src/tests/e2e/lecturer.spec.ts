@@ -123,6 +123,69 @@ test("lecturer opens quiz analytics from regions", async ({ page }) => {
   await expect(page.getByRole("row", { name: /E2E Rival/ })).toContainText("Not passed");
 });
 
+test("lecturer filters analytics tables and downloads CSV exports", async ({ page }) => {
+  await db.submission.create({
+    data: {
+      activityId: seed.activities.assignment.id,
+      studentId: seed.users.student.id,
+      textContent: "Needs grading",
+      status: "SUBMITTED",
+      submittedAt: new Date()
+    }
+  });
+  await db.quizAttempt.create({
+    data: {
+      activityId: seed.activities.quiz.id,
+      studentId: seed.users.rival.id,
+      attemptNo: 1,
+      answers: {
+        selected: { q1: 1 },
+        results: []
+      },
+      score: 0,
+      maxScore: 10,
+      passed: false
+    }
+  });
+
+  await loginAs(page, e2eUsers.lecturer.email);
+  await page.goto(`/lecturer/classes/${seed.class.id}/students`);
+  await page.getByLabel("Search students").fill("E2E Student");
+  await page.getByLabel("Attention").selectOption("needs-attention");
+  await page.getByLabel("Sort").selectOption("grades");
+  await page.getByRole("button", { name: "Apply" }).click();
+  await expect(page.getByRole("row", { name: /E2E Student/ })).toContainText("Needs attention");
+  await expect(page.getByRole("row", { name: /E2E Rival/ })).toHaveCount(0);
+
+  await page.goto(`/lecturer/classes/${seed.class.id}/grades`);
+  await page.getByLabel("Status").selectOption("ungraded");
+  await page.getByLabel("Attention").selectOption("needs-attention");
+  await page.getByRole("button", { name: "Apply" }).click();
+  await expect(page.getByRole("row", { name: /E2E Student/ })).toContainText("Ungraded");
+  const gradesDownload = page.waitForEvent("download");
+  await page.getByRole("link", { name: "CSV" }).click();
+  await expect((await gradesDownload).suggestedFilename()).toBe("grades.csv");
+
+  await page.goto(
+    `/lecturer/classes/${seed.class.id}/modules/${seed.module.id}/activities/${seed.activities.assignment.id}/submissions`
+  );
+  await page.getByLabel("Status").selectOption("ungraded");
+  await page.getByLabel("Attention").selectOption("needs-attention");
+  await page.getByRole("button", { name: "Apply" }).click();
+  await expect(page.locator("span").filter({ hasText: "Needs attention" }).first()).toBeVisible();
+
+  await page.goto(
+    `/lecturer/classes/${seed.class.id}/modules/${seed.module.id}/activities/${seed.activities.quiz.id}/quiz`
+  );
+  await page.getByLabel("Status").selectOption("not-passed");
+  await page.getByLabel("Sort").selectOption("best");
+  await page.getByRole("button", { name: "Apply" }).click();
+  await expect(page.getByRole("row", { name: /E2E Rival/ })).toContainText("Needs attention");
+  const quizDownload = page.waitForEvent("download");
+  await page.getByRole("link", { name: "CSV" }).click();
+  await expect((await quizDownload).suggestedFilename()).toBe("quiz-analytics.csv");
+});
+
 test("lecturer uploads and removes a mission resource", async ({ page }) => {
   const longResourceFileName =
     "e2e-resource-pack-with-a-very-long-name-that-should-stay-inside-the-card.pdf";

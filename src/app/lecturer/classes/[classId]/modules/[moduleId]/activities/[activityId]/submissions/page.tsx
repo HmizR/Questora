@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { GradeSubmissionForm, PublishGradeForm } from "@/components/lecturer/forms";
 import { AvatarImage } from "@/components/ui/avatar-image";
+import { AnalyticsControls } from "@/components/ui/analytics-controls";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { ProtectedFileLink } from "@/components/ui/protected-file-link";
@@ -11,17 +12,36 @@ import { StatusBadge, type StatusBadgeTone } from "@/components/ui/status-badge"
 import { requireClassLecturer } from "@/lib/authorization-service";
 import { formatTimestampLabel } from "@/lib/date-format";
 import { db } from "@/lib/db";
+import {
+  matchesSearch,
+  missionNeedsAttention,
+  parseAnalyticsQuery,
+  queryHref,
+  sortByDirection
+} from "@/lib/lecturer-analytics";
 import { readableStatus } from "@/lib/status-label";
+
+const submissionSorts = ["name", "submitted", "grade", "score"] as const;
+const submissionStatuses = ["submitted", "not-submitted", "ungraded", "draft", "published"] as const;
+type SubmissionSort = (typeof submissionSorts)[number];
+type SubmissionStatusFilter = (typeof submissionStatuses)[number];
 
 export default async function MissionSubmissionsPage({
   params,
   searchParams
 }: {
   params: Promise<{ classId: string; moduleId: string; activityId: string }>;
-  searchParams: Promise<{ studentId?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { classId, moduleId, activityId } = await params;
-  const { studentId } = await searchParams;
+  const rawSearchParams = await searchParams;
+  const rawStudentId = rawSearchParams.studentId;
+  const studentId = Array.isArray(rawStudentId) ? rawStudentId[0] : rawStudentId;
+  const query = parseAnalyticsQuery<SubmissionSort, SubmissionStatusFilter>(rawSearchParams, {
+    defaultSort: "name",
+    allowedSorts: submissionSorts,
+    allowedStatuses: submissionStatuses
+  });
   await requireClassLecturer(classId);
 
   const activity = await db.activity.findFirst({
@@ -59,8 +79,56 @@ export default async function MissionSubmissionsPage({
     orderBy: [{ student: { name: "asc" } }, { enrolledAt: "asc" }]
   });
 
+  const enrichedEnrollments = enrollments.map((enrollment) => {
+    const submissionEntry = enrollment.student.submissions[0];
+    const gradeEntry = enrollment.student.grades[0];
+    const state = gradeEntry?.publishedAt
+      ? "published"
+      : gradeEntry
+        ? "draft"
+        : submissionEntry
+          ? "ungraded"
+          : "not-submitted";
+    const needsAttention = missionNeedsAttention({
+      type: activity.type,
+      dueAt: activity.dueAt,
+      hasSubmission: Boolean(submissionEntry),
+      hasGrade: Boolean(gradeEntry),
+      gradePublishedAt: gradeEntry?.publishedAt
+    });
+
+    return {
+      enrollment,
+      submission: submissionEntry,
+      grade: gradeEntry,
+      state,
+      needsAttention
+    };
+  });
+  const filteredEnrollments = enrichedEnrollments.filter((row) => {
+    if (!matchesSearch(row.enrollment.student, query.q)) return false;
+    if (query.status === "submitted" && !row.submission) return false;
+    if (query.status !== "all" && query.status !== "submitted" && row.state !== query.status) {
+      return false;
+    }
+    if (query.attention === "needs-attention" && !row.needsAttention) return false;
+    return true;
+  });
+  const sortedEnrollments = sortByDirection(filteredEnrollments, query.dir, (row) => {
+    switch (query.sort) {
+      case "submitted":
+        return row.submission?.submittedAt ?? null;
+      case "grade":
+        return row.state;
+      case "score":
+        return row.grade ? Number(row.grade.score) : -1;
+      default:
+        return row.enrollment.student.name;
+    }
+  });
   const selectedEnrollment =
-    enrollments.find((enrollment) => enrollment.studentId === studentId) ?? enrollments[0];
+    sortedEnrollments.find((row) => row.enrollment.studentId === studentId)?.enrollment ??
+    sortedEnrollments[0]?.enrollment;
   const selectedStudentId = selectedEnrollment?.studentId;
 
   const [submission, grade] = selectedStudentId
@@ -78,14 +146,10 @@ export default async function MissionSubmissionsPage({
   const returnTo = selectedStudentId
     ? `/lecturer/classes/${classId}/modules/${moduleId}/activities/${activityId}/submissions?studentId=${selectedStudentId}`
     : `/lecturer/classes/${classId}/modules/${moduleId}/activities/${activityId}/submissions`;
-  const submittedCount = enrollments.filter(
-    (enrollment) => enrollment.student.submissions.length > 0
-  ).length;
-  const gradedCount = enrollments.filter((enrollment) => enrollment.student.grades[0]).length;
-  const publishedCount = enrollments.filter(
-    (enrollment) => enrollment.student.grades[0]?.publishedAt
-  ).length;
-  const notSubmittedCount = Math.max(enrollments.length - submittedCount, 0);
+  const submittedCount = sortedEnrollments.filter((row) => row.submission).length;
+  const gradedCount = sortedEnrollments.filter((row) => row.grade).length;
+  const publishedCount = sortedEnrollments.filter((row) => row.grade?.publishedAt).length;
+  const notSubmittedCount = Math.max(sortedEnrollments.length - submittedCount, 0);
   const summaryStats: Array<{ label: string; value: number; tone: StatusBadgeTone }> = [
     { label: "Submitted", value: submittedCount, tone: "success" },
     { label: "Not submitted", value: notSubmittedCount, tone: "neutral" },
@@ -118,6 +182,34 @@ export default async function MissionSubmissionsPage({
       subtitle={`Review submissions for ${activity.title}.`}
     >
       <ClassTabs classId={classId} role="LECTURER" />
+      <AnalyticsControls
+        action={`/lecturer/classes/${classId}/modules/${moduleId}/activities/${activityId}/submissions`}
+        exportHref={queryHref(
+          `/api/lecturer/classes/${classId}/modules/${moduleId}/activities/${activityId}/submissions/export`,
+          {
+            q: query.q,
+            status: query.status,
+            attention: query.attention,
+            sort: query.sort,
+            dir: query.dir
+          },
+          {}
+        )}
+        query={query}
+        sortOptions={[
+          { label: "Name", value: "name" },
+          { label: "Submitted time", value: "submitted" },
+          { label: "Grade state", value: "grade" },
+          { label: "Score", value: "score" }
+        ]}
+        statusOptions={[
+          { label: "Submitted", value: "submitted" },
+          { label: "Not submitted", value: "not-submitted" },
+          { label: "Ungraded", value: "ungraded" },
+          { label: "Draft grade", value: "draft" },
+          { label: "Published", value: "published" }
+        ]}
+      />
       <div className="mb-5">
         <Link
           className="text-sm font-semibold text-ink/65 hover:text-ink"
@@ -138,10 +230,10 @@ export default async function MissionSubmissionsPage({
         <aside className="rounded-lg border border-ink/10 bg-white p-4 shadow-sm">
           <h2 className="font-bold">Students</h2>
           <div className="mt-4 space-y-2">
-            {enrollments.length === 0 ? (
+            {sortedEnrollments.length === 0 ? (
               <p className="text-sm text-ink/60">No active students enrolled.</p>
             ) : (
-              enrollments.map((enrollment) => {
+              sortedEnrollments.map(({ enrollment, needsAttention }) => {
                 const studentSubmission = enrollment.student.submissions[0];
                 const studentGrade = enrollment.student.grades[0];
                 const isSelected = enrollment.studentId === selectedStudentId;
@@ -153,7 +245,17 @@ export default async function MissionSubmissionsPage({
                         ? "border-ink bg-ink text-white"
                         : "border-ink/10 hover:bg-parchment"
                     }`}
-                    href={`/lecturer/classes/${classId}/modules/${moduleId}/activities/${activityId}/submissions?studentId=${enrollment.studentId}`}
+                    href={queryHref(
+                      `/lecturer/classes/${classId}/modules/${moduleId}/activities/${activityId}/submissions`,
+                      {
+                        q: query.q,
+                        status: query.status,
+                        attention: query.attention,
+                        sort: query.sort,
+                        dir: query.dir
+                      },
+                      { studentId: enrollment.studentId }
+                    )}
                     key={enrollment.studentId}
                   >
                     <span className="flex items-center gap-2">
@@ -192,6 +294,7 @@ export default async function MissionSubmissionsPage({
                       <span className="flex flex-wrap items-center gap-2">
                         {gradeBadge(studentGrade, isSelected)}
                         {studentGrade ? <span>Score {studentGrade.score.toString()}</span> : null}
+                        {needsAttention ? <StatusBadge tone="warning">Needs attention</StatusBadge> : null}
                       </span>
                     </span>
                   </Link>
