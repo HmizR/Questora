@@ -24,6 +24,14 @@ type ToastContextValue = {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
+function createToastId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return `toast-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 const variantStyles: Record<ToastVariant, {
   icon: LucideIcon;
   className: string;
@@ -60,7 +68,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const showToast = useCallback(
     (toast: ToastInput) => {
-      const id = crypto.randomUUID();
+      const id = createToastId();
       const nextToast: Toast = {
         id,
         variant: toast.variant ?? "info",
