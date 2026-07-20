@@ -34,6 +34,10 @@ test("admin destructive actions require confirmation", async ({ page }) => {
   await loginAs(page, e2eUsers.admin.email);
   await page.goto(`/admin/users/${seed.users.unenrolled.id}`);
 
+  await expect(page.getByLabel(`${e2eUsers.unenrolled.name} avatar`)).toBeVisible();
+  await expect(page.getByText("Active enrollments")).toBeVisible();
+  await expect(page.getByText("Questora does not email password resets")).toBeVisible();
+
   await page.getByRole("button", { name: "Deactivate user" }).click();
   await expect(page.getByRole("dialog")).toContainText("Deactivate this user?");
   await page.getByRole("dialog").getByRole("button", { name: "Cancel" }).click();

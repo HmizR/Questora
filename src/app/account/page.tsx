@@ -6,8 +6,10 @@ import {
 } from "@/components/account/account-forms";
 import { AvatarImage } from "@/components/ui/avatar-image";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { requireUser } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
+import { roleLabel, roleTone, statusLabel, statusTone } from "@/lib/user-display";
 
 const roleHome = {
   ADMIN: "/admin",
@@ -53,18 +55,29 @@ export default async function AccountPage() {
               <p className="mt-1 truncate text-sm text-ink/60">{user.email}</p>
             </div>
           </div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            {[
-              ["Name", user.name ?? "Unnamed user"],
-              ["Role", user.role],
-              ["Email", user.email ?? "No email"],
-              ["Status", user.status]
-            ].map(([label, value]) => (
-              <div className="rounded-md border border-ink/10 bg-parchment/50 px-4 py-3" key={label}>
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink/45">{label}</p>
-                <p className="mt-1 break-words text-sm font-semibold text-ink">{value}</p>
+          <div className="mt-5 grid gap-2">
+            <div className="rounded-md border border-ink/10 bg-parchment/50 px-3 py-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-ink/45">Name</p>
+              <p className="mt-1 break-words text-sm font-semibold text-ink">{user.name}</p>
+            </div>
+            <div className="rounded-md border border-ink/10 bg-parchment/50 px-3 py-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-ink/45">Email</p>
+              <p className="mt-1 break-words text-sm font-semibold text-ink">{user.email}</p>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div className="rounded-md border border-ink/10 bg-parchment/50 px-3 py-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-ink/45">Role</p>
+                <div className="mt-1">
+                  <StatusBadge tone={roleTone(user.role)}>{roleLabel(user.role)}</StatusBadge>
+                </div>
               </div>
-            ))}
+              <div className="rounded-md border border-ink/10 bg-parchment/50 px-3 py-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-ink/45">Status</p>
+                <div className="mt-1">
+                  <StatusBadge tone={statusTone(user.status)}>{statusLabel(user.status)}</StatusBadge>
+                </div>
+              </div>
+            </div>
           </div>
           <h2 className="mt-6 text-lg font-bold">Quick links</h2>
           <div className="mt-4 grid gap-3">

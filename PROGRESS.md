@@ -40,6 +40,7 @@ Post-MVP UI refresh completed:
 - Avatar display across account navigation, leaderboards, profiles, rosters, and submission review
 - Lecturer-uploaded mission resources wired into the protected S3 foundation
 - Mission resources display file type icons, readable sizes, filenames, and upload dates
+- Admin/user polish with avatar-aware rosters, role/status badges, compact account details, and clearer account-control guidance
 - Isolated PostgreSQL integration test setup with service and server action coverage
 - Playwright UI-level workflow test setup for admin, lecturer, and student paths
 - GitHub Actions CI quality gate for Prisma validation, typecheck, lint, tests, e2e, and build
@@ -48,6 +49,7 @@ Post-MVP UI refresh completed:
 - Lecturer quiz analytics with participation, pass rate, and question-level answer distribution
 - Student quiz attempt review with guarded correct-answer reveal
 - Deployment readiness documentation and first-admin bootstrap script
+- Production deployment dry run completed successfully
 
 Latest verified checks:
 
@@ -216,10 +218,12 @@ Completed:
 - CI PostgreSQL service database and Playwright failure artifact upload
 - Production deployment guide for Vercel and hosted PostgreSQL
 - First-admin bootstrap command for production setup
+- Successful production deployment dry run with real deployment environment checks
 - Protected S3 upload foundation and student submission upload UI
 - Account avatar upload UI
 - Lecturer mission resource upload UI
 - Resource file display polish with type labels, sizes, icons, and safer filename truncation
+- Admin user/account polish for clearer rosters, account summaries, and reset/deactivation guidance
 
 Current automated coverage:
 
@@ -233,7 +237,6 @@ Current automated coverage:
 
 - Deployment readiness:
   - CI verification on GitHub after the workflow is pushed
-  - first real Vercel deployment dry run
   - production smoke testing with real production-created data
 - S3-backed upload polish:
   - add optional resource previews or resource sorting refinements if needed after use
