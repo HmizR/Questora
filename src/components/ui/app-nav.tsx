@@ -57,7 +57,7 @@ function isActive(pathname: string, href: string) {
   return pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
 }
 
-export function AppNav({ role }: { role: UserRole }) {
+export function AppNav({ collapsed = false, role }: { collapsed?: boolean; role: UserRole }) {
   const pathname = usePathname();
   const items = getRoleItems(role);
 
@@ -69,16 +69,18 @@ export function AppNav({ role }: { role: UserRole }) {
         return (
           <Link
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition",
+              "flex items-center rounded-lg px-3 py-2.5 text-sm font-semibold transition",
+              collapsed ? "justify-center gap-0" : "gap-3",
               isActive(pathname, item.href)
                 ? "bg-accent text-white shadow-sm"
                 : "text-ink/70 hover:bg-surface-muted hover:text-ink"
             )}
             href={item.href}
             key={item.href}
+            title={collapsed ? item.label : undefined}
           >
             <Icon aria-hidden className="h-4 w-4" />
-            <span>{item.label}</span>
+            <span className={cn(collapsed && "sr-only")}>{item.label}</span>
           </Link>
         );
       })}
