@@ -163,6 +163,38 @@ Recommended first AI feature:
 
 Start with mission-scoped context before adding embeddings or document retrieval. This keeps authorization and behavior easier to reason about.
 
+Current AI MVP:
+
+- mounted as a global protected drawer in the dashboard shell
+- uses rich page context on student mission and student realm pages
+- falls back to general help on unsupported protected pages
+- stores chat history in browser state only
+- does not read uploaded file contents yet; mission resource metadata is included instead
+
+### AI Provider Strategy
+
+The first implementation should be provider-agnostic at the service boundary, with Ollama as the recommended local development provider.
+
+Initial local configuration:
+
+```env
+AI_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=qwen3:8b
+```
+
+Ollama keeps early experimentation inexpensive and local. `qwen3:8b` is the preferred first model for mission Q&A, summaries, hints, and study support.
+
+The application should avoid coupling UI or authorization logic to Ollama directly. A thin provider interface should make it possible to add hosted providers later, for example:
+
+```env
+AI_PROVIDER=openai
+OPENAI_API_KEY=...
+OPENAI_MODEL=...
+```
+
+Start with non-streaming responses for the first MVP pass. Streaming can be added after authorization, context construction, and tests are stable.
+
 ### Lecturer Grading Assistant
 
 Recommended later AI feature:
@@ -184,6 +216,7 @@ Future implementation may add:
 - extracted text records for uploaded resources
 - optional embeddings/vector search for larger resource sets
 - `services/ai-service.ts`
+- provider adapters such as `services/ai/ollama-provider.ts`
 - protected `/api/ai/chat` route
 
 AI authorization should reuse existing ownership and enrollment rules:

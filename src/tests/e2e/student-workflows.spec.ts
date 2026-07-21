@@ -203,3 +203,56 @@ test("leaderboard names link to public student profiles", async ({ page }) => {
   await expect(page).toHaveURL(/\/student\/profiles\//);
   await expect(page.getByRole("heading", { name: "E2E Student's profile" })).toBeVisible();
 });
+
+test("global AI assistant drawer uses student page context", async ({ page }) => {
+  let requests = 0;
+  await page.route("**/api/ai/chat", async (route) => {
+    requests += 1;
+    const body = route.request().postDataJSON() as {
+      context?: { type?: string };
+      message?: string;
+    };
+    const contextLabel =
+      body.context?.type === "STUDENT_ACTIVITY"
+        ? "Using current mission"
+        : body.context?.type === "STUDENT_CLASS"
+          ? "Using current realm"
+          : "General help";
+
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        answer: `**Mock AI answer** for ${body.message}\n\n- Review the mission brief\n- Ask for hints`,
+        contextLabel,
+        sources: [{ label: "Mission", detail: "E2E Assignment" }]
+      })
+    });
+  });
+
+  await loginAs(page, e2eUsers.student.email);
+  await page.goto(`/student/classes/${seed.class.id}`);
+  await page.getByRole("button", { name: "Open Questora Assistant" }).click();
+  await expect(page.getByRole("dialog", { name: "Questora Assistant" })).toBeVisible();
+  await expect(page.getByText("Using current realm")).toBeVisible();
+  await page.getByRole("button", { name: "Summarize this" }).click();
+  await expect(page.getByText("Mock AI answer")).toBeVisible();
+  await expect(page.getByText("Review the mission brief")).toBeVisible();
+
+  await page.reload();
+  await page.getByRole("button", { name: "Open Questora Assistant" }).click();
+  await expect(page.getByText("Mock AI answer")).toHaveCount(0);
+  await page.getByRole("button", { name: "Close assistant" }).click();
+
+  await page.goto(`/student/classes/${seed.class.id}/activities/${seed.activities.assignment.id}`);
+  await page.getByRole("button", { name: "Open Questora Assistant" }).click();
+  await expect(page.getByText("Using current mission")).toBeVisible();
+  await page.getByPlaceholder("Ask about this page...").fill("Give me a hint");
+  await page.getByRole("button", { name: "Send message" }).click();
+  await expect(page.getByText("Mock AI answer")).toBeVisible();
+  await expect(page.getByText("Mission: E2E Assignment")).toBeVisible();
+
+  await page.goto("/account");
+  await page.getByRole("button", { name: "Open Questora Assistant" }).click();
+  await expect(page.getByText("General help")).toBeVisible();
+  expect(requests).toBeGreaterThanOrEqual(2);
+});

@@ -46,6 +46,7 @@ Post-MVP UI refresh completed:
 - Lecturer roster, grades, submission review, and quiz analytics filters, sorting, needs-attention highlights, and CSV exports
 - Due-date UX with student and lecturer due-soon/overdue panels and mission deadline badges
 - Class announcements with lecturer draft/publish/archive/delete workflow and student published-only viewing
+- Global AI assistant drawer MVP with Ollama provider, student mission/realm context, generic fallback, and client-only chat history
 - Isolated PostgreSQL integration test setup with service and server action coverage
 - Playwright UI-level workflow test setup for admin, lecturer, and student paths
 - GitHub Actions CI quality gate for Prisma validation, typecheck, lint, tests, e2e, and build
@@ -242,9 +243,9 @@ Completed:
 Current automated coverage:
 
 ```text
-41 unit tests passing
-37 integration tests passing
-21 e2e tests passing
+44 unit tests passing
+42 integration tests passing
+22 e2e tests passing
 ```
 
 ## Recommended Next Steps
@@ -260,8 +261,9 @@ Current automated coverage:
   - add full calendar views later if deadline panels are not enough
   - add quiz review improvements such as answer explanations, review settings, or question randomization
 - AI assistant roadmap:
-  - add a student mission assistant that can answer questions about mission content, lecturer-uploaded resources, and class announcements
-  - start with mission-scoped context before adding embeddings or full document RAG
+  - add resource text extraction so the assistant can answer from uploaded PDFs, slides, docs, and worksheets instead of metadata only
+  - add embeddings or full document RAG after resource text extraction
+  - add streaming chat UX after the non-streaming assistant is stable
   - make the assistant cite the resource or mission content it used where possible
   - add academic-honesty guardrails so it explains, hints, quizzes, and summarizes instead of completing graded work for students
   - later add a lecturer grading assistant for summarizing submissions, suggesting feedback, and checking rubric coverage

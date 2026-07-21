@@ -7,6 +7,7 @@ import {
   StartActivityForm,
   SubmitAssignmentForm
 } from "@/components/student/activity-forms";
+import { AIAssistantContextRegistration } from "@/components/ai/ai-assistant-context-registration";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { ProtectedFileLink } from "@/components/ui/protected-file-link";
@@ -127,6 +128,9 @@ export default async function StudentActivityPage({
 
   return (
     <DashboardShell title={activity.title} subtitle={`${activity.type} mission in ${activity.module.title}`}>
+      <AIAssistantContextRegistration
+        context={{ type: "STUDENT_ACTIVITY", classId, activityId: activity.id }}
+      />
       <ClassTabs classId={classId} role="STUDENT" />
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <section className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">

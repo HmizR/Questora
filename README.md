@@ -38,6 +38,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Protected S3 uploads support student assignment/project files, self-service avatar images, and lecturer mission resources with short-lived upload/download URLs.
 - Uploaded mission resources show file type, readable size, original filename, upload date, required/optional state, learning label, and optional description.
 - User avatars appear in account menus, leaderboards, profiles, lecturer rosters, and submission review.
+- A global AI assistant drawer can answer with page-aware student mission/realm context through a local Ollama provider.
 - Seed data with one admin, two lecturers, five students, two classes, example modules, activities, quests, badges, and student profiles.
 
 ## Tech Stack
@@ -66,6 +67,9 @@ S3_ACCESS_KEY_ID="replace-with-access-key"
 S3_SECRET_ACCESS_KEY="replace-with-secret-key"
 # S3_ENDPOINT="https://s3-compatible-provider.example.com"
 # S3_FORCE_PATH_STYLE="false"
+AI_PROVIDER="ollama"
+OLLAMA_BASE_URL="http://localhost:11434"
+OLLAMA_MODEL="qwen3:8b"
 ```
 
 The S3 variables power protected uploads. Student assignment/project submissions, account
@@ -77,6 +81,18 @@ Removing a lecturer mission resource currently removes the Questora database rec
 The physical S3/RustFS object is intentionally left in storage for this MVP to avoid unsafe
 deletion edge cases. Add a reviewed orphan-cleanup script or storage lifecycle policy before
 relying on automatic physical object cleanup in production.
+
+The AI assistant uses a provider-agnostic service layer. The first supported provider is
+Ollama for local development:
+
+```bash
+ollama pull qwen3:8b
+ollama serve
+```
+
+The first AI pass is non-streaming and stores chat history in browser state only. Student
+mission and realm pages provide authorized page context; other protected pages use general
+help until richer context is added.
 
 ## Database
 

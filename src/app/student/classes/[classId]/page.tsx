@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AIAssistantContextRegistration } from "@/components/ai/ai-assistant-context-registration";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { DeadlineBadge, DeadlineCard } from "@/components/ui/deadline-card";
@@ -60,6 +61,7 @@ export default async function StudentClassPage({
 
   return (
     <DashboardShell title={teachingClass.name} subtitle="Choose a mission and continue your quest.">
+      <AIAssistantContextRegistration context={{ type: "STUDENT_CLASS", classId }} />
       <ClassTabs classId={classId} role="STUDENT" />
       <section className="mb-6 rounded-lg border border-border/80 bg-surface p-5 shadow-sm">
         <div className="flex items-center justify-between gap-3">
