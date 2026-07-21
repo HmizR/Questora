@@ -1,0 +1,202 @@
+# ARCHITECTURE.md
+
+Questora is a gamified LMS MVP built around clear academic domain models with RPG-style presentation in the UI.
+
+## Application Stack
+
+- Next.js App Router for pages, server components, route handlers, and server actions.
+- TypeScript with strict application-level types.
+- PostgreSQL as the source of truth.
+- Prisma ORM for schema, migrations, and typed database access.
+- Auth.js credentials authentication.
+- Zod validation for server mutations and request payloads.
+- Tailwind CSS and shared dashboard components for UI.
+- Vitest for unit and integration tests.
+- Playwright for browser workflow tests.
+
+## Core Layers
+
+### Routes
+
+Routes live under `src/app`.
+
+- `/admin` owns platform administration.
+- `/lecturer` owns assigned-class teaching workflows.
+- `/student` owns enrolled-class learning workflows.
+- `/api` contains protected route handlers such as uploads and exports.
+
+Protected pages rely on server-side auth and authorization checks. Client components are used only where interactivity is needed, such as forms, upload controls, menus, theme toggles, and confirmations.
+
+### Services
+
+Business logic lives in `src/services`.
+
+Important rules should stay in services rather than route handlers or React components. Examples:
+
+- class and enrollment management
+- lecturer ownership checks
+- activity progress
+- quest completion
+- XP transactions
+- grading
+- quiz attempts and analytics
+- storage authorization
+- deadline queries
+- announcements
+
+### Validation
+
+Zod schemas live in `src/schemas`.
+
+Server actions and route handlers validate incoming data before calling services. Client-side validation may improve UX, but server validation remains authoritative.
+
+### Authorization
+
+Reusable auth helpers live in `src/lib/authorization-service.ts`.
+
+Authorization must check both role and resource relationship:
+
+- Admins can manage all users and classes.
+- Lecturers can manage only classes assigned to them.
+- Students can access only active enrollments and published accessible content.
+- Students can view only their own private submissions, progress, and grades.
+
+## Data Model
+
+Prisma schema lives in `prisma/schema.prisma`.
+
+The backend keeps professional domain names:
+
+- `Class`
+- `Module`
+- `Activity`
+- `Quest`
+- `Submission`
+- `Grade`
+- `XPTransaction`
+- `ActivityResource`
+- `Announcement`
+
+The UI may present these as:
+
+- Class = Learning Realm
+- Module = Region
+- Activity = Mission
+- Project = Boss Battle
+- XP = Experience Points
+
+## Gamification
+
+Grades and XP are intentionally separate.
+
+- Grades represent academic assessment.
+- XP represents gamified progress.
+- XP must always be awarded through `XPTransaction`.
+- Student profile XP and level updates happen in the same transaction as XP awards.
+- Quest completion is derived from required connected activity progress.
+- Students cannot directly mark quests complete.
+
+## Uploads And Storage
+
+Questora uses protected S3-compatible storage through presigned URLs.
+
+Stored application references use opaque `s3:<object-key>` values. The app resolves protected downloads through authorized short-lived signed URLs.
+
+Current upload surfaces:
+
+- student assignment/project submissions
+- self-service avatars
+- lecturer mission resources
+
+Resource deletion currently removes database rows only. Physical S3/RustFS object cleanup should be handled later with a reviewed cleanup helper or lifecycle policy.
+
+## UI Structure
+
+Protected pages use a shared dashboard shell:
+
+- sticky top navbar
+- role-aware global sidebar
+- class workspace tabs in the main content area
+- responsive tables and scrollable tabs
+- structured toasts and inline action errors
+- confirmation dialogs for destructive actions
+- shared empty states and status badges
+
+## Testing
+
+Questora uses three levels of automated coverage:
+
+- Unit tests for pure rules and helpers.
+- Integration tests against isolated PostgreSQL for services, server actions, uploads, exports, and authorization.
+- Playwright e2e tests for admin, lecturer, and student workflows.
+
+`npm test` remains the fast unit suite. Database-backed and browser suites use the isolated `questora_test` database.
+
+## Deployment
+
+The intended first production deployment is Vercel with hosted PostgreSQL.
+
+Production should use:
+
+- committed Prisma migrations
+- `prisma migrate deploy`
+- production environment variables
+- first-admin bootstrap script
+- manual smoke checks with production-created data
+
+Development seed data should not be used in production.
+
+## Future AI Assistant Layer
+
+AI should be introduced as a controlled assistant layer, not as a replacement for LMS rules or lecturer judgment.
+
+### Student Mission Assistant
+
+Recommended first AI feature:
+
+- appears inside student mission pages
+- answers questions about the current mission
+- uses mission content, lecturer-uploaded resources, and class announcements as context
+- cites the source material used where practical
+- supports explanation, summarization, hints, study questions, and quiz-me flows
+- avoids completing graded submissions for students
+
+Start with mission-scoped context before adding embeddings or document retrieval. This keeps authorization and behavior easier to reason about.
+
+### Lecturer Grading Assistant
+
+Recommended later AI feature:
+
+- appears in mission-specific submission review pages
+- summarizes a student's submission
+- suggests feedback
+- checks rubric or instruction coverage once rubrics exist
+- may suggest a score only as a clearly labeled draft
+
+Lecturers must remain the final decision-makers. AI should never publish grades automatically.
+
+### Likely AI Architecture
+
+Future implementation may add:
+
+- `AIConversation`
+- `AIMessage`
+- extracted text records for uploaded resources
+- optional embeddings/vector search for larger resource sets
+- `services/ai-service.ts`
+- protected `/api/ai/chat` route
+
+AI authorization should reuse existing ownership and enrollment rules:
+
+- students can chat only about published accessible class content they are enrolled in
+- lecturers can use AI only for classes they teach
+- private submissions and grades must never be exposed across students
+
+### AI Safety Notes
+
+- Do not trust client-submitted user IDs.
+- Do not send another student's private work to a student chat.
+- Keep prompts and responses scoped to authorized resources.
+- Treat AI output as advisory.
+- Add logging and rate limiting before public production usage.
+- Consider whether chat history should be persisted before adding conversation tables.

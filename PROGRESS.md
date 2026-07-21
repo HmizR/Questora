@@ -258,5 +258,13 @@ Current automated coverage:
   - add full calendar views later if deadline panels are not enough
   - add resource organization polish such as resource ordering, labels, and required/optional indicators
   - add quiz review improvements such as answer explanations, review settings, or question randomization
+- AI assistant roadmap:
+  - add a student mission assistant that can answer questions about mission content, lecturer-uploaded resources, and class announcements
+  - start with mission-scoped context before adding embeddings or full document RAG
+  - make the assistant cite the resource or mission content it used where possible
+  - add academic-honesty guardrails so it explains, hints, quizzes, and summarizes instead of completing graded work for students
+  - later add a lecturer grading assistant for summarizing submissions, suggesting feedback, and checking rubric coverage
+  - keep lecturer AI grading suggestions human-reviewed and never auto-publish grades
+  - consider AI conversation/message persistence only after deciding whether chat history is needed
 - Production hardening:
   - replace in-memory auth rate limiting with Redis before public/multi-instance deployment
