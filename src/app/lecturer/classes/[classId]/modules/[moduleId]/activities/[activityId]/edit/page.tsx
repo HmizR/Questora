@@ -38,7 +38,7 @@ export default async function EditMissionPage({
         }
       },
       resources: {
-        orderBy: { position: "asc" }
+        orderBy: [{ isRequired: "desc" }, { position: "asc" }]
       }
     }
   });

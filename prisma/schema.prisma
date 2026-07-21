@@ -67,6 +67,17 @@ enum AnnouncementStatus {
   ARCHIVED
 }
 
+enum ActivityResourceKind {
+  READING
+  SLIDES
+  WORKSHEET
+  REFERENCE
+  STARTER_FILE
+  DATASET
+  EXAMPLE
+  OTHER
+}
+
 model User {
   id               String             @id @default(cuid())
   name             String
@@ -191,6 +202,9 @@ model ActivityResource {
   id          String   @id @default(cuid())
   activityId  String
   title       String
+  description String?
+  kind        ActivityResourceKind @default(OTHER)
+  isRequired  Boolean  @default(false)
   fileName    String
   fileUrl     String
   contentType String

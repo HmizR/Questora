@@ -1,5 +1,6 @@
 import {
   ActivityType,
+  ActivityResourceKind,
   AnnouncementStatus,
   QuestType,
   type Announcement,
@@ -33,6 +34,7 @@ import {
   removeQuestActivityAction,
   updateActivityAction,
   updateAnnouncementAction,
+  updateActivityResourceAction,
   updateModuleAction,
   updateQuestAction
 } from "@/app/lecturer/actions";
@@ -73,6 +75,19 @@ function activityOptions(activities: ActivityOption[]) {
     value: activity.id,
     label: `${activity.position}. ${activity.title} (${activity.type})`
   }));
+}
+
+function resourceKindOptions() {
+  return [
+    { value: ActivityResourceKind.READING, label: "Reading" },
+    { value: ActivityResourceKind.SLIDES, label: "Slides" },
+    { value: ActivityResourceKind.WORKSHEET, label: "Worksheet" },
+    { value: ActivityResourceKind.REFERENCE, label: "Reference" },
+    { value: ActivityResourceKind.STARTER_FILE, label: "Starter file" },
+    { value: ActivityResourceKind.DATASET, label: "Dataset" },
+    { value: ActivityResourceKind.EXAMPLE, label: "Example" },
+    { value: ActivityResourceKind.OTHER, label: "Other" }
+  ];
 }
 
 export function CreateModuleForm({ classId }: { classId: string }) {
@@ -371,8 +386,9 @@ export function MissionResourcesPanel({
           <p className="text-sm text-ink/60">No resources added yet.</p>
         ) : (
           resources.map((resource) => (
-            <ResourceFileCard
-              actionSlot={
+            <div className="space-y-3" key={resource.id}>
+              <ResourceFileCard
+                actionSlot={
                 <LecturerActionForm action={deleteActivityResourceAction}>
                   <input name="classId" type="hidden" value={classId} />
                   <input name="moduleId" type="hidden" value={moduleId} />
@@ -386,18 +402,62 @@ export function MissionResourcesPanel({
                     title="Remove this resource?"
                   />
                 </LecturerActionForm>
-              }
-              activityId={activityId}
-              contentType={resource.contentType}
-              createdAt={resource.createdAt}
-              fileName={resource.fileName}
-              fileUrl={resource.fileUrl}
-              intent="MISSION_RESOURCE"
-              key={resource.id}
-              position={resource.position}
-              size={resource.size}
-              title={resource.title}
-            />
+                }
+                activityId={activityId}
+                contentType={resource.contentType}
+                createdAt={resource.createdAt}
+                description={resource.description}
+                fileName={resource.fileName}
+                fileUrl={resource.fileUrl}
+                intent="MISSION_RESOURCE"
+                isRequired={resource.isRequired}
+                kind={resource.kind}
+                position={resource.position}
+                size={resource.size}
+                title={resource.title}
+              />
+              <details className="rounded-lg border border-border/80 bg-surface p-4">
+                <summary className="cursor-pointer list-none text-sm font-bold text-ink/75">
+                  Edit details
+                </summary>
+                <LecturerActionForm
+                  action={updateActivityResourceAction}
+                  className="mt-4 grid gap-3"
+                >
+                  <input name="classId" type="hidden" value={classId} />
+                  <input name="moduleId" type="hidden" value={moduleId} />
+                  <input name="activityId" type="hidden" value={activityId} />
+                  <input name="resourceId" type="hidden" value={resource.id} />
+                  <TextField label="Resource title" name="title" defaultValue={resource.title} />
+                  <TextAreaField
+                    label="Description"
+                    name="description"
+                    defaultValue={resource.description}
+                    required={false}
+                  />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <SelectField
+                      defaultValue={resource.kind}
+                      label="Resource label"
+                      name="kind"
+                      options={resourceKindOptions()}
+                    />
+                    <TextField
+                      defaultValue={String(resource.position)}
+                      label="Position"
+                      name="position"
+                      type="number"
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 text-sm font-medium">
+                    <input name="isRequired" type="checkbox" defaultChecked={resource.isRequired} /> Required resource
+                  </label>
+                  <button className="w-fit rounded-md border border-ink/20 bg-white px-3 py-2 text-sm font-semibold hover:bg-ink hover:text-white">
+                    Save resource details
+                  </button>
+                </LecturerActionForm>
+              </details>
+            </div>
           ))
         )}
       </div>
@@ -409,12 +469,22 @@ export function MissionResourcesPanel({
         <input name="moduleId" type="hidden" value={moduleId} />
         <input name="activityId" type="hidden" value={activityId} />
         <TextField label="Resource title" name="title" />
+        <TextAreaField label="Description" name="description" required={false} />
+        <SelectField
+          defaultValue={ActivityResourceKind.OTHER}
+          label="Resource label"
+          name="kind"
+          options={resourceKindOptions()}
+        />
         <TextField
           defaultValue={String(resources.length + 1)}
           label="Position"
           name="position"
           type="number"
         />
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <input name="isRequired" type="checkbox" /> Required resource
+        </label>
         <MissionResourceUpload activityId={activityId} />
         <button className="rounded-md border border-ink/20 bg-white px-3 py-2 text-sm font-semibold hover:bg-ink hover:text-white">
           Add resource

@@ -1,4 +1,4 @@
-import { ActivityType, AnnouncementStatus, QuestType } from "@prisma/client";
+import { ActivityResourceKind, ActivityType, AnnouncementStatus, QuestType } from "@prisma/client";
 import { z } from "zod";
 
 const optionalText = z
@@ -136,10 +136,25 @@ export const createActivityResourceSchema = z.object({
   moduleId: z.string().min(1),
   activityId: z.string().min(1),
   title: z.string().trim().min(2, "Title is required"),
+  description: optionalText.optional(),
+  kind: z.nativeEnum(ActivityResourceKind).default(ActivityResourceKind.OTHER),
+  isRequired: checkbox.default(false),
   fileName: z.string().trim().min(1, "File name is required").max(180),
   fileUrl: z.string().trim().min(1, "Upload or paste a file reference first"),
   contentType: z.string().trim().min(1).max(120),
   size: z.coerce.number().int().nonnegative(),
+  position: z.coerce.number().int().positive()
+});
+
+export const updateActivityResourceSchema = z.object({
+  classId: z.string().min(1),
+  moduleId: z.string().min(1),
+  activityId: z.string().min(1),
+  resourceId: z.string().min(1),
+  title: z.string().trim().min(2, "Title is required"),
+  description: optionalText.optional(),
+  kind: z.nativeEnum(ActivityResourceKind),
+  isRequired: checkbox.default(false),
   position: z.coerce.number().int().positive()
 });
 

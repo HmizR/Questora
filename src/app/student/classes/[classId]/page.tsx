@@ -34,7 +34,7 @@ export default async function StudentClassPage({
             include: {
               progresses: { where: { studentId: user.id } },
               grades: { where: { studentId: user.id, publishedAt: { not: null } } },
-              resources: { select: { id: true } },
+              resources: { select: { id: true, isRequired: true } },
               prerequisites: {
                 include: {
                   requiredActivity: {
@@ -133,6 +133,7 @@ export default async function StudentClassPage({
                     })
                   : "No due date";
                 const deadlineState = classifyDeadline(activity.dueAt);
+                const requiredResourceCount = activity.resources.filter((resource) => resource.isRequired).length;
                 const isUnlocked = activity.prerequisites.every((prerequisite) => {
                   const prerequisiteProgress = prerequisite.requiredActivity.progresses[0];
                   const completed = prerequisiteProgress?.status === "COMPLETED";
@@ -158,7 +159,9 @@ export default async function StudentClassPage({
                       </p>
                       {activity.resources.length > 0 ? (
                         <p className="mt-1 text-sm font-medium text-moss">
-                          {activity.resources.length} resource{activity.resources.length === 1 ? "" : "s"} available
+                          {requiredResourceCount > 0
+                            ? `${requiredResourceCount} required resource${requiredResourceCount === 1 ? "" : "s"}`
+                            : `${activity.resources.length} resource${activity.resources.length === 1 ? "" : "s"} available`}
                         </p>
                       ) : null}
                       {!isUnlocked ? (

@@ -1,4 +1,4 @@
-import { ProgressStatus, SubmissionStatus, type ActivityType, type QuestType } from "@prisma/client";
+import { ActivityResourceKind, ProgressStatus, SubmissionStatus, type ActivityType, type QuestType } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
@@ -230,6 +230,9 @@ export async function createActivityResource(input: {
   lecturerId: string;
   activityId: string;
   title: string;
+  description?: string;
+  kind?: ActivityResourceKind;
+  isRequired?: boolean;
   fileName: string;
   fileUrl: string;
   contentType: string;
@@ -243,12 +246,51 @@ export async function createActivityResource(input: {
       data: {
         activityId: input.activityId,
         title: input.title,
+        description: input.description,
+        kind: input.kind ?? ActivityResourceKind.OTHER,
+        isRequired: input.isRequired ?? false,
         fileName: input.fileName,
         fileUrl: input.fileUrl,
         contentType: input.contentType,
         size: input.size,
         position: input.position,
         createdById: input.lecturerId
+      }
+    });
+  } catch (error) {
+    throw prismaErrorToAppError(error);
+  }
+}
+
+export async function updateActivityResource(input: {
+  lecturerId: string;
+  activityId: string;
+  resourceId: string;
+  title: string;
+  description?: string;
+  kind: ActivityResourceKind;
+  isRequired: boolean;
+  position: number;
+}) {
+  await getActivityForLecturer(input.activityId, input.lecturerId);
+
+  const resource = await db.activityResource.findUnique({
+    where: { id: input.resourceId }
+  });
+
+  if (!resource || resource.activityId !== input.activityId) {
+    throw new AppError("NOT_FOUND", "Resource not found.");
+  }
+
+  try {
+    return await db.activityResource.update({
+      where: { id: input.resourceId },
+      data: {
+        title: input.title,
+        description: input.description,
+        kind: input.kind,
+        isRequired: input.isRequired,
+        position: input.position
       }
     });
   } catch (error) {

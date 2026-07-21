@@ -50,7 +50,7 @@ export default async function LecturerModulesPage({
                 select: { studentId: true }
               },
               resources: {
-                select: { id: true }
+                select: { id: true, isRequired: true }
               }
             },
             orderBy: { position: "asc" }
@@ -144,6 +144,7 @@ export default async function LecturerModulesPage({
                   >
                     <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <p className="text-sm text-ink/60">
+                        {activity.resources.filter((resource) => resource.isRequired).length} required /{" "}
                         {activity.resources.length} resource{activity.resources.length === 1 ? "" : "s"}
                       </p>
                       <ActionMenu label={`Actions for ${activity.title}`}>

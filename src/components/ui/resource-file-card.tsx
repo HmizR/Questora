@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { ActivityResourceKind } from "@prisma/client";
 import {
   Archive,
   File,
@@ -16,6 +17,17 @@ import { formatFileSize, getFileKind, type FileKind } from "@/lib/file-display";
 import type { UploadIntent } from "@/lib/upload-rules";
 
 const iconClassName = "h-5 w-5";
+
+const resourceKindLabels: Record<ActivityResourceKind, string> = {
+  READING: "Reading",
+  SLIDES: "Slides",
+  WORKSHEET: "Worksheet",
+  REFERENCE: "Reference",
+  STARTER_FILE: "Starter file",
+  DATASET: "Dataset",
+  EXAMPLE: "Example",
+  OTHER: "Other"
+};
 
 function FileKindIcon({ kind }: { kind: FileKind }) {
   if (kind === "PDF" || kind === "Document" || kind === "Text") {
@@ -46,9 +58,12 @@ export function ResourceFileCard({
   className,
   contentType,
   createdAt,
+  description,
   fileName,
   fileUrl,
   intent,
+  isRequired,
+  kind: resourceKind,
   position,
   size,
   title
@@ -58,14 +73,18 @@ export function ResourceFileCard({
   className?: string;
   contentType?: string | null;
   createdAt?: Date | null;
+  description?: string | null;
   fileName: string;
   fileUrl: string;
   intent: UploadIntent;
+  isRequired?: boolean | null;
+  kind?: ActivityResourceKind | null;
   position?: number;
   size?: number | null;
   title: string;
 }) {
   const kind = getFileKind(contentType, fileName);
+  const label = resourceKind ? resourceKindLabels[resourceKind] : resourceKindLabels.OTHER;
 
   return (
     <div
@@ -84,7 +103,16 @@ export function ResourceFileCard({
               {title}
             </p>
             <StatusBadge tone="info">{kind}</StatusBadge>
+            <StatusBadge tone={isRequired ? "warning" : "neutral"}>
+              {isRequired ? "Required" : "Optional"}
+            </StatusBadge>
+            <StatusBadge>{label}</StatusBadge>
           </div>
+          {description ? (
+            <p className="mt-2 line-clamp-2 text-sm leading-5 text-ink/65" title={description}>
+              {description}
+            </p>
+          ) : null}
           <p className="mt-1 truncate text-xs text-ink/55" title={fileName}>
             {fileName}
           </p>

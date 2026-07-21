@@ -40,6 +40,7 @@ Post-MVP UI refresh completed:
 - Avatar display across account navigation, leaderboards, profiles, rosters, and submission review
 - Lecturer-uploaded mission resources wired into the protected S3 foundation
 - Mission resources display file type icons, readable sizes, filenames, and upload dates
+- Mission resources include required/optional indicators, learning labels, descriptions, editable details, and required-first ordering
 - Admin/user polish with avatar-aware rosters, role/status badges, compact account details, and clearer account-control guidance
 - Quiz and assignment UX polish with clearer student work states, quiz attempt summaries, submission stats, and analytics labels
 - Lecturer roster, grades, submission review, and quiz analytics filters, sorting, needs-attention highlights, and CSV exports
@@ -231,6 +232,7 @@ Completed:
 - Account avatar upload UI
 - Lecturer mission resource upload UI
 - Resource file display polish with type labels, sizes, icons, and safer filename truncation
+- Resource organization polish with required/optional metadata, controlled resource labels, descriptions, and editable ordering
 - Admin user/account polish for clearer rosters, account summaries, and reset/deactivation guidance
 - Quiz and assignment UX polish for student work states, lecturer submission stats, and clearer analytics labels
 - Lecturer analytics usability polish with filters, sorting, needs-attention highlights, and protected CSV exports
@@ -240,7 +242,7 @@ Completed:
 Current automated coverage:
 
 ```text
-39 unit tests passing
+41 unit tests passing
 37 integration tests passing
 21 e2e tests passing
 ```
@@ -256,7 +258,6 @@ Current automated coverage:
 - Quiz and assignment UX polish:
   - add true submission revision history so lecturers can inspect previous text/file versions, timestamps, and the currently graded version
   - add full calendar views later if deadline panels are not enough
-  - add resource organization polish such as resource ordering, labels, and required/optional indicators
   - add quiz review improvements such as answer explanations, review settings, or question randomization
 - AI assistant roadmap:
   - add a student mission assistant that can answer questions about mission content, lecturer-uploaded resources, and class announcements

@@ -1,4 +1,4 @@
-import { ActivityType, QuestType, UserRole } from "@prisma/client";
+import { ActivityResourceKind, ActivityType, QuestType, UserRole } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 
 import { db } from "@/lib/db";
@@ -8,6 +8,7 @@ import {
   createActivityResource,
   deleteActivityResource,
   updateActivity,
+  updateActivityResource,
   updateModule,
   updateQuest
 } from "@/services/lecturer-service";
@@ -100,11 +101,51 @@ describe("database-backed service rules", () => {
       lecturerId: lecturer.id,
       activityId: activity.id,
       title: "Lecture Slides",
+      description: "Required opening slides.",
+      kind: ActivityResourceKind.SLIDES,
+      isRequired: true,
       fileName: "slides.pdf",
       fileUrl: `s3:mission-resources/${activity.id}/slides.pdf`,
       contentType: "application/pdf",
       size: 1000,
       position: 1
+    });
+
+    expect(resource).toMatchObject({
+      description: "Required opening slides.",
+      kind: ActivityResourceKind.SLIDES,
+      isRequired: true
+    });
+
+    await expect(
+      updateActivityResource({
+        lecturerId: otherLecturer.id,
+        activityId: activity.id,
+        resourceId: resource.id,
+        title: "Other update",
+        kind: ActivityResourceKind.READING,
+        isRequired: false,
+        position: 2
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    const updatedResource = await updateActivityResource({
+      lecturerId: lecturer.id,
+      activityId: activity.id,
+      resourceId: resource.id,
+      title: "Updated Lecture Slides",
+      description: "Review before the workshop.",
+      kind: ActivityResourceKind.WORKSHEET,
+      isRequired: false,
+      position: 2
+    });
+
+    expect(updatedResource).toMatchObject({
+      title: "Updated Lecture Slides",
+      description: "Review before the workshop.",
+      kind: ActivityResourceKind.WORKSHEET,
+      isRequired: false,
+      position: 2
     });
 
     await expect(

@@ -34,7 +34,7 @@ export default async function StudentActivityPage({
   const { classId, activityId } = await params;
   const { user } = await requireClassEnrollment(classId);
 
-  let activity;
+  let activity: Awaited<ReturnType<typeof assertStudentCanAccessActivity>>;
   try {
     activity = await assertStudentCanAccessActivity(activityId, user.id);
   } catch {
@@ -60,7 +60,7 @@ export default async function StudentActivityPage({
     }),
     db.activityResource.findMany({
       where: { activityId },
-      orderBy: { position: "asc" }
+      orderBy: [{ isRequired: "desc" }, { position: "asc" }]
     })
   ]);
 
@@ -91,6 +91,39 @@ export default async function StudentActivityPage({
     activity.type === ActivityType.QUIZ && quiz
       ? quizAttempts.map((attempt) => parseStoredQuizAttempt(attempt))
       : [];
+  const requiredResources = resources.filter((resource) => resource.isRequired);
+  const optionalResources = resources.filter((resource) => !resource.isRequired);
+
+  function renderResourceGroup(title: string, groupResources: typeof resources) {
+    if (groupResources.length === 0) {
+      return null;
+    }
+
+    return (
+      <div>
+        <h3 className="text-sm font-bold text-ink/75">{title}</h3>
+        <div className="mt-3 grid gap-3">
+          {groupResources.map((resource) => (
+            <ResourceFileCard
+              activityId={activity.id}
+              contentType={resource.contentType}
+              createdAt={resource.createdAt}
+              description={resource.description}
+              fileName={resource.fileName}
+              fileUrl={resource.fileUrl}
+              intent="MISSION_RESOURCE"
+              isRequired={resource.isRequired}
+              key={resource.id}
+              kind={resource.kind}
+              position={resource.position}
+              size={resource.size}
+              title={resource.title}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <DashboardShell title={activity.title} subtitle={`${activity.type} mission in ${activity.module.title}`}>
@@ -108,21 +141,9 @@ export default async function StudentActivityPage({
           {resources.length > 0 ? (
             <section className="mt-5 rounded-lg border border-ink/10 bg-surface-muted p-5">
               <h2 className="font-bold">Resources</h2>
-              <div className="mt-3 grid gap-3">
-                {resources.map((resource) => (
-                  <ResourceFileCard
-                    activityId={activity.id}
-                    contentType={resource.contentType}
-                    createdAt={resource.createdAt}
-                    fileName={resource.fileName}
-                    fileUrl={resource.fileUrl}
-                    intent="MISSION_RESOURCE"
-                    key={resource.id}
-                    position={resource.position}
-                    size={resource.size}
-                    title={resource.title}
-                  />
-                ))}
+              <div className="mt-3 space-y-5">
+                {renderResourceGroup("Required resources", requiredResources)}
+                {renderResourceGroup("Optional resources", optionalResources)}
               </div>
             </section>
           ) : null}

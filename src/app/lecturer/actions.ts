@@ -33,6 +33,7 @@ import {
   removeQuestActivitySchema,
   updateAnnouncementSchema,
   updateActivitySchema,
+  updateActivityResourceSchema,
   updateModuleSchema,
   updateQuestSchema
 } from "@/schemas/lecturer";
@@ -62,6 +63,7 @@ import {
   removeActivityPrerequisite,
   removeActivityFromQuest,
   updateActivity,
+  updateActivityResource,
   updateModule,
   updateQuest
 } from "@/services/lecturer-service";
@@ -347,6 +349,26 @@ export async function deleteActivityResourceAction(
       `/lecturer/classes/${parsed.data.classId}/modules/${parsed.data.moduleId}/activities/${parsed.data.activityId}/edit`
     );
     return { ok: true, data: { message: "Resource removed." } };
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+}
+
+export async function updateActivityResourceAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = updateActivityResourceSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  try {
+    const user = await requireRole("LECTURER");
+    await updateActivityResource({ ...parsed.data, lecturerId: user.id });
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}/modules`);
+    revalidatePath(
+      `/lecturer/classes/${parsed.data.classId}/modules/${parsed.data.moduleId}/activities/${parsed.data.activityId}/edit`
+    );
+    return { ok: true, data: { message: "Resource details updated." } };
   } catch (error) {
     return { ok: false, error: toActionError(error) };
   }

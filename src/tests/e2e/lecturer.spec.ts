@@ -238,7 +238,10 @@ test("lecturer uploads and removes a mission resource", async ({ page }) => {
   );
 
   await page.getByLabel("Resource title").fill("E2E Resource Pack");
+  await page.getByLabel("Description").last().fill("Required starter files for the assignment.");
+  await page.getByLabel("Resource label").selectOption("STARTER_FILE");
   await page.getByLabel("Position").last().fill("1");
+  await page.getByLabel("Required resource").check();
   await page.setInputFiles("#mission-resource-file", {
     name: longResourceFileName,
     mimeType: "application/pdf",
@@ -248,13 +251,28 @@ test("lecturer uploads and removes a mission resource", async ({ page }) => {
   await page.getByRole("button", { name: "Add resource" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Resource added." })).toBeVisible();
   await expect(page.getByText("E2E Resource Pack")).toBeVisible();
+  await expect(page.getByTitle("Required starter files for the assignment.")).toBeVisible();
+  await expect(page.locator("span").filter({ hasText: "Starter file" }).first()).toBeVisible();
+  await expect(page.locator("span").filter({ hasText: "Required" }).first()).toBeVisible();
   await expect(page.getByText(longResourceFileName).first()).toBeVisible();
   await expect(page.getByText("PDF").first()).toBeVisible();
   await expect(page.getByText("12 B").first()).toBeVisible();
+  await page.getByText("Edit details").click();
+  const editDetails = page.locator("details").filter({ hasText: "Edit details" }).first();
+  await editDetails.getByLabel("Resource title").fill("E2E Resource Pack Updated");
+  await editDetails.getByLabel("Description").fill("Optional review packet after the workshop.");
+  await editDetails.getByLabel("Resource label").selectOption("WORKSHEET");
+  await editDetails.getByLabel("Required resource").uncheck();
+  await editDetails.getByRole("button", { name: "Save resource details" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Resource details updated." })).toBeVisible();
+  await expect(page.getByText("E2E Resource Pack Updated")).toBeVisible();
+  await expect(page.getByTitle("Optional review packet after the workshop.")).toBeVisible();
+  await expect(page.locator("span").filter({ hasText: "Worksheet" }).first()).toBeVisible();
+  await expect(page.locator("span").filter({ hasText: "Optional" }).first()).toBeVisible();
 
   await page.goto(`/lecturer/classes/${seed.class.id}/modules`);
   await page.getByText("1. E2E Assignment").click();
-  await expect(page.getByText("1 resource")).toBeVisible();
+  await expect(page.getByText("0 required / 1 resource")).toBeVisible();
 
   await loginAs(page, e2eUsers.student.email);
   await page.goto(`/student/classes/${seed.class.id}`);
@@ -272,8 +290,10 @@ test("lecturer uploads and removes a mission resource", async ({ page }) => {
     });
   });
   await page.getByRole("link", { name: /E2E Assignment/ }).click();
-  await expect(page.getByRole("heading", { name: "Resources" })).toBeVisible();
-  await expect(page.getByText("E2E Resource Pack")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Resources", exact: true })).toBeVisible();
+  await expect(page.getByText("Optional resources")).toBeVisible();
+  await expect(page.getByText("E2E Resource Pack Updated")).toBeVisible();
+  await expect(page.getByTitle("Optional review packet after the workshop.")).toBeVisible();
   await expect(page.getByText(longResourceFileName).first()).toBeVisible();
   await expect(page.getByText("PDF").first()).toBeVisible();
   await expect(page.getByText("12 B").first()).toBeVisible();
@@ -287,7 +307,7 @@ test("lecturer uploads and removes a mission resource", async ({ page }) => {
   await page.getByRole("button", { name: "Remove resource" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Remove resource" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Resource removed." })).toBeVisible();
-  await expect(page.getByText("E2E Resource Pack")).toHaveCount(0);
+  await expect(page.getByText("E2E Resource Pack Updated")).toHaveCount(0);
 });
 
 test("lecturer mission deletion requires confirmation", async ({ page }) => {

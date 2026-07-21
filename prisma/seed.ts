@@ -1,4 +1,5 @@
 import {
+  ActivityResourceKind,
   ActivityType,
   AnnouncementStatus,
   ClassStatus,
@@ -201,6 +202,22 @@ async function main() {
       passingScore: 70,
       isRequired: true,
       isPublished: true
+    }
+  });
+
+  await prisma.activityResource.create({
+    data: {
+      activityId: assignment.id,
+      title: "Semantic HTML starter brief",
+      description: "Read this before building the camp assignment.",
+      kind: ActivityResourceKind.READING,
+      isRequired: true,
+      fileName: "semantic-html-starter-brief.pdf",
+      fileUrl: "https://example.com/semantic-html-starter-brief.pdf",
+      contentType: "application/pdf",
+      size: 240000,
+      position: 1,
+      createdById: lecturers[0].id
     }
   });
 
