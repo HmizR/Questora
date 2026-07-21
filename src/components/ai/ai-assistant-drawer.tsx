@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { FormEvent, KeyboardEvent, useState } from "react";
+import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import { Bot, Loader2, Send, Sparkles, Trash2, X } from "lucide-react";
 
 import { useAIAssistant } from "@/components/ai/ai-assistant-provider";
@@ -27,10 +27,13 @@ export function AIAssistantDrawer() {
     sendMessage
   } = useAIAssistant();
   const [draft, setDraft] = useState("");
+  const messageEndRef = useRef<HTMLDivElement | null>(null);
 
   async function submitMessage(message: string) {
-    await sendMessage(message);
+    if (!message.trim()) return;
+
     setDraft("");
+    await sendMessage(message);
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -46,6 +49,12 @@ export function AIAssistantDrawer() {
     event.preventDefault();
     await submitMessage(draft);
   }
+
+  useEffect(() => {
+    if (isOpen) {
+      messageEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  }, [isOpen, messages, isSending]);
 
   if (!isOpen) return null;
 
@@ -150,6 +159,7 @@ export function AIAssistantDrawer() {
                   Thinking...
                 </div>
               ) : null}
+              <div ref={messageEndRef} />
             </div>
           )}
           {error ? (
