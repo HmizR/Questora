@@ -7,11 +7,11 @@ import {
   StartActivityForm,
   SubmitAssignmentForm
 } from "@/components/student/activity-forms";
+import { StudentResourceSection } from "@/components/student/student-resource-section";
 import { AIAssistantContextRegistration } from "@/components/ai/ai-assistant-context-registration";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { ProtectedFileLink } from "@/components/ui/protected-file-link";
-import { ResourceFileCard } from "@/components/ui/resource-file-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireClassEnrollment } from "@/lib/authorization-service";
 import { formatDateTime, formatTimestampLabel } from "@/lib/date-format";
@@ -92,40 +92,6 @@ export default async function StudentActivityPage({
     activity.type === ActivityType.QUIZ && quiz
       ? quizAttempts.map((attempt) => parseStoredQuizAttempt(attempt))
       : [];
-  const requiredResources = resources.filter((resource) => resource.isRequired);
-  const optionalResources = resources.filter((resource) => !resource.isRequired);
-
-  function renderResourceGroup(title: string, groupResources: typeof resources) {
-    if (groupResources.length === 0) {
-      return null;
-    }
-
-    return (
-      <div>
-        <h3 className="text-sm font-bold text-ink/75">{title}</h3>
-        <div className="mt-3 grid gap-3">
-          {groupResources.map((resource) => (
-            <ResourceFileCard
-              activityId={activity.id}
-              contentType={resource.contentType}
-              createdAt={resource.createdAt}
-              description={resource.description}
-              fileName={resource.fileName}
-              fileUrl={resource.fileUrl}
-              intent="MISSION_RESOURCE"
-              isRequired={resource.isRequired}
-              key={resource.id}
-              kind={resource.kind}
-              position={resource.position}
-              size={resource.size}
-              title={resource.title}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <DashboardShell title={activity.title} subtitle={`${activity.type} mission in ${activity.module.title}`}>
       <AIAssistantContextRegistration
@@ -142,15 +108,7 @@ export default async function StudentActivityPage({
               <div className="mt-3 whitespace-pre-wrap text-sm leading-6">{displayContent}</div>
             </section>
           ) : null}
-          {resources.length > 0 ? (
-            <section className="mt-5 rounded-lg border border-ink/10 bg-surface-muted p-5">
-              <h2 className="font-bold">Resources</h2>
-              <div className="mt-3 space-y-5">
-                {renderResourceGroup("Required resources", requiredResources)}
-                {renderResourceGroup("Optional resources", optionalResources)}
-              </div>
-            </section>
-          ) : null}
+          <StudentResourceSection activityId={activity.id} resources={resources} />
           {activity.type === ActivityType.QUIZ && hasQuizAttemptsRemaining ? (
             <div className="mt-6">
               <AttemptQuizForm activityId={activity.id} quiz={quiz} />

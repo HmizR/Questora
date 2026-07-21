@@ -256,3 +256,74 @@ test("global AI assistant drawer uses student page context", async ({ page }) =>
   await expect(page.getByText("General help")).toBeVisible();
   expect(requests).toBeGreaterThanOrEqual(2);
 });
+
+test("student previews mission resources inline beside the assistant", async ({ page }) => {
+  const pdfResource = await db.activityResource.create({
+    data: {
+      activityId: seed.activities.assignment.id,
+      title: "E2E Required PDF",
+      description: "A previewable protected resource.",
+      fileName: "e2e-resource.pdf",
+      fileUrl: `s3:mission-resources/${seed.activities.assignment.id}/e2e-resource.pdf`,
+      contentType: "application/pdf",
+      size: 2048,
+      position: 1,
+      isRequired: true,
+      kind: "READING",
+      createdById: seed.users.lecturer.id
+    }
+  });
+  await db.activityResource.create({
+    data: {
+      activityId: seed.activities.assignment.id,
+      title: "E2E Asset Pack",
+      description: "A download-only zip resource.",
+      fileName: "assets.zip",
+      fileUrl: `s3:mission-resources/${seed.activities.assignment.id}/assets.zip`,
+      contentType: "application/zip",
+      size: 4096,
+      position: 2,
+      isRequired: false,
+      kind: "STARTER_FILE",
+      createdById: seed.users.lecturer.id
+    }
+  });
+  let downloadRequests = 0;
+  await page.route("**/api/uploads/download", async (route) => {
+    downloadRequests += 1;
+    const body = route.request().postDataJSON() as { storageRef?: string };
+    const fileName = body.storageRef?.includes("assets.zip") ? "assets.zip" : "e2e-resource.pdf";
+
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        downloadUrl: `https://downloads.questora.test/${fileName}`,
+        expiresIn: 300
+      })
+    });
+  });
+  await page.route("https://downloads.questora.test/e2e-resource.pdf", async (route) => {
+    await route.fulfill({
+      contentType: "application/pdf",
+      body: Buffer.from("%PDF-1.4\n% Questora e2e PDF preview\n")
+    });
+  });
+
+  await loginAs(page, e2eUsers.student.email);
+  await page.goto(`/student/classes/${seed.class.id}/activities/${seed.activities.assignment.id}`);
+  await page.getByRole("button", { name: "Open Questora Assistant" }).click();
+  await expect(page.getByRole("dialog", { name: "Questora Assistant" })).toBeVisible();
+
+  await page.getByRole("button", { name: `Preview ${pdfResource.title}` }).click();
+  await expect(page.getByRole("heading", { name: `Preview: ${pdfResource.title}` })).toBeVisible();
+  await expect(page.locator('iframe[title="Resource PDF preview"]')).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Questora Assistant" })).toBeVisible();
+  expect(downloadRequests).toBeGreaterThanOrEqual(1);
+
+  await page.getByRole("button", { name: "Close resource preview" }).click();
+  await expect(page.getByRole("heading", { name: `Preview: ${pdfResource.title}` })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Preview E2E Asset Pack" }).click();
+  await expect(page.getByText("Preview is not available for this file type.")).toBeVisible();
+  await expect(page.getByText("Open or download the resource to view it.")).toBeVisible();
+});

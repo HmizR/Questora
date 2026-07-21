@@ -65,6 +65,7 @@ export function ResourceFileCard({
   isRequired,
   kind: resourceKind,
   position,
+  previewSlot,
   size,
   title
 }: {
@@ -80,6 +81,7 @@ export function ResourceFileCard({
   isRequired?: boolean | null;
   kind?: ActivityResourceKind | null;
   position?: number;
+  previewSlot?: ReactNode;
   size?: number | null;
   title: string;
 }) {
@@ -119,7 +121,8 @@ export function ResourceFileCard({
           <p className="mt-1 text-xs text-ink/55">
             {formatFileSize(size)} - Added {formatDate(createdAt)}
           </p>
-          <div className="mt-3">
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            {previewSlot}
             <ProtectedFileLink
               activityId={activityId}
               fileUrl={fileUrl}

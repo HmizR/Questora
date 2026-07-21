@@ -8,6 +8,8 @@ export type FileKind =
   | "Text"
   | "File";
 
+export type PreviewKind = "PDF" | "IMAGE" | "TEXT" | "UNSUPPORTED";
+
 const extensionKind: Record<string, FileKind> = {
   csv: "Spreadsheet",
   doc: "Document",
@@ -21,6 +23,8 @@ const extensionKind: Record<string, FileKind> = {
   pptx: "Slides",
   txt: "Text",
   webp: "Image",
+  md: "Text",
+  markdown: "Text",
   xls: "Spreadsheet",
   xlsx: "Spreadsheet",
   zip: "Zip"
@@ -45,6 +49,29 @@ export function getFileKind(contentType: string | null | undefined, fileName: st
   if (normalizedType.startsWith("text/")) return "Text";
 
   return extensionKind[extension] ?? "File";
+}
+
+export function getPreviewKind(contentType: string | null | undefined, fileName: string): PreviewKind {
+  const normalizedType = contentType?.toLowerCase() ?? "";
+  const extension = fileName.split(".").pop()?.toLowerCase() ?? "";
+
+  if (normalizedType.includes("pdf") || extension === "pdf") return "PDF";
+  if (normalizedType.startsWith("image/") || ["gif", "jpeg", "jpg", "png", "webp"].includes(extension)) {
+    return "IMAGE";
+  }
+  if (
+    normalizedType.startsWith("text/") ||
+    normalizedType.includes("markdown") ||
+    ["md", "markdown", "txt"].includes(extension)
+  ) {
+    return "TEXT";
+  }
+
+  return "UNSUPPORTED";
+}
+
+export function canPreviewFile(contentType: string | null | undefined, fileName: string) {
+  return getPreviewKind(contentType, fileName) !== "UNSUPPORTED";
 }
 
 export function formatFileSize(bytes: number | null | undefined) {

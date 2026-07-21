@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { AppError } from "@/lib/errors";
-import { formatFileSize, getFileKind } from "@/lib/file-display";
+import { canPreviewFile, formatFileSize, getFileKind, getPreviewKind } from "@/lib/file-display";
 import {
   createStorageKey,
   parseStorageRef,
@@ -42,6 +42,19 @@ describe("storage helpers", () => {
     expect(formatFileSize(1536)).toBe("1.5 KB");
     expect(formatFileSize(2 * 1024 * 1024)).toBe("2.0 MB");
     expect(formatFileSize(3 * 1024 * 1024 * 1024)).toBe("3.0 GB");
+  });
+
+  it("detects inline preview support for mission resources", () => {
+    expect(getPreviewKind("application/pdf", "briefing.bin")).toBe("PDF");
+    expect(getPreviewKind("", "briefing.pdf")).toBe("PDF");
+    expect(getPreviewKind("image/png", "map.bin")).toBe("IMAGE");
+    expect(getPreviewKind("", "map.webp")).toBe("IMAGE");
+    expect(getPreviewKind("text/plain", "notes.bin")).toBe("TEXT");
+    expect(getPreviewKind("", "guide.md")).toBe("TEXT");
+    expect(getPreviewKind("application/zip", "assets.zip")).toBe("UNSUPPORTED");
+    expect(getPreviewKind("", "slides.pptx")).toBe("UNSUPPORTED");
+    expect(canPreviewFile("application/pdf", "briefing.pdf")).toBe(true);
+    expect(canPreviewFile("application/zip", "assets.zip")).toBe(false);
   });
 
   it("validates allowed and disallowed upload file types", () => {

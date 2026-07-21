@@ -37,6 +37,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Student class workspaces include a Grades tab for own published assignment, project, and quiz grades.
 - Protected S3 uploads support student assignment/project files, self-service avatar images, and lecturer mission resources with short-lived upload/download URLs.
 - Uploaded mission resources show file type, readable size, original filename, upload date, required/optional state, learning label, and optional description.
+- Students can preview PDF, image, and text/markdown mission resources inline on mission pages; Office files and archives remain download-only.
 - User avatars appear in account menus, leaderboards, profiles, lecturer rosters, and submission review.
 - A global AI assistant drawer can answer with page-aware student mission/realm context through a local Ollama provider.
 - Seed data with one admin, two lecturers, five students, two classes, example modules, activities, quests, badges, and student profiles.

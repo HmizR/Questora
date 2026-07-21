@@ -59,17 +59,17 @@ export function AIAssistantDrawer() {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="pointer-events-none fixed inset-0 z-50">
       <button
         aria-label="Close Questora Assistant"
-        className="absolute inset-0 bg-ink/30 backdrop-blur-[2px]"
+        className="pointer-events-auto absolute inset-0 bg-ink/30 backdrop-blur-[2px] sm:hidden"
         onClick={closeAssistant}
         type="button"
       />
       <aside
         aria-label="Questora Assistant"
         aria-modal="true"
-        className="absolute inset-y-0 right-0 flex w-full flex-col border-l border-border/80 bg-surface shadow-2xl sm:max-w-md"
+        className="pointer-events-auto absolute inset-y-0 right-0 flex w-full flex-col border-l border-border/80 bg-surface shadow-2xl sm:max-w-md"
         role="dialog"
       >
         <header className="flex items-start justify-between gap-3 border-b border-border/80 p-4">

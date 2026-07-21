@@ -41,6 +41,7 @@ Post-MVP UI refresh completed:
 - Lecturer-uploaded mission resources wired into the protected S3 foundation
 - Mission resources display file type icons, readable sizes, filenames, and upload dates
 - Mission resources include required/optional indicators, learning labels, descriptions, editable details, and required-first ordering
+- Student inline mission resource previews for PDF, image, and text/markdown files
 - Admin/user polish with avatar-aware rosters, role/status badges, compact account details, and clearer account-control guidance
 - Quiz and assignment UX polish with clearer student work states, quiz attempt summaries, submission stats, and analytics labels
 - Lecturer roster, grades, submission review, and quiz analytics filters, sorting, needs-attention highlights, and CSV exports
@@ -243,9 +244,9 @@ Completed:
 Current automated coverage:
 
 ```text
-44 unit tests passing
+45 unit tests passing
 42 integration tests passing
-22 e2e tests passing
+23 e2e tests passing
 ```
 
 ## Recommended Next Steps
