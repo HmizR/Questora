@@ -1,16 +1,18 @@
-import { BookOpen, CheckCircle2, Gauge } from "lucide-react";
+import { BookOpen, CalendarClock, CheckCircle2, Gauge } from "lucide-react";
 
 import { QuestCard } from "@/components/gamification/quest-card";
 import { LevelProgress } from "@/components/gamification/level-progress";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { DeadlineCard } from "@/components/ui/deadline-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatCard } from "@/components/ui/stat-card";
 import { requireRole } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
+import { getStudentDeadlineItems } from "@/services/deadline-service";
 
 export default async function StudentDashboardPage() {
   const user = await requireRole("STUDENT");
-  const [profile, activeClasses, recentGrades, publishedActivities, completedActivities, quests] =
+  const [profile, activeClasses, recentGrades, publishedActivities, completedActivities, quests, deadlines] =
     await Promise.all([
     db.studentProfile.findUnique({ where: { studentId: user.id } }),
     db.classStudent.count({ where: { studentId: user.id, status: "ACTIVE" } }),
@@ -75,12 +77,17 @@ export default async function StudentDashboardPage() {
       },
       orderBy: [{ type: "asc" }, { position: "asc" }],
       take: 4
-    })
+    }),
+    getStudentDeadlineItems({ studentId: user.id })
   ]);
 
   const totalXp = profile?.totalXp ?? 0;
   const progressPercent =
     publishedActivities > 0 ? Math.round((completedActivities / publishedActivities) * 100) : 0;
+  const dueSoon = deadlines
+    .filter((item) => item.state === "due-today" || item.state === "due-soon")
+    .slice(0, 5);
+  const overdue = deadlines.filter((item) => item.state === "overdue").slice(0, 5);
 
   return (
     <DashboardShell
@@ -143,6 +150,61 @@ export default async function StudentDashboardPage() {
                     {grade.activity.module.class.name} · {grade.score.toString()}
                   </p>
                 </div>
+              ))
+            )}
+          </div>
+        </section>
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <section>
+          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
+            <CalendarClock aria-hidden className="h-5 w-5 text-moss" />
+            Due soon
+          </h2>
+          <div className="grid gap-3">
+            {dueSoon.length === 0 ? (
+              <EmptyState
+                description="Missions due in the next 7 days will appear here."
+                title="No urgent deadlines"
+              />
+            ) : (
+              dueSoon.map((item) => (
+                <DeadlineCard
+                  context={`${item.className} - ${item.moduleTitle}`}
+                  dueAt={item.dueAt}
+                  href={item.href}
+                  key={item.activityId}
+                  meta={item.type}
+                  state={item.state}
+                  title={item.title}
+                />
+              ))
+            )}
+          </div>
+        </section>
+        <section>
+          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
+            <CalendarClock aria-hidden className="h-5 w-5 text-ember" />
+            Overdue
+          </h2>
+          <div className="grid gap-3">
+            {overdue.length === 0 ? (
+              <EmptyState
+                description="Past-due missions that still need action will appear here."
+                title="No overdue missions"
+              />
+            ) : (
+              overdue.map((item) => (
+                <DeadlineCard
+                  context={`${item.className} - ${item.moduleTitle}`}
+                  dueAt={item.dueAt}
+                  href={item.href}
+                  key={item.activityId}
+                  meta={item.type}
+                  state={item.state}
+                  title={item.title}
+                />
               ))
             )}
           </div>

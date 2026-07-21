@@ -3,9 +3,12 @@ import { notFound } from "next/navigation";
 
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { DeadlineBadge, DeadlineCard } from "@/components/ui/deadline-card";
 import { Expander } from "@/components/ui/expander";
 import { requireClassEnrollment } from "@/lib/authorization-service";
+import { classifyDeadline } from "@/lib/deadlines";
 import { db } from "@/lib/db";
+import { getStudentDeadlineItems } from "@/services/deadline-service";
 
 export default async function StudentClassPage({
   params
@@ -15,7 +18,8 @@ export default async function StudentClassPage({
   const { classId } = await params;
   const { user } = await requireClassEnrollment(classId);
 
-  const teachingClass = await db.class.findUnique({
+  const [teachingClass, deadlines] = await Promise.all([
+    db.class.findUnique({
     where: { id: classId },
     include: {
       modules: {
@@ -46,13 +50,40 @@ export default async function StudentClassPage({
         orderBy: { position: "asc" }
       }
     }
-  });
+    }),
+    getStudentDeadlineItems({ studentId: user.id, classId })
+  ]);
 
   if (!teachingClass) notFound();
 
   return (
     <DashboardShell title={teachingClass.name} subtitle="Choose a mission and continue your quest.">
       <ClassTabs classId={classId} role="STUDENT" />
+      <section className="mb-6">
+        <h2 className="mb-4 text-xl font-bold">Upcoming deadlines</h2>
+        <div className="grid gap-3 lg:grid-cols-2">
+          {deadlines.filter((item) => item.state !== "future").slice(0, 4).length === 0 ? (
+            <p className="rounded-lg border border-border/80 bg-surface p-4 text-sm text-ink/65">
+              No upcoming or overdue deadlines in this realm.
+            </p>
+          ) : (
+            deadlines
+              .filter((item) => item.state !== "future")
+              .slice(0, 4)
+              .map((item) => (
+                <DeadlineCard
+                  context={item.moduleTitle}
+                  dueAt={item.dueAt}
+                  href={item.href}
+                  key={item.activityId}
+                  meta={item.type}
+                  state={item.state}
+                  title={item.title}
+                />
+              ))
+          )}
+        </div>
+      </section>
       <div className="space-y-6">
         {teachingClass.modules.map((module, index) => (
           <Expander
@@ -72,6 +103,7 @@ export default async function StudentClassPage({
                       year: "numeric"
                     })
                   : "No due date";
+                const deadlineState = classifyDeadline(activity.dueAt);
                 const isUnlocked = activity.prerequisites.every((prerequisite) => {
                   const prerequisiteProgress = prerequisite.requiredActivity.progresses[0];
                   const completed = prerequisiteProgress?.status === "COMPLETED";
@@ -91,7 +123,10 @@ export default async function StudentClassPage({
                       <p className="text-sm text-ink/60">
                         {activity.type} - {progress?.status ?? "NOT_STARTED"}
                       </p>
-                      <p className="mt-1 text-sm text-ink/55">Due: {dueDate}</p>
+                      <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink/55">
+                        <span>Due: {dueDate}</span>
+                        {activity.dueAt ? <DeadlineBadge state={deadlineState} /> : null}
+                      </p>
                       {activity.resources.length > 0 ? (
                         <p className="mt-1 text-sm font-medium text-moss">
                           {activity.resources.length} resource{activity.resources.length === 1 ? "" : "s"} available

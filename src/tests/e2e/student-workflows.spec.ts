@@ -1,7 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { e2eUsers, resetE2eDatabase, type E2eSeed } from "./fixtures";
-import { loginAs } from "./helpers";
+import { loginAs, logout } from "./helpers";
+import { db } from "../../lib/db";
 
 let seed: E2eSeed;
 
@@ -112,6 +113,48 @@ test("student can still submit an assignment with a pasted file URL", async ({ p
   await page.getByRole("button", { name: "Submit assignment" }).click();
 
   await expect(page.getByRole("status").filter({ hasText: "Submission sent." })).toBeVisible();
+});
+
+test("student and lecturer dashboards show deadline panels", async ({ page }) => {
+  const now = new Date();
+  const dueSoon = new Date(now);
+  dueSoon.setDate(dueSoon.getDate() + 2);
+  const overdue = new Date(now);
+  overdue.setDate(overdue.getDate() - 2);
+  await db.activity.update({
+    where: { id: seed.activities.assignment.id },
+    data: { dueAt: dueSoon }
+  });
+  await db.activity.update({
+    where: { id: seed.activities.quiz.id },
+    data: { dueAt: overdue }
+  });
+
+  await loginAs(page, e2eUsers.student.email);
+  await page.goto("/student");
+  await expect(page.getByRole("heading", { name: "Due soon" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Overdue" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /E2E Assignment/ }).first()).toContainText("Due soon");
+  await expect(page.getByRole("link", { name: /E2E Quiz/ })).toContainText("Overdue");
+
+  await page.goto(`/student/classes/${seed.class.id}`);
+  await expect(page.getByRole("heading", { name: "Upcoming deadlines" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /E2E Assignment/ }).first()).toContainText("Due soon");
+  await expect(page.getByText("Due:").first()).toBeVisible();
+
+  await logout(page);
+  await loginAs(page, e2eUsers.lecturer.email);
+  await page.goto("/lecturer");
+  await expect(page.getByRole("heading", { name: "Upcoming deadlines" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Overdue work" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /E2E Assignment/ }).first()).toContainText("Due soon");
+  await expect(page.getByRole("link", { name: /E2E Quiz/ }).first()).toContainText("Quiz not passed");
+
+  await page.goto(`/lecturer/classes/${seed.class.id}`);
+  await expect(page.getByRole("heading", { name: "Upcoming deadlines" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Overdue work" })).toBeVisible();
+  await page.getByRole("link", { name: /E2E Quiz/ }).first().click();
+  await expect(page).toHaveURL(new RegExp(`/lecturer/classes/${seed.class.id}/modules/.+/quiz`));
 });
 
 test("student quiz attempt limit hides questions after attempts are exhausted", async ({ page }) => {

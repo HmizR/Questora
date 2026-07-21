@@ -43,6 +43,7 @@ Post-MVP UI refresh completed:
 - Admin/user polish with avatar-aware rosters, role/status badges, compact account details, and clearer account-control guidance
 - Quiz and assignment UX polish with clearer student work states, quiz attempt summaries, submission stats, and analytics labels
 - Lecturer roster, grades, submission review, and quiz analytics filters, sorting, needs-attention highlights, and CSV exports
+- Due-date UX with student and lecturer due-soon/overdue panels and mission deadline badges
 - Isolated PostgreSQL integration test setup with service and server action coverage
 - Playwright UI-level workflow test setup for admin, lecturer, and student paths
 - GitHub Actions CI quality gate for Prisma validation, typecheck, lint, tests, e2e, and build
@@ -228,13 +229,14 @@ Completed:
 - Admin user/account polish for clearer rosters, account summaries, and reset/deactivation guidance
 - Quiz and assignment UX polish for student work states, lecturer submission stats, and clearer analytics labels
 - Lecturer analytics usability polish with filters, sorting, needs-attention highlights, and protected CSV exports
+- Due-date UX with dashboard deadline panels, class deadline panels, and mission due-date badges
 
 Current automated coverage:
 
 ```text
-33 unit tests passing
-32 integration tests passing
-19 e2e tests passing
+35 unit tests passing
+34 integration tests passing
+20 e2e tests passing
 ```
 
 ## Recommended Next Steps
@@ -246,6 +248,10 @@ Current automated coverage:
   - add optional resource previews or resource sorting refinements if needed after use
   - add a reviewed orphan-cleanup script or storage lifecycle policy for removed S3/RustFS objects
 - Quiz and assignment UX polish:
-  - consider true submission revision history if replacement-only edits become insufficient
+  - add true submission revision history so lecturers can inspect previous text/file versions, timestamps, and the currently graded version
+  - add full calendar views later if deadline panels are not enough
+  - add simple class announcements from lecturers to enrolled students
+  - add resource organization polish such as resource ordering, labels, and required/optional indicators
+  - add quiz review improvements such as answer explanations, review settings, or question randomization
 - Production hardening:
   - replace in-memory auth rate limiting with Redis before public/multi-instance deployment

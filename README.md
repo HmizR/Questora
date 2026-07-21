@@ -25,6 +25,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Assignment and project submissions can be edited until a lecturer grades them, then they lock.
 - Assignment and quiz pages show clearer work status, attempt summaries, and review guidance for students and lecturers.
 - Lecturer roster, grades, submission review, and quiz analytics tables support filters, sorting, needs-attention highlights, and protected CSV exports.
+- Student and lecturer dashboards show due-soon and overdue deadline panels, with clearer deadline badges on student mission cards.
 - Quest edit pages manage connected missions, while quest lists show connected mission summaries and completion stats.
 - Quiz missions support structured multiple-choice and true/false questions with server-side scoring and attempt history.
 - Lecturers can cap quiz attempts; quiz grades use the highest student attempt score.

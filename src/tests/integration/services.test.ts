@@ -14,6 +14,7 @@ import {
 import { assertStudentCanAccessActivity, completeActivity } from "@/services/progress-service";
 import { getLecturerQuizAnalytics } from "@/services/quiz-analytics-service";
 import { attemptQuiz } from "@/services/student-service";
+import { getLecturerDeadlineItems, getLecturerOverdueWork, getStudentDeadlineItems } from "@/services/deadline-service";
 
 import {
   connectQuestActivityFixture,
@@ -22,6 +23,7 @@ import {
   createCoreBadges,
   createModuleFixture,
   createQuestFixture,
+  createSubmissionFixture,
   createUser,
   enrollStudentFixture
 } from "./fixtures";
@@ -356,5 +358,93 @@ describe("database-backed service rules", () => {
     expect(grade.gradedById).toBe(lecturer.id);
     expect(grade.score.toString()).toBe("10");
     expect(grade.publishedAt).not.toBeNull();
+  });
+
+  it("returns student deadlines only for enrolled published accessible unfinished missions", async () => {
+    const { class: teachingClass } = await createClassFixture();
+    const { student } = await enrollStudentFixture(teachingClass.id);
+    const otherStudent = await createUser(UserRole.STUDENT, "Other Deadline Student");
+    const learningModule = await createModuleFixture(teachingClass.id);
+    const dueSoon = await createActivityFixture(learningModule.id, {
+      type: ActivityType.ASSIGNMENT,
+      title: "Visible Deadline",
+      position: 1
+    });
+    const submitted = await createActivityFixture(learningModule.id, {
+      type: ActivityType.ASSIGNMENT,
+      title: "Submitted Deadline",
+      position: 2
+    });
+    const hidden = await createActivityFixture(learningModule.id, {
+      title: "Hidden Deadline",
+      position: 3,
+      isPublished: false
+    });
+    await db.activity.updateMany({
+      where: { id: { in: [dueSoon.id, submitted.id, hidden.id] } },
+      data: { dueAt: new Date("2026-07-22T12:00:00.000Z") }
+    });
+    await createSubmissionFixture(submitted.id, student.id);
+    await createSubmissionFixture(dueSoon.id, otherStudent.id);
+
+    const deadlines = await getStudentDeadlineItems({
+      studentId: student.id,
+      now: new Date("2026-07-20T12:00:00.000Z")
+    });
+
+    expect(deadlines.map((item) => item.title)).toEqual(["Visible Deadline"]);
+    expect(deadlines[0]).toMatchObject({ state: "due-soon", classId: teachingClass.id });
+  });
+
+  it("returns lecturer upcoming deadlines and overdue work for assigned classes only", async () => {
+    const otherLecturer = await createUser(UserRole.LECTURER, "Deadline Outsider");
+    const { lecturer, class: teachingClass } = await createClassFixture();
+    const { student } = await enrollStudentFixture(teachingClass.id);
+    const learningModule = await createModuleFixture(teachingClass.id);
+    const assignment = await createActivityFixture(learningModule.id, {
+      type: ActivityType.ASSIGNMENT,
+      title: "Missing Paper",
+      position: 1
+    });
+    const quiz = await createActivityFixture(learningModule.id, {
+      type: ActivityType.QUIZ,
+      title: "Missed Quiz",
+      position: 2,
+      maxAttempts: 1
+    });
+    await db.activity.updateMany({
+      where: { id: { in: [assignment.id, quiz.id] } },
+      data: { dueAt: new Date("2026-07-19T12:00:00.000Z") }
+    });
+
+    const deadlines = await getLecturerDeadlineItems({
+      lecturerId: lecturer.id,
+      now: new Date("2026-07-20T12:00:00.000Z")
+    });
+    const overdue = await getLecturerOverdueWork({
+      lecturerId: lecturer.id,
+      now: new Date("2026-07-20T12:00:00.000Z")
+    });
+    const outsiderDeadlines = await getLecturerDeadlineItems({
+      lecturerId: otherLecturer.id,
+      now: new Date("2026-07-20T12:00:00.000Z")
+    });
+
+    expect(deadlines.map((item) => item.title)).toEqual(["Missing Paper", "Missed Quiz"]);
+    expect(overdue).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: "Missing Paper",
+          studentId: student.id,
+          reason: "missing-submission"
+        }),
+        expect.objectContaining({
+          title: "Missed Quiz",
+          studentId: student.id,
+          reason: "quiz-not-passed"
+        })
+      ])
+    );
+    expect(outsiderDeadlines).toEqual([]);
   });
 });

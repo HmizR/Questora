@@ -2,9 +2,11 @@ import { notFound } from "next/navigation";
 
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { DeadlineCard } from "@/components/ui/deadline-card";
 import { StatCard } from "@/components/ui/stat-card";
 import { requireClassLecturer } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
+import { getLecturerDeadlineItems, getLecturerOverdueWork } from "@/services/deadline-service";
 
 export default async function LecturerClassDashboardPage({
   params
@@ -12,9 +14,10 @@ export default async function LecturerClassDashboardPage({
   params: Promise<{ classId: string }>;
 }) {
   const { classId } = await params;
-  await requireClassLecturer(classId);
+  const { user } = await requireClassLecturer(classId);
 
-  const teachingClass = await db.class.findUnique({
+  const [teachingClass, deadlines, overdueWork] = await Promise.all([
+    db.class.findUnique({
     where: { id: classId },
     include: {
       students: { where: { status: "ACTIVE" }, include: { student: true } },
@@ -22,7 +25,10 @@ export default async function LecturerClassDashboardPage({
       quests: { orderBy: { position: "asc" } },
       _count: { select: { quests: true, modules: true } }
     }
-  });
+    }),
+    getLecturerDeadlineItems({ lecturerId: user.id, classId }),
+    getLecturerOverdueWork({ lecturerId: user.id, classId })
+  ]);
 
   if (!teachingClass) notFound();
 
@@ -39,6 +45,10 @@ export default async function LecturerClassDashboardPage({
       activity: { module: { classId } }
     }
   });
+  const dueSoon = deadlines
+    .filter((item) => item.state === "due-today" || item.state === "due-soon")
+    .slice(0, 5);
+  const overdue = overdueWork.slice(0, 5);
 
   return (
     <DashboardShell title={teachingClass.name} subtitle={teachingClass.description ?? "Realm overview"}>
@@ -48,6 +58,49 @@ export default async function LecturerClassDashboardPage({
         <StatCard label="Regions" value={teachingClass._count.modules} />
         <StatCard label="Quests" value={teachingClass._count.quests} />
         <StatCard label="Completed missions" value={completedProgress} />
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <section className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-bold">Upcoming deadlines</h2>
+          <div className="mt-4 grid gap-3">
+            {dueSoon.length === 0 ? (
+              <p className="text-sm text-ink/65">No published missions are due in the next 7 days.</p>
+            ) : (
+              dueSoon.map((item) => (
+                <DeadlineCard
+                  context={item.moduleTitle}
+                  dueAt={item.dueAt}
+                  href={item.href}
+                  key={item.activityId}
+                  meta={item.type}
+                  state={item.state}
+                  title={item.title}
+                />
+              ))
+            )}
+          </div>
+        </section>
+        <section className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-bold">Overdue work</h2>
+          <div className="mt-4 grid gap-3">
+            {overdue.length === 0 ? (
+              <p className="text-sm text-ink/65">No overdue submissions or quizzes need attention.</p>
+            ) : (
+              overdue.map((item) => (
+                <DeadlineCard
+                  context={`${item.studentName} - ${item.moduleTitle}`}
+                  dueAt={item.dueAt}
+                  href={item.href}
+                  key={`${item.activityId}-${item.studentId}`}
+                  meta={item.reason === "missing-submission" ? "Missing submission" : "Quiz not passed"}
+                  state={item.state}
+                  title={item.title}
+                />
+              ))
+            )}
+          </div>
+        </section>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
