@@ -8,6 +8,7 @@ import { Expander } from "@/components/ui/expander";
 import { requireClassEnrollment } from "@/lib/authorization-service";
 import { classifyDeadline } from "@/lib/deadlines";
 import { db } from "@/lib/db";
+import { getPublishedAnnouncementsForStudent } from "@/services/announcement-service";
 import { getStudentDeadlineItems } from "@/services/deadline-service";
 
 export default async function StudentClassPage({
@@ -18,7 +19,7 @@ export default async function StudentClassPage({
   const { classId } = await params;
   const { user } = await requireClassEnrollment(classId);
 
-  const [teachingClass, deadlines] = await Promise.all([
+  const [teachingClass, deadlines, announcements] = await Promise.all([
     db.class.findUnique({
     where: { id: classId },
     include: {
@@ -51,7 +52,8 @@ export default async function StudentClassPage({
       }
     }
     }),
-    getStudentDeadlineItems({ studentId: user.id, classId })
+    getStudentDeadlineItems({ studentId: user.id, classId }),
+    getPublishedAnnouncementsForStudent({ studentId: user.id, classId, take: 3 })
   ]);
 
   if (!teachingClass) notFound();
@@ -59,6 +61,33 @@ export default async function StudentClassPage({
   return (
     <DashboardShell title={teachingClass.name} subtitle="Choose a mission and continue your quest.">
       <ClassTabs classId={classId} role="STUDENT" />
+      <section className="mb-6 rounded-lg border border-border/80 bg-surface p-5 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-xl font-bold">Recent announcements</h2>
+          <Link
+            className="text-sm font-semibold text-moss hover:text-ink"
+            href={`/student/classes/${classId}/announcements`}
+          >
+            View all
+          </Link>
+        </div>
+        <div className="mt-4 grid gap-3">
+          {announcements.length === 0 ? (
+            <p className="text-sm text-ink/65">No published announcements in this realm yet.</p>
+          ) : (
+            announcements.map((announcement) => (
+              <Link
+                className="rounded-lg border border-border/80 bg-surface-muted p-4 transition hover:border-accent/40"
+                href={`/student/classes/${classId}/announcements`}
+                key={announcement.id}
+              >
+                <p className="font-semibold">{announcement.title}</p>
+                <p className="mt-1 line-clamp-2 text-sm text-ink/65">{announcement.body}</p>
+              </Link>
+            ))
+          )}
+        </div>
+      </section>
       <section className="mb-6">
         <h2 className="mb-4 text-xl font-bold">Upcoming deadlines</h2>
         <div className="grid gap-3 lg:grid-cols-2">

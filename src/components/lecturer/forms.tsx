@@ -1,6 +1,8 @@
 import {
   ActivityType,
+  AnnouncementStatus,
   QuestType,
+  type Announcement,
   type Activity,
   type ActivityResource,
   type Module,
@@ -9,23 +11,28 @@ import {
 
 import {
   addActivityPrerequisiteAction,
+  archiveAnnouncementAction,
   connectQuestActivityAction,
+  createAnnouncementAction,
   createActivityAction,
   createActivityResourceAction,
   createModuleAction,
   createQuestAction,
+  deleteAnnouncementAction,
   deleteActivityAction,
   deleteActivityResourceAction,
   deleteModuleAction,
   deleteQuestAction,
   gradeSubmissionAction,
   publishActivityAction,
+  publishAnnouncementAction,
   publishGradeAction,
   publishModuleAction,
   publishQuestAction,
   removeActivityPrerequisiteAction,
   removeQuestActivityAction,
   updateActivityAction,
+  updateAnnouncementAction,
   updateModuleAction,
   updateQuestAction
 } from "@/app/lecturer/actions";
@@ -414,6 +421,112 @@ export function MissionResourcesPanel({
         </button>
       </LecturerActionForm>
     </div>
+  );
+}
+
+export function CreateAnnouncementForm({ classId }: { classId: string }) {
+  return (
+    <LecturerActionForm action={createAnnouncementAction} className="rounded-lg border border-border/80 bg-surface p-6 shadow-sm">
+      <input name="classId" type="hidden" value={classId} />
+      <TextField label="Announcement title" name="title" />
+      <TextAreaField label="Update" name="body" />
+      <SelectField
+        defaultValue={AnnouncementStatus.DRAFT}
+        label="Status"
+        name="status"
+        options={[
+          { value: AnnouncementStatus.DRAFT, label: "Draft" },
+          { value: AnnouncementStatus.PUBLISHED, label: "Published" }
+        ]}
+      />
+      <button className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-steel">
+        Create announcement
+      </button>
+    </LecturerActionForm>
+  );
+}
+
+export function UpdateAnnouncementForm({ announcement }: { announcement: Announcement }) {
+  return (
+    <LecturerActionForm action={updateAnnouncementAction} className="rounded-lg border border-border/80 bg-surface p-6 shadow-sm">
+      <input name="classId" type="hidden" value={announcement.classId} />
+      <input name="announcementId" type="hidden" value={announcement.id} />
+      <TextField label="Announcement title" name="title" defaultValue={announcement.title} />
+      <TextAreaField label="Update" name="body" defaultValue={announcement.body} />
+      <SelectField
+        defaultValue={announcement.status}
+        label="Status"
+        name="status"
+        options={[
+          { value: AnnouncementStatus.DRAFT, label: "Draft" },
+          { value: AnnouncementStatus.PUBLISHED, label: "Published" },
+          { value: AnnouncementStatus.ARCHIVED, label: "Archived" }
+        ]}
+      />
+      <button className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-steel">
+        Save announcement
+      </button>
+    </LecturerActionForm>
+  );
+}
+
+export function PublishAnnouncementForm({
+  announcementId,
+  classId,
+  buttonClassName = `${smallActionButton} border-moss/30 text-moss hover:bg-moss`
+}: {
+  announcementId: string;
+  classId: string;
+  buttonClassName?: string;
+}) {
+  return (
+    <LecturerActionForm action={publishAnnouncementAction}>
+      <input name="classId" type="hidden" value={classId} />
+      <input name="announcementId" type="hidden" value={announcementId} />
+      <button className={buttonClassName}>Publish</button>
+    </LecturerActionForm>
+  );
+}
+
+export function ArchiveAnnouncementForm({
+  announcementId,
+  classId,
+  buttonClassName = `${smallActionButton} border-steel/30 text-steel hover:bg-steel`
+}: {
+  announcementId: string;
+  classId: string;
+  buttonClassName?: string;
+}) {
+  return (
+    <LecturerActionForm action={archiveAnnouncementAction}>
+      <input name="classId" type="hidden" value={classId} />
+      <input name="announcementId" type="hidden" value={announcementId} />
+      <button className={buttonClassName}>Archive</button>
+    </LecturerActionForm>
+  );
+}
+
+export function DeleteAnnouncementForm({
+  announcementId,
+  classId,
+  buttonClassName = `${smallActionButton} border-ember/30 text-ember hover:bg-ember`
+}: {
+  announcementId: string;
+  classId: string;
+  buttonClassName?: string;
+}) {
+  return (
+    <LecturerActionForm action={deleteAnnouncementAction}>
+      <input name="classId" type="hidden" value={classId} />
+      <input name="announcementId" type="hidden" value={announcementId} />
+      <ConfirmAction
+        className={buttonClassName}
+        confirmLabel="Delete announcement"
+        description="This permanently removes the announcement from this realm."
+        label="Delete announcement"
+        title="Delete this announcement?"
+      />
+    </LecturerActionForm>
   );
 }
 

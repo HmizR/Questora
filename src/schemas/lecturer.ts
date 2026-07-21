@@ -1,4 +1,4 @@
-import { ActivityType, QuestType } from "@prisma/client";
+import { ActivityType, AnnouncementStatus, QuestType } from "@prisma/client";
 import { z } from "zod";
 
 const optionalText = z
@@ -148,6 +148,26 @@ export const deleteActivityResourceSchema = z.object({
   moduleId: z.string().min(1),
   activityId: z.string().min(1),
   resourceId: z.string().min(1)
+});
+
+export const createAnnouncementSchema = z.object({
+  classId: z.string().min(1),
+  title: z.string().trim().min(2, "Title is required").max(140, "Keep titles under 140 characters."),
+  body: z.string().trim().min(2, "Body is required").max(5000, "Keep announcements under 5000 characters."),
+  status: z.enum([AnnouncementStatus.DRAFT, AnnouncementStatus.PUBLISHED]).default(AnnouncementStatus.DRAFT)
+});
+
+export const updateAnnouncementSchema = createAnnouncementSchema
+  .extend({
+    announcementId: z.string().min(1)
+  })
+  .extend({
+    status: z.nativeEnum(AnnouncementStatus)
+  });
+
+export const announcementIdSchema = z.object({
+  classId: z.string().min(1),
+  announcementId: z.string().min(1)
 });
 
 export const createQuestSchema = z.object({

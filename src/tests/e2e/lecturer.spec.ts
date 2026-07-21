@@ -60,6 +60,33 @@ test("lecturer publish actions show toast feedback", async ({ page }) => {
   await expect(page.getByRole("status").filter({ hasText: "Region published." })).toBeVisible();
 });
 
+test("lecturer creates and publishes a class announcement for students", async ({ page }) => {
+  await loginAs(page, e2eUsers.lecturer.email);
+
+  await page.goto(`/lecturer/classes/${seed.class.id}/announcements/new`);
+  await expect(page.getByRole("link", { name: "Announcements", exact: true })).toBeVisible();
+  await page.getByLabel("Announcement title").fill("E2E Schedule Update");
+  await page.getByLabel("Update").fill("Project work time has been added to this week's realm session.");
+  await page.getByLabel("Status").selectOption("DRAFT");
+  await page.getByRole("button", { name: "Create announcement" }).click();
+
+  await expect(page).toHaveURL(`/lecturer/classes/${seed.class.id}/announcements`);
+  await expect(page.getByText("E2E Schedule Update")).toBeVisible();
+  await expect(page.getByText("Draft")).toBeVisible();
+  await page.getByRole("button", { name: "Publish" }).first().click();
+  await expect(page.getByRole("status").filter({ hasText: "Announcement published." })).toBeVisible();
+
+  await loginAs(page, e2eUsers.student.email);
+  await page.goto(`/student/classes/${seed.class.id}/announcements`);
+  await expect(page.getByRole("heading", { name: "Announcements" })).toBeVisible();
+  await expect(page.getByText("E2E Schedule Update")).toBeVisible();
+  await expect(page.getByText("Project work time has been added")).toBeVisible();
+
+  await page.goto(`/student/classes/${seed.class.id}`);
+  await expect(page.getByRole("heading", { name: "Recent announcements" })).toBeVisible();
+  await expect(page.getByText("E2E Schedule Update")).toBeVisible();
+});
+
 test("lecturer opens quiz analytics from regions", async ({ page }) => {
   await db.quizAttempt.createMany({
     data: [

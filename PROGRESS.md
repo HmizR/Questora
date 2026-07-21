@@ -44,6 +44,7 @@ Post-MVP UI refresh completed:
 - Quiz and assignment UX polish with clearer student work states, quiz attempt summaries, submission stats, and analytics labels
 - Lecturer roster, grades, submission review, and quiz analytics filters, sorting, needs-attention highlights, and CSV exports
 - Due-date UX with student and lecturer due-soon/overdue panels and mission deadline badges
+- Class announcements with lecturer draft/publish/archive/delete workflow and student published-only viewing
 - Isolated PostgreSQL integration test setup with service and server action coverage
 - Playwright UI-level workflow test setup for admin, lecturer, and student paths
 - GitHub Actions CI quality gate for Prisma validation, typecheck, lint, tests, e2e, and build
@@ -130,6 +131,9 @@ Key routes:
 - `/lecturer`
 - `/lecturer/classes`
 - `/lecturer/classes/[classId]`
+- `/lecturer/classes/[classId]/announcements`
+- `/lecturer/classes/[classId]/announcements/new`
+- `/lecturer/classes/[classId]/announcements/[announcementId]/edit`
 - `/lecturer/classes/[classId]/modules`
 - `/lecturer/classes/[classId]/modules/new`
 - `/lecturer/classes/[classId]/modules/[moduleId]/edit`
@@ -174,6 +178,7 @@ Key routes:
 - `/student/leaderboard`
 - `/student/profiles/[studentId]`
 - `/student/classes/[classId]`
+- `/student/classes/[classId]/announcements`
 - `/student/classes/[classId]/activities/[activityId]`
 - `/student/classes/[classId]/quests`
 - `/student/classes/[classId]/grades`
@@ -230,13 +235,14 @@ Completed:
 - Quiz and assignment UX polish for student work states, lecturer submission stats, and clearer analytics labels
 - Lecturer analytics usability polish with filters, sorting, needs-attention highlights, and protected CSV exports
 - Due-date UX with dashboard deadline panels, class deadline panels, and mission due-date badges
+- Class announcements with lecturer authoring, recent overview panels, and student published-only access
 
 Current automated coverage:
 
 ```text
-35 unit tests passing
-34 integration tests passing
-20 e2e tests passing
+39 unit tests passing
+37 integration tests passing
+21 e2e tests passing
 ```
 
 ## Recommended Next Steps
@@ -250,7 +256,6 @@ Current automated coverage:
 - Quiz and assignment UX polish:
   - add true submission revision history so lecturers can inspect previous text/file versions, timestamps, and the currently graded version
   - add full calendar views later if deadline panels are not enough
-  - add simple class announcements from lecturers to enrolled students
   - add resource organization polish such as resource ordering, labels, and required/optional indicators
   - add quiz review improvements such as answer explanations, review settings, or question randomization
 - Production hardening:

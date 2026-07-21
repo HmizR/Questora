@@ -61,6 +61,12 @@ enum QuestType {
   BOSS
 }
 
+enum AnnouncementStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 model User {
   id               String             @id @default(cuid())
   name             String
@@ -83,6 +89,7 @@ model User {
   badges           StudentBadge[]
   quizAttempts     QuizAttempt[]
   createdResources ActivityResource[] @relation("ActivityResourceCreator")
+  announcements    Announcement[]     @relation("AnnouncementCreator")
 }
 
 model Class {
@@ -103,6 +110,7 @@ model Class {
   modules        Module[]
   quests         Quest[]
   xpTransactions XPTransaction[]
+  announcements  Announcement[]
 }
 
 model ClassStudent {
@@ -195,6 +203,23 @@ model ActivityResource {
   createdBy   User     @relation("ActivityResourceCreator", fields: [createdById], references: [id])
 
   @@unique([activityId, position])
+}
+
+model Announcement {
+  id          String             @id @default(cuid())
+  classId     String
+  title       String
+  body        String
+  status      AnnouncementStatus @default(DRAFT)
+  createdById String
+  publishedAt DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  class       Class              @relation(fields: [classId], references: [id], onDelete: Cascade)
+  createdBy   User               @relation("AnnouncementCreator", fields: [createdById], references: [id])
+
+  @@index([classId, status, publishedAt])
+  @@index([createdById])
 }
 
 model ActivityPrerequisite {

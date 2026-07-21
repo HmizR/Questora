@@ -17,7 +17,9 @@ import {
 import {
   activityIdSchema,
   activityPrerequisiteSchema,
+  announcementIdSchema,
   connectQuestActivitySchema,
+  createAnnouncementSchema,
   createActivityResourceSchema,
   createActivitySchema,
   createModuleSchema,
@@ -29,10 +31,18 @@ import {
   questIdSchema,
   removeActivityPrerequisiteSchema,
   removeQuestActivitySchema,
+  updateAnnouncementSchema,
   updateActivitySchema,
   updateModuleSchema,
   updateQuestSchema
 } from "@/schemas/lecturer";
+import {
+  archiveAnnouncement,
+  createAnnouncement,
+  deleteAnnouncement,
+  publishAnnouncement,
+  updateAnnouncement
+} from "@/services/announcement-service";
 import { publishGrade } from "@/services/grade-service";
 import {
   addActivityPrerequisite,
@@ -337,6 +347,102 @@ export async function deleteActivityResourceAction(
       `/lecturer/classes/${parsed.data.classId}/modules/${parsed.data.moduleId}/activities/${parsed.data.activityId}/edit`
     );
     return { ok: true, data: { message: "Resource removed." } };
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+}
+
+export async function createAnnouncementAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = createAnnouncementSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  let redirectTo: string;
+  try {
+    const user = await requireRole("LECTURER");
+    await createAnnouncement({ ...parsed.data, lecturerId: user.id });
+    redirectTo = `/lecturer/classes/${parsed.data.classId}/announcements`;
+    revalidatePath(redirectTo);
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}`);
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+
+  redirect(redirectTo);
+}
+
+export async function updateAnnouncementAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = updateAnnouncementSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  let redirectTo: string;
+  try {
+    const user = await requireRole("LECTURER");
+    await updateAnnouncement({ ...parsed.data, lecturerId: user.id });
+    redirectTo = `/lecturer/classes/${parsed.data.classId}/announcements`;
+    revalidatePath(redirectTo);
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}`);
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+
+  redirect(redirectTo);
+}
+
+export async function publishAnnouncementAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = announcementIdSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  try {
+    const user = await requireRole("LECTURER");
+    await publishAnnouncement({ ...parsed.data, lecturerId: user.id });
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}/announcements`);
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}`);
+    return { ok: true, data: { message: "Announcement published." } };
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+}
+
+export async function archiveAnnouncementAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = announcementIdSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  try {
+    const user = await requireRole("LECTURER");
+    await archiveAnnouncement({ ...parsed.data, lecturerId: user.id });
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}/announcements`);
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}`);
+    return { ok: true, data: { message: "Announcement archived." } };
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+}
+
+export async function deleteAnnouncementAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = announcementIdSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  try {
+    const user = await requireRole("LECTURER");
+    await deleteAnnouncement({ ...parsed.data, lecturerId: user.id });
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}/announcements`);
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}`);
+    return { ok: true, data: { message: "Announcement deleted." } };
   } catch (error) {
     return { ok: false, error: toActionError(error) };
   }

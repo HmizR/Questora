@@ -1,4 +1,4 @@
-import { ActivityType, ClassStatus, EnrollmentStatus, QuestType, UserRole, UserStatus } from "@prisma/client";
+import { ActivityType, AnnouncementStatus, ClassStatus, EnrollmentStatus, QuestType, UserRole, UserStatus } from "@prisma/client";
 
 import { db } from "../../lib/db";
 import { hashPassword } from "../../lib/password";
@@ -45,6 +45,7 @@ async function clearDatabase() {
     db.submission.deleteMany(),
     db.quizAttempt.deleteMany(),
     db.activityProgress.deleteMany(),
+    db.announcement.deleteMany(),
     db.questActivity.deleteMany(),
     db.activityPrerequisite.deleteMany(),
     db.quest.deleteMany(),
@@ -232,11 +233,23 @@ export async function resetE2eDatabase() {
     ]
   });
 
+  const announcement = await db.announcement.create({
+    data: {
+      classId: teachingClass.id,
+      title: "E2E Welcome Announcement",
+      body: "This published update should be visible to enrolled students.",
+      status: AnnouncementStatus.PUBLISHED,
+      createdById: lecturer.id,
+      publishedAt: new Date()
+    }
+  });
+
   return {
     users: { admin, lecturer, student, rival, unenrolled },
     class: teachingClass,
     module: learningModule,
     activities: { assignment, quiz, reviewQuiz },
-    quest
+    quest,
+    announcement
   };
 }

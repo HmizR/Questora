@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BookOpen, ClipboardList, ListChecks, Map, Trophy, UsersRound } from "lucide-react";
+import { BarChart3, BookOpen, ClipboardList, ListChecks, Map, Megaphone, Trophy, UsersRound } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ function getTabs({ role, classId }: ClassTabsProps) {
   if (role === "LECTURER") {
     return [
       { href: `/lecturer/classes/${classId}`, label: "Overview", icon: BarChart3 },
+      { href: `/lecturer/classes/${classId}/announcements`, label: "Announcements", icon: Megaphone },
       { href: `/lecturer/classes/${classId}/modules`, label: "Regions", icon: Map },
       { href: `/lecturer/classes/${classId}/students`, label: "Students", icon: UsersRound },
       { href: `/lecturer/classes/${classId}/quests`, label: "Quests", icon: Trophy },
@@ -25,6 +26,7 @@ function getTabs({ role, classId }: ClassTabsProps) {
 
   return [
     { href: `/student/classes/${classId}`, label: "Missions", icon: ListChecks },
+    { href: `/student/classes/${classId}/announcements`, label: "Announcements", icon: Megaphone },
     { href: `/student/classes/${classId}/quests`, label: "Quests", icon: Trophy },
     { href: `/student/classes/${classId}/grades`, label: "Grades", icon: ClipboardList },
     { href: `/student/classes/${classId}/leaderboard`, label: "Leaderboard", icon: BookOpen }
@@ -42,11 +44,11 @@ function isActive(pathname: string, href: string) {
     return pathname.startsWith(`${href}/activities/`);
   }
 
-  if (href.match(/\/student\/classes\/[^/]+\/(?:quests|grades|leaderboard)$/)) {
+  if (href.match(/\/student\/classes\/[^/]+\/(?:announcements|quests|grades|leaderboard)$/)) {
     return pathname.startsWith(`${href}/`);
   }
 
-  return href.match(/\/lecturer\/classes\/[^/]+\/(?:modules|quests|grades)$/)
+  return href.match(/\/lecturer\/classes\/[^/]+\/(?:announcements|modules|quests|grades)$/)
     ? pathname.startsWith(`${href}/`)
     : false;
 }

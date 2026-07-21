@@ -1,9 +1,11 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { DeadlineCard } from "@/components/ui/deadline-card";
 import { StatCard } from "@/components/ui/stat-card";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { requireClassLecturer } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
 import { getLecturerDeadlineItems, getLecturerOverdueWork } from "@/services/deadline-service";
@@ -16,7 +18,7 @@ export default async function LecturerClassDashboardPage({
   const { classId } = await params;
   const { user } = await requireClassLecturer(classId);
 
-  const [teachingClass, deadlines, overdueWork] = await Promise.all([
+  const [teachingClass, deadlines, overdueWork, announcements] = await Promise.all([
     db.class.findUnique({
     where: { id: classId },
     include: {
@@ -27,7 +29,12 @@ export default async function LecturerClassDashboardPage({
     }
     }),
     getLecturerDeadlineItems({ lecturerId: user.id, classId }),
-    getLecturerOverdueWork({ lecturerId: user.id, classId })
+    getLecturerOverdueWork({ lecturerId: user.id, classId }),
+    db.announcement.findMany({
+      where: { classId, status: { in: ["DRAFT", "PUBLISHED"] } },
+      orderBy: [{ updatedAt: "desc" }],
+      take: 3
+    })
   ]);
 
   if (!teachingClass) notFound();
@@ -60,7 +67,7 @@ export default async function LecturerClassDashboardPage({
         <StatCard label="Completed missions" value={completedProgress} />
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <section className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold">Upcoming deadlines</h2>
           <div className="mt-4 grid gap-3">
@@ -97,6 +104,36 @@ export default async function LecturerClassDashboardPage({
                   state={item.state}
                   title={item.title}
                 />
+              ))
+            )}
+          </div>
+        </section>
+        <section className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-bold">Recent announcements</h2>
+            <Link
+              className="text-sm font-semibold text-moss hover:text-ink"
+              href={`/lecturer/classes/${classId}/announcements`}
+            >
+              View all
+            </Link>
+          </div>
+          <div className="mt-4 space-y-4">
+            {announcements.length === 0 ? (
+              <p className="text-sm text-ink/65">No draft or published announcements yet.</p>
+            ) : (
+              announcements.map((announcement) => (
+                <div key={announcement.id} className="border-b border-ink/10 pb-3 last:border-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="min-w-0 truncate font-semibold" title={announcement.title}>
+                      {announcement.title}
+                    </p>
+                    <StatusBadge tone={announcement.status === "PUBLISHED" ? "success" : "warning"}>
+                      {announcement.status === "PUBLISHED" ? "Published" : "Draft"}
+                    </StatusBadge>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-sm text-ink/60">{announcement.body}</p>
+                </div>
               ))
             )}
           </div>

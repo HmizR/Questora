@@ -1,5 +1,6 @@
 import {
   ActivityType,
+  AnnouncementStatus,
   ClassStatus,
   PrismaClient,
   QuestType,
@@ -19,6 +20,7 @@ async function main() {
   await prisma.submission.deleteMany();
   await prisma.quizAttempt.deleteMany();
   await prisma.activityProgress.deleteMany();
+  await prisma.announcement.deleteMany();
   await prisma.activityPrerequisite.deleteMany();
   await prisma.questActivity.deleteMany();
   await prisma.quest.deleteMany();
@@ -274,6 +276,26 @@ async function main() {
       { questId: mainQuest.id, activityId: quiz.id, position: 3 },
       { questId: bossQuest.id, activityId: boss.id, position: 1 },
       { questId: dataQuest.id, activityId: dataLesson.id, position: 1 }
+    ]
+  });
+
+  await prisma.announcement.createMany({
+    data: [
+      {
+        classId: webRealm.id,
+        title: "Welcome to Web Foundations",
+        body: "Start with Mission 1 this week. The first quest unlocks your opening XP reward once the connected missions are complete.",
+        status: AnnouncementStatus.PUBLISHED,
+        createdById: lecturers[0].id,
+        publishedAt: new Date("2026-07-01T09:00:00.000Z")
+      },
+      {
+        classId: webRealm.id,
+        title: "Draft: Boss battle briefing",
+        body: "Add final project expectations before publishing this update.",
+        status: AnnouncementStatus.DRAFT,
+        createdById: lecturers[0].id
+      }
     ]
   });
 
