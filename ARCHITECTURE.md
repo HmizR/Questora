@@ -174,6 +174,8 @@ Current AI MVP:
 
 - mounted as a global protected drawer in the dashboard shell
 - uses rich page context on student mission and student realm pages
+- streams responses over a protected Server-Sent Events endpoint
+- keeps the original JSON chat endpoint as a fallback
 - falls back to general help on unsupported protected pages
 - stores chat history in browser state only
 - includes authorized extracted resource excerpts for student mission context when available
@@ -201,7 +203,9 @@ OPENAI_API_KEY=...
 OPENAI_MODEL=...
 ```
 
-Start with non-streaming responses for the first MVP pass. Streaming can be added after authorization, context construction, and tests are stable.
+Streaming responses are supported for Ollama through the provider interface. Additional hosted
+providers should implement the same stream/fallback contract instead of changing drawer or
+authorization logic.
 
 ### Lecturer Grading Assistant
 

@@ -2,7 +2,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AppError } from "@/lib/errors";
 import { aiChatRequestSchema } from "@/schemas/ai";
-import { OllamaProvider } from "@/services/ai/ollama-provider";
+import {
+  createThinkingBlockFilter,
+  OllamaProvider,
+  parseOllamaStreamLine,
+  stripThinkingBlocks
+} from "@/services/ai/ollama-provider";
 import { academicHonestyPrompt } from "@/services/ai/ai-prompts";
 
 describe("AI assistant helpers", () => {
@@ -67,5 +72,76 @@ describe("AI assistant helpers", () => {
         messages: [{ role: "user", content: "Help" }]
       })
     ).rejects.toBeInstanceOf(AppError);
+  });
+
+  it("parses Ollama stream lines and ignores empty lines", () => {
+    expect(parseOllamaStreamLine("")).toBeNull();
+    expect(
+      parseOllamaStreamLine(JSON.stringify({ message: { content: "Hello" }, done: false }))
+    ).toEqual({
+      content: "Hello",
+      done: false
+    });
+    expect(parseOllamaStreamLine(JSON.stringify({ response: "Done", done: true }))).toEqual({
+      content: "Done",
+      done: true
+    });
+  });
+
+  it("strips thinking blocks from full and streamed content", () => {
+    expect(stripThinkingBlocks("<think>private</think>\nVisible answer")).toBe("Visible answer");
+
+    const filter = createThinkingBlockFilter();
+    expect(filter.next("Visible <thi")).toBe("Visible ");
+    expect(filter.next("nk>private")).toBe("");
+    expect(filter.next(" reasoning</think> answer")).toBe(" answer");
+    expect(filter.flush()).toBe("");
+  });
+
+  it("streams Ollama deltas and maps provider failures", async () => {
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        const encoder = new TextEncoder();
+        controller.enqueue(
+          encoder.encode(
+            `${JSON.stringify({ message: { content: "<think>hidden</think>" }, done: false })}\n`
+          )
+        );
+        controller.enqueue(
+          encoder.encode(
+            `${JSON.stringify({ message: { content: "Visible " }, done: false })}\n${JSON.stringify({
+              message: { content: "answer" },
+              done: true
+            })}\n`
+          )
+        );
+        controller.close();
+      }
+    });
+    const fetchMock = vi.fn(async () => new Response(stream));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const provider = new OllamaProvider({
+      baseUrl: "http://ollama.test",
+      model: "qwen3:8b"
+    });
+    const chunks: string[] = [];
+    for await (const chunk of provider.stream({
+      messages: [{ role: "user", content: "Help" }]
+    })) {
+      chunks.push(chunk);
+    }
+
+    expect(chunks.join("")).toBe("Visible answer");
+
+    fetchMock.mockResolvedValueOnce(new Response("Nope", { status: 500 }));
+    await expect(async () => {
+      for await (const chunk of provider.stream({
+        messages: [{ role: "user", content: "Help" }]
+      })) {
+        expect(chunk).toBeDefined();
+        // Exhaust stream.
+      }
+    }).rejects.toBeInstanceOf(AppError);
   });
 });

@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
-import { Bot, Loader2, Send, Sparkles, Trash2, X } from "lucide-react";
+import { Bot, Loader2, Send, Sparkles, Square, Trash2, X } from "lucide-react";
 
 import { useAIAssistant } from "@/components/ai/ai-assistant-provider";
 
@@ -24,7 +24,8 @@ export function AIAssistantDrawer() {
     isOpen,
     isSending,
     messages,
-    sendMessage
+    sendMessage,
+    stopGenerating
   } = useAIAssistant();
   const [draft, setDraft] = useState("");
   const messageEndRef = useRef<HTMLDivElement | null>(null);
@@ -156,7 +157,7 @@ export function AIAssistantDrawer() {
               {isSending ? (
                 <div className="mr-8 flex items-center gap-2 rounded-xl border border-border/80 bg-surface-muted px-4 py-3 text-sm text-ink/65">
                   <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
-                  Thinking...
+                  Generating...
                 </div>
               ) : null}
               <div ref={messageEndRef} />
@@ -185,15 +186,23 @@ export function AIAssistantDrawer() {
             />
             <button
               className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-ink text-white transition hover:bg-moss disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isSending || !draft.trim()}
-              type="submit"
+              disabled={!isSending && !draft.trim()}
+              onClick={
+                isSending
+                  ? (event) => {
+                      event.preventDefault();
+                      stopGenerating();
+                    }
+                  : undefined
+              }
+              type={isSending ? "button" : "submit"}
             >
               {isSending ? (
-                <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
+                <Square aria-hidden className="h-4 w-4" />
               ) : (
                 <Send aria-hidden className="h-4 w-4" />
               )}
-              <span className="sr-only">Send message</span>
+              <span className="sr-only">{isSending ? "Stop generation" : "Send message"}</span>
             </button>
           </form>
           {messages.length > 0 ? (

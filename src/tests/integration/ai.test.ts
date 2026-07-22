@@ -2,6 +2,7 @@ import { ActivityResourceTextStatus, ActivityType, UserRole } from "@prisma/clie
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { POST as chat } from "@/app/api/ai/chat/route";
+import { POST as streamChat } from "@/app/api/ai/chat/stream/route";
 import { db } from "@/lib/db";
 
 import {
@@ -24,12 +25,40 @@ async function json(response: Response) {
   return response.json() as Promise<Record<string, unknown>>;
 }
 
+async function text(response: Response) {
+  return response.text();
+}
+
 function mockOllama(answer = "Study the mission instructions and resources first.") {
   return vi.spyOn(globalThis, "fetch").mockImplementation(async () =>
     Response.json({
       message: { content: answer }
     })
   );
+}
+
+function mockOllamaStream(chunks: string[]) {
+  return vi.spyOn(globalThis, "fetch").mockImplementation(async () => {
+    const encoder = new TextEncoder();
+
+    return new Response(
+      new ReadableStream<Uint8Array>({
+        start(controller) {
+          chunks.forEach((chunk, index) => {
+            controller.enqueue(
+              encoder.encode(
+                `${JSON.stringify({
+                  message: { content: chunk },
+                  done: index === chunks.length - 1
+                })}\n`
+              )
+            );
+          });
+          controller.close();
+        }
+      })
+    );
+  });
 }
 
 describe("AI chat API", () => {
@@ -41,8 +70,12 @@ describe("AI chat API", () => {
     clearMockSession();
 
     const response = await chat(jsonRequest({ message: "Help", context: { type: "GENERIC" } }));
+    const streamResponse = await streamChat(
+      jsonRequest({ message: "Help", context: { type: "GENERIC" } })
+    );
 
     expect(response.status).toBe(401);
+    expect(streamResponse.status).toBe(401);
   });
 
   it("allows an enrolled student to ask about a published activity", async () => {
@@ -111,6 +144,44 @@ describe("AI chat API", () => {
     );
   });
 
+  it("streams an enrolled student's published activity answer with metadata", async () => {
+    const { class: teachingClass } = await createClassFixture();
+    const { student } = await enrollStudentFixture(teachingClass.id);
+    const learningModule = await createModuleFixture(teachingClass.id);
+    const activity = await createActivityFixture(learningModule.id, {
+      type: ActivityType.ASSIGNMENT,
+      title: "Streaming Mission"
+    });
+    setMockSession({
+      id: student.id,
+      name: student.name,
+      email: student.email,
+      role: "STUDENT"
+    });
+    mockOllamaStream(["Streamed ", "answer"]);
+
+    const response = await streamChat(
+      jsonRequest({
+        message: "Give me a hint",
+        context: {
+          type: "STUDENT_ACTIVITY",
+          classId: teachingClass.id,
+          activityId: activity.id
+        }
+      })
+    );
+    const body = await text(response);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/event-stream");
+    expect(body).toContain("event: meta");
+    expect(body).toContain("Using current mission");
+    expect(body).toContain("Streaming Mission");
+    expect(body).toContain('event: delta\ndata: {"content":"Streamed "}');
+    expect(body).toContain('event: delta\ndata: {"content":"answer"}');
+    expect(body).toContain("event: done");
+  });
+
   it("blocks a student from another class and unpublished activity context", async () => {
     const { class: teachingClass } = await createClassFixture();
     const { student } = await enrollStudentFixture(teachingClass.id);
@@ -153,6 +224,18 @@ describe("AI chat API", () => {
     expect(outsiderResponse.status).toBe(403);
     expect(unpublishedResponse.status).toBe(403);
     expect(fetchMock).not.toHaveBeenCalled();
+
+    const unpublishedStreamResponse = await streamChat(
+      jsonRequest({
+        message: "Help",
+        context: {
+          type: "STUDENT_ACTIVITY",
+          classId: teachingClass.id,
+          activityId: privateActivity.id
+        }
+      })
+    );
+    expect(unpublishedStreamResponse.status).toBe(403);
   });
 
   it("uses enrolled class context and generic protected context safely", async () => {
@@ -224,5 +307,37 @@ describe("AI chat API", () => {
       code: "BAD_REQUEST",
       message: "The AI assistant is unavailable right now."
     });
+  });
+
+  it("emits a safe stream error when the provider fails after authorization", async () => {
+    const student = await db.user.create({
+      data: {
+        name: "Streaming Student",
+        email: "streaming-student@integration.questora.dev",
+        passwordHash: "hash",
+        role: UserRole.STUDENT,
+        status: "ACTIVE"
+      }
+    });
+    setMockSession({
+      id: student.id,
+      name: student.name,
+      email: student.email,
+      role: "STUDENT"
+    });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("Nope", { status: 500 }));
+
+    const response = await streamChat(
+      jsonRequest({
+        message: "Help",
+        context: { type: "GENERIC" }
+      })
+    );
+    const body = await text(response);
+
+    expect(response.status).toBe(200);
+    expect(body).toContain("event: meta");
+    expect(body).toContain("event: error");
+    expect(body).toContain("The AI assistant is unavailable right now.");
   });
 });

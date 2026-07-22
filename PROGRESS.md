@@ -50,6 +50,7 @@ Post-MVP UI refresh completed:
 - Class announcements with lecturer draft/publish/archive/delete workflow and student published-only viewing
 - Global AI assistant drawer MVP with Ollama provider, student mission/realm context, generic fallback, and client-only chat history
 - Student mission AI context now includes extracted resource excerpts when available, capped and source-labeled
+- Streaming AI assistant responses with SSE, Ollama stream parsing, and stop-generation control
 - Isolated PostgreSQL integration test setup with service and server action coverage
 - Playwright UI-level workflow test setup for admin, lecturer, and student paths
 - GitHub Actions CI quality gate for Prisma validation, typecheck, lint, tests, e2e, and build
@@ -247,9 +248,10 @@ Completed:
 Current automated coverage:
 
 ```text
-47 unit tests passing
-46 integration tests passing
+50 unit tests passing
+48 integration tests passing
 Targeted lecturer resource e2e extraction checks passing
+Targeted student AI assistant streaming e2e check passing
 ```
 
 ## Recommended Next Steps
@@ -267,7 +269,6 @@ Targeted lecturer resource e2e extraction checks passing
 - AI assistant roadmap:
   - add embeddings or full document RAG after resource text extraction
   - consider Office document text extraction after upload safety, conversion tooling, and performance limits are clearer
-  - add streaming chat UX after the non-streaming assistant is stable
   - make the assistant cite the resource or mission content it used where possible
   - add academic-honesty guardrails so it explains, hints, quizzes, and summarizes instead of completing graded work for students
   - later add a lecturer grading assistant for summarizing submissions, suggesting feedback, and checking rubric coverage

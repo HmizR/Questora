@@ -206,7 +206,7 @@ test("leaderboard names link to public student profiles", async ({ page }) => {
 
 test("global AI assistant drawer uses student page context", async ({ page }) => {
   let requests = 0;
-  await page.route("**/api/ai/chat", async (route) => {
+  await page.route("**/api/ai/chat/stream", async (route) => {
     requests += 1;
     const body = route.request().postDataJSON() as {
       context?: { type?: string };
@@ -220,12 +220,21 @@ test("global AI assistant drawer uses student page context", async ({ page }) =>
           : "General help";
 
     await route.fulfill({
-      contentType: "application/json",
-      body: JSON.stringify({
-        answer: `**Mock AI answer** for ${body.message}\n\n- Review the mission brief\n- Ask for hints`,
-        contextLabel,
-        sources: [{ label: "Mission", detail: "E2E Assignment" }]
-      })
+      contentType: "text/event-stream",
+      body: [
+        `event: meta\ndata: ${JSON.stringify({
+          contextLabel,
+          sources: [{ label: "Mission", detail: "E2E Assignment" }]
+        })}`,
+        `event: delta\ndata: ${JSON.stringify({
+          content: `**Mock AI answer** for ${body.message}\n\n`
+        })}`,
+        `event: delta\ndata: ${JSON.stringify({
+          content: "- Review the mission brief\n- Ask for hints"
+        })}`,
+        "event: done\ndata: {}",
+        ""
+      ].join("\n\n")
     });
   });
 

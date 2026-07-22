@@ -17,6 +17,7 @@ export type AIProviderRequest = {
 
 export type AIProvider = {
   complete(request: AIProviderRequest): Promise<string>;
+  stream?(request: AIProviderRequest): AsyncIterable<string>;
 };
 
 export type AIContextResult = {

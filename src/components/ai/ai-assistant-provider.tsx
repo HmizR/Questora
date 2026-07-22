@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 
 import type { AIContextInput } from "@/schemas/ai";
 
@@ -23,6 +23,7 @@ type AIAssistantState = {
   toggleAssistant: () => void;
   registerContext: (context: AIContextInput) => void;
   sendMessage: (message: string) => Promise<void>;
+  stopGenerating: () => void;
   clearMessages: () => void;
 };
 
@@ -47,12 +48,33 @@ function labelForContext(context: AIContextInput) {
   return "General help";
 }
 
+function parseSSEBlock(block: string) {
+  let event = "message";
+  const dataLines: string[] = [];
+
+  for (const line of block.split(/\r?\n/)) {
+    if (line.startsWith("event:")) {
+      event = line.slice("event:".length).trim();
+    }
+
+    if (line.startsWith("data:")) {
+      dataLines.push(line.slice("data:".length).trimStart());
+    }
+  }
+
+  return {
+    event,
+    data: dataLines.join("\n")
+  };
+}
+
 export function AIAssistantProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [context, setContext] = useState<AIContextInput>(genericContext);
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const registerContext = useCallback((nextContext: AIContextInput) => {
     setContext((current) => {
@@ -76,19 +98,31 @@ export function AIAssistantProvider({ children }: { children: React.ReactNode })
         role: "user",
         content: trimmed
       };
+      const assistantMessageId = createClientId();
       const history = [...messages, userMessage].slice(-8).map((message) => ({
         role: message.role,
         content: message.content
       }));
+      const abortController = new AbortController();
 
-      setMessages((current) => [...current, userMessage]);
+      abortControllerRef.current = abortController;
+      setMessages((current) => [
+        ...current,
+        userMessage,
+        {
+          id: assistantMessageId,
+          role: "assistant",
+          content: ""
+        }
+      ]);
       setIsSending(true);
       setError(null);
 
       try {
-        const response = await fetch("/api/ai/chat", {
+        const response = await fetch("/api/ai/chat/stream", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: abortController.signal,
           body: JSON.stringify({
             message: trimmed,
             context,
@@ -96,36 +130,89 @@ export function AIAssistantProvider({ children }: { children: React.ReactNode })
           })
         });
 
-        const data = (await response.json()) as {
-          answer?: string;
-          sources?: Array<{ label: string; detail?: string }>;
-          contextLabel?: string;
-          error?: { message?: string };
-        };
-
-        if (!response.ok || !data.answer) {
-          throw new Error(data.error?.message ?? "The assistant could not answer right now.");
+        if (!response.ok || !response.body) {
+          const data = (await response.json().catch(() => null)) as {
+            error?: { message?: string };
+          } | null;
+          throw new Error(data?.error?.message ?? "The assistant could not answer right now.");
         }
 
-        setMessages((current) => [
-          ...current,
-          {
-            id: createClientId(),
-            role: "assistant",
-            content: data.answer ?? "",
-            sources: data.sources
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          buffer += decoder.decode(value, { stream: !done });
+          const blocks = buffer.split(/\r?\n\r?\n/);
+          buffer = blocks.pop() ?? "";
+
+          for (const block of blocks) {
+            const parsed = parseSSEBlock(block);
+            if (!parsed.data) continue;
+
+            if (parsed.event === "meta") {
+              const data = JSON.parse(parsed.data) as {
+                sources?: Array<{ label: string; detail?: string }>;
+              };
+              setMessages((current) =>
+                current.map((message) =>
+                  message.id === assistantMessageId
+                    ? { ...message, sources: data.sources ?? [] }
+                    : message
+                )
+              );
+            }
+
+            if (parsed.event === "delta") {
+              const data = JSON.parse(parsed.data) as { content?: string };
+              if (data.content) {
+                setMessages((current) =>
+                  current.map((message) =>
+                    message.id === assistantMessageId
+                      ? { ...message, content: `${message.content}${data.content}` }
+                      : message
+                  )
+                );
+              }
+            }
+
+            if (parsed.event === "error") {
+              const data = JSON.parse(parsed.data) as { message?: string };
+              throw new Error(data.message ?? "The assistant could not answer right now.");
+            }
+
+            if (parsed.event === "done") {
+              buffer = "";
+            }
           }
-        ]);
+
+          if (done) break;
+        }
+
+        reader.releaseLock();
       } catch (sendError) {
+        if (abortController.signal.aborted) {
+          setError("Generation stopped.");
+          return;
+        }
+
         const message =
           sendError instanceof Error ? sendError.message : "The assistant could not answer right now.";
         setError(message);
       } finally {
+        if (abortControllerRef.current === abortController) {
+          abortControllerRef.current = null;
+        }
         setIsSending(false);
       }
     },
     [context, isSending, messages]
   );
+
+  const stopGenerating = useCallback(() => {
+    abortControllerRef.current?.abort();
+  }, []);
 
   const value = useMemo<AIAssistantState>(
     () => ({
@@ -140,12 +227,13 @@ export function AIAssistantProvider({ children }: { children: React.ReactNode })
       toggleAssistant: () => setIsOpen((current) => !current),
       registerContext,
       sendMessage,
+      stopGenerating,
       clearMessages: () => {
         setMessages([]);
         setError(null);
       }
     }),
-    [context, error, isOpen, isSending, messages, registerContext, sendMessage]
+    [context, error, isOpen, isSending, messages, registerContext, sendMessage, stopGenerating]
   );
 
   return <AIAssistantContext.Provider value={value}>{children}</AIAssistantContext.Provider>;

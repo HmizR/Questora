@@ -99,10 +99,11 @@ ollama pull qwen3:8b
 ollama serve
 ```
 
-The first AI pass is non-streaming and stores chat history in browser state only. Student
-mission and realm pages provide authorized page context; student mission context includes
-resource metadata plus extracted resource excerpts when available. Other protected pages use
-general help until richer context is added.
+The AI assistant streams responses through Server-Sent Events for a faster chat feel while
+keeping the original JSON endpoint as a fallback. Chat history stays in browser state only.
+Student mission and realm pages provide authorized page context; student mission context
+includes resource metadata plus extracted resource excerpts when available. Other protected
+pages use general help until richer context is added.
 
 ## Database
 
