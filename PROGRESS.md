@@ -42,12 +42,14 @@ Post-MVP UI refresh completed:
 - Mission resources display file type icons, readable sizes, filenames, and upload dates
 - Mission resources include required/optional indicators, learning labels, descriptions, editable details, and required-first ordering
 - Student inline mission resource previews for PDF, image, and text/markdown files
+- AI resource text extraction for protected text, Markdown, and PDF mission resources
 - Admin/user polish with avatar-aware rosters, role/status badges, compact account details, and clearer account-control guidance
 - Quiz and assignment UX polish with clearer student work states, quiz attempt summaries, submission stats, and analytics labels
 - Lecturer roster, grades, submission review, and quiz analytics filters, sorting, needs-attention highlights, and CSV exports
 - Due-date UX with student and lecturer due-soon/overdue panels and mission deadline badges
 - Class announcements with lecturer draft/publish/archive/delete workflow and student published-only viewing
 - Global AI assistant drawer MVP with Ollama provider, student mission/realm context, generic fallback, and client-only chat history
+- Student mission AI context now includes extracted resource excerpts when available, capped and source-labeled
 - Isolated PostgreSQL integration test setup with service and server action coverage
 - Playwright UI-level workflow test setup for admin, lecturer, and student paths
 - GitHub Actions CI quality gate for Prisma validation, typecheck, lint, tests, e2e, and build
@@ -235,6 +237,7 @@ Completed:
 - Lecturer mission resource upload UI
 - Resource file display polish with type labels, sizes, icons, and safer filename truncation
 - Resource organization polish with required/optional metadata, controlled resource labels, descriptions, and editable ordering
+- Server-side text extraction for protected text, Markdown, and PDF mission resources
 - Admin user/account polish for clearer rosters, account summaries, and reset/deactivation guidance
 - Quiz and assignment UX polish for student work states, lecturer submission stats, and clearer analytics labels
 - Lecturer analytics usability polish with filters, sorting, needs-attention highlights, and protected CSV exports
@@ -244,9 +247,9 @@ Completed:
 Current automated coverage:
 
 ```text
-45 unit tests passing
-42 integration tests passing
-23 e2e tests passing
+47 unit tests passing
+46 integration tests passing
+Targeted lecturer resource e2e extraction checks passing
 ```
 
 ## Recommended Next Steps
@@ -262,8 +265,8 @@ Current automated coverage:
   - add full calendar views later if deadline panels are not enough
   - add quiz review improvements such as answer explanations, review settings, or question randomization
 - AI assistant roadmap:
-  - add resource text extraction so the assistant can answer from uploaded PDFs, slides, docs, and worksheets instead of metadata only
   - add embeddings or full document RAG after resource text extraction
+  - consider Office document text extraction after upload safety, conversion tooling, and performance limits are clearer
   - add streaming chat UX after the non-streaming assistant is stable
   - make the assistant cite the resource or mission content it used where possible
   - add academic-honesty guardrails so it explains, hints, quizzes, and summarizes instead of completing graded work for students

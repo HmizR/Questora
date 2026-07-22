@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import { processActivityCompletionRewards } from "@/services/progress-service";
+import { extractTextFromResource } from "@/services/resource-text-service";
 
 async function getModuleForLecturer(moduleId: string, lecturerId: string) {
   const learningModule = await db.module.findUnique({
@@ -242,7 +243,7 @@ export async function createActivityResource(input: {
   await getActivityForLecturer(input.activityId, input.lecturerId);
 
   try {
-    return await db.activityResource.create({
+    const resource = await db.activityResource.create({
       data: {
         activityId: input.activityId,
         title: input.title,
@@ -257,6 +258,8 @@ export async function createActivityResource(input: {
         createdById: input.lecturerId
       }
     });
+    await extractTextFromResource(resource);
+    return resource;
   } catch (error) {
     throw prismaErrorToAppError(error);
   }

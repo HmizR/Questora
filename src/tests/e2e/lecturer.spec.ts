@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ActivityType, ClassStatus } from "@prisma/client";
+import { ActivityResourceTextStatus, ActivityType, ClassStatus } from "@prisma/client";
 
 import { e2eUsers, resetE2eDatabase, type E2eSeed } from "./fixtures";
 import { loginAs } from "./helpers";
@@ -237,11 +237,14 @@ test("lecturer uploads and removes a mission resource", async ({ page }) => {
     `/lecturer/classes/${seed.class.id}/modules/${seed.module.id}/activities/${seed.activities.assignment.id}/edit`
   );
 
-  await page.getByLabel("Resource title").fill("E2E Resource Pack");
-  await page.getByLabel("Description").last().fill("Required starter files for the assignment.");
-  await page.getByLabel("Resource label").selectOption("STARTER_FILE");
-  await page.getByLabel("Position").last().fill("1");
-  await page.getByLabel("Required resource").check();
+  const addResourceForm = page.locator("form").filter({
+    has: page.getByRole("button", { name: "Add resource" })
+  });
+  await addResourceForm.getByLabel("Resource title").fill("E2E Resource Pack");
+  await addResourceForm.getByLabel("Description").fill("Required starter files for the assignment.");
+  await addResourceForm.getByLabel("Resource label").selectOption("STARTER_FILE");
+  await addResourceForm.getByLabel("Position").fill("1");
+  await addResourceForm.getByLabel("Required resource").check();
   await page.setInputFiles("#mission-resource-file", {
     name: longResourceFileName,
     mimeType: "application/pdf",
@@ -308,6 +311,69 @@ test("lecturer uploads and removes a mission resource", async ({ page }) => {
   await page.getByRole("dialog").getByRole("button", { name: "Remove resource" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Resource removed." })).toBeVisible();
   await expect(page.getByText("E2E Resource Pack Updated")).toHaveCount(0);
+});
+
+test("lecturer sees mission resource extraction status", async ({ page }) => {
+  await db.activityResource.create({
+    data: {
+      activityId: seed.activities.assignment.id,
+      title: "Ready Text Resource",
+      fileName: "ready-notes.md",
+      fileUrl: `s3:mission-resources/${seed.activities.assignment.id}/ready-notes.md`,
+      contentType: "text/markdown",
+      size: 1200,
+      position: 1,
+      createdById: seed.users.lecturer.id,
+      textStatus: ActivityResourceTextStatus.READY,
+      textExtractedAt: new Date(),
+      extractedTexts: {
+        create: {
+          chunkIndex: 0,
+          content: "Mission resource text is available to the assistant."
+        }
+      }
+    }
+  });
+  await db.activityResource.create({
+    data: {
+      activityId: seed.activities.assignment.id,
+      title: "Unsupported Archive",
+      fileName: "archive.zip",
+      fileUrl: `s3:mission-resources/${seed.activities.assignment.id}/archive.zip`,
+      contentType: "application/zip",
+      size: 2400,
+      position: 2,
+      createdById: seed.users.lecturer.id,
+      textStatus: ActivityResourceTextStatus.UNSUPPORTED
+    }
+  });
+  await db.activityResource.create({
+    data: {
+      activityId: seed.activities.assignment.id,
+      title: "Failed Extraction",
+      fileName: "failed.txt",
+      fileUrl: `s3:mission-resources/${seed.activities.assignment.id}/failed.txt`,
+      contentType: "text/plain",
+      size: 800,
+      position: 3,
+      createdById: seed.users.lecturer.id,
+      textStatus: ActivityResourceTextStatus.FAILED,
+      textError: "Temporary extraction failure"
+    }
+  });
+
+  await loginAs(page, e2eUsers.lecturer.email);
+  await page.goto(
+    `/lecturer/classes/${seed.class.id}/modules/${seed.module.id}/activities/${seed.activities.assignment.id}/edit`
+  );
+
+  await expect(page.getByText("Ready Text Resource")).toBeVisible();
+  await expect(page.getByText("Text ready")).toBeVisible();
+  await expect(page.getByText("Unsupported Archive")).toBeVisible();
+  await expect(page.getByText("Unsupported", { exact: true })).toBeVisible();
+  await expect(page.getByText("Failed Extraction")).toBeVisible();
+  await expect(page.getByText("Extraction failed")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Retry extraction" })).toBeVisible();
 });
 
 test("lecturer mission deletion requires confirmation", async ({ page }) => {

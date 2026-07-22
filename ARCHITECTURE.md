@@ -108,6 +108,13 @@ Current upload surfaces:
 - self-service avatars
 - lecturer mission resources
 
+Mission resources can have extracted text chunks in PostgreSQL. The MVP extracts only
+protected `s3:<object-key>` resources that are plain text, Markdown, or PDF. Office files,
+images, zip archives, unknown types, and external URLs are marked unsupported for extraction
+while remaining available for authorized download/preview. Extraction is synchronous when a
+lecturer creates a resource, and lecturers can retry failed extraction from the mission edit
+page.
+
 Resource deletion currently removes database rows only. Physical S3/RustFS object cleanup should be handled later with a reviewed cleanup helper or lifecycle policy.
 
 ## UI Structure
@@ -169,7 +176,8 @@ Current AI MVP:
 - uses rich page context on student mission and student realm pages
 - falls back to general help on unsupported protected pages
 - stores chat history in browser state only
-- does not read uploaded file contents yet; mission resource metadata is included instead
+- includes authorized extracted resource excerpts for student mission context when available
+- caps extracted resource context before sending it to the provider
 
 ### AI Provider Strategy
 
@@ -213,7 +221,6 @@ Future implementation may add:
 
 - `AIConversation`
 - `AIMessage`
-- extracted text records for uploaded resources
 - optional embeddings/vector search for larger resource sets
 - `services/ai-service.ts`
 - provider adapters such as `services/ai/ollama-provider.ts`

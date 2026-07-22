@@ -31,6 +31,7 @@ import {
   questIdSchema,
   removeActivityPrerequisiteSchema,
   removeQuestActivitySchema,
+  retryActivityResourceExtractionSchema,
   updateAnnouncementSchema,
   updateActivitySchema,
   updateActivityResourceSchema,
@@ -67,6 +68,7 @@ import {
   updateModule,
   updateQuest
 } from "@/services/lecturer-service";
+import { retryActivityResourceExtraction } from "@/services/resource-text-service";
 
 function validationError(error: z.ZodError): LecturerActionState {
   const fieldErrors = Object.fromEntries(
@@ -369,6 +371,26 @@ export async function updateActivityResourceAction(
       `/lecturer/classes/${parsed.data.classId}/modules/${parsed.data.moduleId}/activities/${parsed.data.activityId}/edit`
     );
     return { ok: true, data: { message: "Resource details updated." } };
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+}
+
+export async function retryActivityResourceExtractionAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = retryActivityResourceExtractionSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  try {
+    const user = await requireRole("LECTURER");
+    await retryActivityResourceExtraction({ ...parsed.data, lecturerId: user.id });
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}/modules`);
+    revalidatePath(
+      `/lecturer/classes/${parsed.data.classId}/modules/${parsed.data.moduleId}/activities/${parsed.data.activityId}/edit`
+    );
+    return { ok: true, data: { message: "Resource text extraction retried." } };
   } catch (error) {
     return { ok: false, error: toActionError(error) };
   }

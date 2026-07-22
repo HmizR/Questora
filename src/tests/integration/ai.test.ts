@@ -1,4 +1,4 @@
-import { ActivityType, UserRole } from "@prisma/client";
+import { ActivityResourceTextStatus, ActivityType, UserRole } from "@prisma/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { POST as chat } from "@/app/api/ai/chat/route";
@@ -65,7 +65,15 @@ describe("AI chat API", () => {
         createdById: teachingClass.lecturerId,
         kind: "READING",
         isRequired: true,
-        description: "Read this before answering."
+        description: "Read this before answering.",
+        textStatus: ActivityResourceTextStatus.READY,
+        textExtractedAt: new Date(),
+        extractedTexts: {
+          create: {
+            chunkIndex: 0,
+            content: "Use claim evidence reasoning when answering the E2E resource prompt."
+          }
+        }
       }
     });
     setMockSession({
@@ -97,6 +105,9 @@ describe("AI chat API", () => {
       expect.objectContaining({
         body: expect.stringContaining("Required Brief")
       })
+    );
+    expect(String(fetchMock.mock.calls[0]?.[1]?.body)).toContain(
+      "Use claim evidence reasoning when answering the E2E resource prompt."
     );
   });
 

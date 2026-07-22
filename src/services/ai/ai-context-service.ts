@@ -11,6 +11,8 @@ import { getPublishedAnnouncementsForStudent } from "@/services/announcement-ser
 import { getStudentDeadlineItems } from "@/services/deadline-service";
 import { assertStudentCanAccessActivity } from "@/services/progress-service";
 
+const MAX_RESOURCE_CONTEXT_CHARS = 12000;
+
 function compact(value: string | null | undefined) {
   return value?.trim() || "None";
 }
@@ -64,6 +66,11 @@ async function buildStudentActivityContext(classId: string, activityId: string) 
     }),
     db.activityResource.findMany({
       where: { activityId },
+      include: {
+        extractedTexts: {
+          orderBy: { chunkIndex: "asc" }
+        }
+      },
       orderBy: [{ isRequired: "desc" }, { position: "asc" }]
     }),
     db.questActivity.findMany({
@@ -82,9 +89,10 @@ async function buildStudentActivityContext(classId: string, activityId: string) 
             (resource) =>
               `- ${resource.title} (${resource.kind}, ${resource.isRequired ? "required" : "optional"}): ${compact(
                 resource.description
-              )}. File: ${resource.fileName}.`
+              )}. File: ${resource.fileName}. Text status: ${resource.textStatus}.`
           )
           .join("\n");
+  const resourceExcerpts = buildResourceExcerptContext(resources);
   const questText =
     questLinks.length === 0
       ? "No published connected quests."
@@ -124,8 +132,11 @@ Passing score: ${activity.passingScore?.toString() ?? "None"}
 Progress status: ${progress?.status ?? "NOT_STARTED"}
 Progress percent: ${progress?.progressPercent ?? 0}
 
-Resource metadata only. Full uploaded file contents are not available yet:
+Resource metadata:
 ${resourceText}
+
+Extracted resource excerpts when available:
+${resourceExcerpts || "No extracted resource text is available yet."}
 
 Connected published quests:
 ${questText}
@@ -134,6 +145,37 @@ Recent published announcements:
 ${announcementText}
 `.trim()
   });
+}
+
+function buildResourceExcerptContext(
+  resources: Array<{
+    title: string;
+    isRequired: boolean;
+    extractedTexts: Array<{ chunkIndex: number; content: string }>;
+  }>
+) {
+  let remaining = MAX_RESOURCE_CONTEXT_CHARS;
+  const excerpts: string[] = [];
+
+  for (const resource of resources) {
+    if (remaining <= 0) break;
+
+    for (const chunk of resource.extractedTexts) {
+      if (remaining <= 0) break;
+
+      const prefix = `[Resource: ${resource.title}, chunk ${chunk.chunkIndex + 1}, ${
+        resource.isRequired ? "required" : "optional"
+      }]\n`;
+      const available = remaining - prefix.length;
+      if (available <= 0) break;
+
+      const content = chunk.content.slice(0, available);
+      excerpts.push(`${prefix}${content}`);
+      remaining -= prefix.length + content.length;
+    }
+  }
+
+  return excerpts.join("\n\n");
 }
 
 async function buildStudentClassContext(classId: string) {

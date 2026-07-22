@@ -32,6 +32,7 @@ import {
   publishQuestAction,
   removeActivityPrerequisiteAction,
   removeQuestActivityAction,
+  retryActivityResourceExtractionAction,
   updateActivityAction,
   updateAnnouncementAction,
   updateActivityResourceAction,
@@ -89,6 +90,13 @@ function resourceKindOptions() {
     { value: ActivityResourceKind.OTHER, label: "Other" }
   ];
 }
+
+const resourceTextStatusLabels = {
+  NOT_EXTRACTED: "Not extracted",
+  READY: "Text ready",
+  UNSUPPORTED: "Unsupported",
+  FAILED: "Extraction failed"
+} as const;
 
 export function CreateModuleForm({ classId }: { classId: string }) {
   return (
@@ -389,19 +397,44 @@ export function MissionResourcesPanel({
             <div className="space-y-3" key={resource.id}>
               <ResourceFileCard
                 actionSlot={
-                <LecturerActionForm action={deleteActivityResourceAction}>
-                  <input name="classId" type="hidden" value={classId} />
-                  <input name="moduleId" type="hidden" value={moduleId} />
-                  <input name="activityId" type="hidden" value={activityId} />
-                  <input name="resourceId" type="hidden" value={resource.id} />
-                  <ConfirmAction
-                    className="rounded-md border border-ember/30 bg-white px-3 py-1.5 text-xs font-semibold text-ember hover:bg-ember hover:text-white"
-                    confirmLabel="Remove resource"
-                    description="This removes the resource from the mission. The uploaded object is not deleted from storage in this pass."
-                    label="Remove resource"
-                    title="Remove this resource?"
-                  />
-                </LecturerActionForm>
+                  <div className="flex flex-col items-start gap-2 sm:items-end">
+                    <span
+                      className={`rounded-full border px-2.5 py-1 text-xs font-bold ${
+                        resource.textStatus === "READY"
+                          ? "border-moss/30 bg-moss/10 text-moss"
+                          : resource.textStatus === "FAILED"
+                            ? "border-ember/30 bg-ember/10 text-ember"
+                            : "border-border/80 bg-surface-muted text-ink/60"
+                      }`}
+                      title={resource.textError ?? undefined}
+                    >
+                      {resourceTextStatusLabels[resource.textStatus]}
+                    </span>
+                    {resource.textStatus === "FAILED" || resource.textStatus === "NOT_EXTRACTED" ? (
+                      <LecturerActionForm action={retryActivityResourceExtractionAction}>
+                        <input name="classId" type="hidden" value={classId} />
+                        <input name="moduleId" type="hidden" value={moduleId} />
+                        <input name="activityId" type="hidden" value={activityId} />
+                        <input name="resourceId" type="hidden" value={resource.id} />
+                        <button className="rounded-md border border-ink/20 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-ink hover:text-white">
+                          Retry extraction
+                        </button>
+                      </LecturerActionForm>
+                    ) : null}
+                    <LecturerActionForm action={deleteActivityResourceAction}>
+                      <input name="classId" type="hidden" value={classId} />
+                      <input name="moduleId" type="hidden" value={moduleId} />
+                      <input name="activityId" type="hidden" value={activityId} />
+                      <input name="resourceId" type="hidden" value={resource.id} />
+                      <ConfirmAction
+                        className="rounded-md border border-ember/30 bg-white px-3 py-1.5 text-xs font-semibold text-ember hover:bg-ember hover:text-white"
+                        confirmLabel="Remove resource"
+                        description="This removes the resource from the mission. The uploaded object is not deleted from storage in this pass."
+                        label="Remove resource"
+                        title="Remove this resource?"
+                      />
+                    </LecturerActionForm>
+                  </div>
                 }
                 activityId={activityId}
                 contentType={resource.contentType}

@@ -173,3 +173,18 @@ export async function createPresignedDownloadUrl(key: string) {
 
   return getSignedUrl(createS3Client(), command, { expiresIn: STORAGE_URL_EXPIRES_IN });
 }
+
+export async function downloadStorageObject(key: string) {
+  const config = storageConfig();
+  const command = new GetObjectCommand({
+    Bucket: config.bucket,
+    Key: key
+  });
+  const response = await createS3Client().send(command);
+
+  if (!response.Body) {
+    throw new AppError("NOT_FOUND", "Storage object is empty.");
+  }
+
+  return Buffer.from(await response.Body.transformToByteArray());
+}

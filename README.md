@@ -38,6 +38,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Protected S3 uploads support student assignment/project files, self-service avatar images, and lecturer mission resources with short-lived upload/download URLs.
 - Uploaded mission resources show file type, readable size, original filename, upload date, required/optional state, learning label, and optional description.
 - Students can preview PDF, image, and text/markdown mission resources inline on mission pages; Office files and archives remain download-only.
+- Text, Markdown, and PDF mission resources can be extracted server-side so the AI assistant can use authorized resource excerpts.
 - User avatars appear in account menus, leaderboards, profiles, lecturer rosters, and submission review.
 - A global AI assistant drawer can answer with page-aware student mission/realm context through a local Ollama provider.
 - Seed data with one admin, two lecturers, five students, two classes, example modules, activities, quests, badges, and student profiles.
@@ -83,6 +84,13 @@ The physical S3/RustFS object is intentionally left in storage for this MVP to a
 deletion edge cases. Add a reviewed orphan-cleanup script or storage lifecycle policy before
 relying on automatic physical object cleanup in production.
 
+Questora extracts readable text from protected mission resources when lecturers add them.
+The MVP supports `text/plain`, Markdown, and PDF resources stored as `s3:<object-key>`
+references. Office files, images, zip archives, unknown files, and pasted external URLs remain
+download/preview-only for now. Lecturers can see extraction status on the mission edit page
+and retry failed extraction. Students do not see extraction internals; the AI assistant uses
+authorized extracted excerpts when available.
+
 The AI assistant uses a provider-agnostic service layer. The first supported provider is
 Ollama for local development:
 
@@ -92,8 +100,9 @@ ollama serve
 ```
 
 The first AI pass is non-streaming and stores chat history in browser state only. Student
-mission and realm pages provide authorized page context; other protected pages use general
-help until richer context is added.
+mission and realm pages provide authorized page context; student mission context includes
+resource metadata plus extracted resource excerpts when available. Other protected pages use
+general help until richer context is added.
 
 ## Database
 
