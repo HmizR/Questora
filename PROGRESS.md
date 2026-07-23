@@ -54,6 +54,7 @@ Post-MVP UI refresh completed:
 - Suspicious extracted resource text is excluded from AI prompts so bad PDFs do not break mission chat
 - Streaming AI assistant responses with SSE, Ollama stream parsing, and stop-generation control
 - pgvector RAG foundation for mission-scoped semantic retrieval over extracted resource chunks
+- AI resource citations now use PDF page ranges or text/Markdown line ranges when available
 - Isolated PostgreSQL integration test setup with service and server action coverage
 - Playwright UI-level workflow test setup for admin, lecturer, and student paths
 - GitHub Actions CI quality gate for Prisma validation, typecheck, lint, tests, e2e, and build

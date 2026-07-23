@@ -119,7 +119,9 @@ not block students from using the assistant with the rest of the mission.
 
 Extracted resource chunks can also store pgvector embeddings for mission-scoped semantic
 retrieval. Questora keeps vector-specific writes/searches in raw SQL and keeps ordinary
-resource metadata in Prisma. Hosted PostgreSQL must support `CREATE EXTENSION vector`.
+resource metadata in Prisma. Chunks may include PDF page ranges or text/Markdown line ranges
+so AI citations can point students to useful source locations instead of only chunk numbers.
+Hosted PostgreSQL must support `CREATE EXTENSION vector`.
 
 Resource deletion currently removes database rows only. Physical S3/RustFS object cleanup should be handled later with a reviewed cleanup helper or lifecycle policy.
 

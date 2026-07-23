@@ -242,6 +242,10 @@ model ActivityResourceText {
   resourceId      String
   chunkIndex      Int
   content         String
+  pageStart       Int?
+  pageEnd         Int?
+  lineStart       Int?
+  lineEnd         Int?
   embedding       Unsupported("vector(768)")?
   embeddingStatus ActivityResourceEmbeddingStatus @default(NOT_EMBEDDED)
   embeddedAt      DateTime?

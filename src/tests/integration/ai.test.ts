@@ -120,7 +120,9 @@ describe("AI chat API", () => {
         extractedTexts: {
           create: {
             chunkIndex: 0,
-            content: "Use claim evidence reasoning when answering the E2E resource prompt."
+            content: "Use claim evidence reasoning when answering the E2E resource prompt.",
+            lineStart: 4,
+            lineEnd: 6
           }
         }
       }
@@ -171,6 +173,7 @@ describe("AI chat API", () => {
     expect(JSON.stringify(body.sources)).toContain("Required Brief");
     const assistantBody = findAssistantRequestBody(fetchMock);
     expect(assistantBody).toContain("Required Brief");
+    expect(assistantBody).toContain("[Resource: Required Brief, lines 4-6, required]");
     expect(assistantBody).toContain(
       "Use claim evidence reasoning when answering the E2E resource prompt."
     );

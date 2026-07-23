@@ -20,6 +20,10 @@ export type RetrievedResourceChunk = {
   resourceTitle: string;
   isRequired: boolean;
   chunkIndex: number;
+  pageStart: number | null;
+  pageEnd: number | null;
+  lineStart: number | null;
+  lineEnd: number | null;
   content: string;
   distance: number;
 };
@@ -118,6 +122,10 @@ export async function retrieveRelevantActivityResourceChunks(params: {
        ar."title" AS "resourceTitle",
        ar."isRequired",
        art."chunkIndex",
+       art."pageStart",
+       art."pageEnd",
+       art."lineStart",
+       art."lineEnd",
        art."content",
        (art."embedding" <=> $1::vector) AS "distance"
      FROM "ActivityResourceText" art

@@ -41,6 +41,8 @@ async function createExtractedResource(params: {
   content: string;
   isRequired?: boolean;
   position?: number;
+  pageStart?: number;
+  pageEnd?: number;
 }) {
   return db.activityResource.create({
     data: {
@@ -60,7 +62,9 @@ async function createExtractedResource(params: {
       extractedTexts: {
         create: {
           chunkIndex: 0,
-          content: params.content
+          content: params.content,
+          pageStart: params.pageStart,
+          pageEnd: params.pageEnd
         }
       }
     },
@@ -85,7 +89,9 @@ describe("resource semantic retrieval services", () => {
       lecturerId: lecturer.id,
       title: "Required Photosynthesis Guide",
       content: "Photosynthesis turns light into chemical energy.",
-      isRequired: true
+      isRequired: true,
+      pageStart: 12,
+      pageEnd: 13
     });
     const optionalResource = await createExtractedResource({
       activityId: activity.id,
@@ -113,6 +119,7 @@ describe("resource semantic retrieval services", () => {
     });
 
     expect(chunks[0]?.resourceTitle).toBe("Required Photosynthesis Guide");
+    expect(chunks[0]).toMatchObject({ pageStart: 12, pageEnd: 13 });
     expect(chunks.map((chunk) => chunk.resourceTitle)).not.toContain("Other Photosynthesis Notes");
   });
 

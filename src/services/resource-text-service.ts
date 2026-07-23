@@ -5,7 +5,8 @@ import { ActivityResourceTextStatus, type ActivityResource } from "@prisma/clien
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import {
-  chunkExtractedText,
+  chunkPagesWithPageLocations,
+  chunkTextWithLineLocations,
   getResourceExtractability
 } from "@/lib/resource-text-rules";
 import { parseStorageRef, downloadStorageObject } from "@/lib/storage";
@@ -16,6 +17,17 @@ import {
 } from "@/services/ai/resource-retrieval-service";
 
 const MAX_SAFE_ERROR_LENGTH = 180;
+type PdfParseWithOptions = (
+  buffer: Buffer,
+  options?: {
+    pagerender?: (pageData: {
+      getTextContent: (options: {
+        normalizeWhitespace: boolean;
+        disableCombineTextItems: boolean;
+      }) => Promise<{ items: Array<{ str?: string }> }>;
+    }) => Promise<string>;
+  }
+) => Promise<{ text: string }>;
 
 export async function extractTextFromResource(resource: ActivityResource) {
   const extractability = getResourceExtractability(resource);
@@ -32,11 +44,10 @@ export async function extractTextFromResource(resource: ActivityResource) {
 
   try {
     const objectBuffer = await downloadStorageObject(parseStorageRef(resource.fileUrl));
-    const rawText =
+    const chunks =
       extractability === "PDF"
-        ? await extractPdfText(objectBuffer)
-        : objectBuffer.toString("utf8");
-    const chunks = chunkExtractedText(rawText);
+        ? await extractPdfChunks(objectBuffer)
+        : chunkTextWithLineLocations(objectBuffer.toString("utf8"));
 
     if (chunks.length === 0) {
       await markExtractionStatus(
@@ -61,7 +72,11 @@ export async function extractTextFromResource(resource: ActivityResource) {
         data: chunks.map((content, index) => ({
           resourceId: resource.id,
           chunkIndex: index,
-          content
+          content: content.content,
+          pageStart: content.pageStart,
+          pageEnd: content.pageEnd,
+          lineStart: content.lineStart,
+          lineEnd: content.lineEnd
         }))
       })
     ]);
@@ -144,10 +159,28 @@ async function getLecturerResource(input: {
   return resource;
 }
 
-async function extractPdfText(buffer: Buffer) {
+async function extractPdfChunks(buffer: Buffer) {
   const { default: pdfParse } = await import("pdf-parse/lib/pdf-parse.js");
-  const parsed = await pdfParse(buffer);
-  return parsed.text;
+  const parsePdfWithOptions = pdfParse as PdfParseWithOptions;
+  const pages: Array<{ pageNumber: number; text: string }> = [];
+  let pageNumber = 0;
+
+  await parsePdfWithOptions(buffer, {
+    pagerender: async (pageData) => {
+      pageNumber += 1;
+      const textContent = await pageData.getTextContent({
+        normalizeWhitespace: false,
+        disableCombineTextItems: false
+      });
+      const text = textContent.items
+        .map((item) => item.str ?? "")
+        .join(" ");
+      pages.push({ pageNumber, text });
+      return text;
+    }
+  });
+
+  return chunkPagesWithPageLocations(pages);
 }
 
 async function markExtractionStatus(

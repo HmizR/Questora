@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   chunkExtractedText,
+  chunkPagesWithPageLocations,
+  chunkTextWithLineLocations,
+  formatResourceChunkCitation,
   getResourceExtractability,
   isSuspiciousExtractedText,
   normalizeExtractedText
@@ -28,6 +31,53 @@ describe("resource text extraction helpers", () => {
     expect(chunks.join(" ")).toContain("Alpha sentence.");
     expect(chunks.join(" ")).toContain("Gamma sentence.");
     expect(chunkExtractedText("   ")).toEqual([]);
+  });
+
+  it("chunks text and markdown with line locations", () => {
+    const chunks = chunkTextWithLineLocations("Line one\nLine two has more text\nLine three", 20);
+
+    expect(chunks.length).toBeGreaterThan(1);
+    expect(chunks[0]).toMatchObject({
+      lineStart: 1,
+      lineEnd: 1
+    });
+    expect(chunks.at(-1)).toMatchObject({
+      lineStart: 3,
+      lineEnd: 3
+    });
+  });
+
+  it("chunks PDF page text with page locations", () => {
+    const chunks = chunkPagesWithPageLocations(
+      [
+        { pageNumber: 1, text: "First PDF page." },
+        { pageNumber: 2, text: "Second PDF page." },
+        { pageNumber: 3, text: "Third PDF page with enough words." }
+      ],
+      40
+    );
+
+    expect(chunks[0]).toMatchObject({
+      pageStart: 1,
+      pageEnd: 2
+    });
+    expect(chunks[1]).toMatchObject({
+      pageStart: 3,
+      pageEnd: 3
+    });
+  });
+
+  it("formats resource chunk citations from structured locations", () => {
+    expect(formatResourceChunkCitation({ chunkIndex: 0, pageStart: 12, pageEnd: 12 })).toBe(
+      "p. 12"
+    );
+    expect(formatResourceChunkCitation({ chunkIndex: 0, pageStart: 12, pageEnd: 13 })).toBe(
+      "pp. 12-13"
+    );
+    expect(formatResourceChunkCitation({ chunkIndex: 0, lineStart: 42, lineEnd: 58 })).toBe(
+      "lines 42-58"
+    );
+    expect(formatResourceChunkCitation({ chunkIndex: 4 })).toBe("chunk 5");
   });
 
   it("rejects suspicious extracted text before chunking", () => {

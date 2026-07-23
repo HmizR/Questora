@@ -16,7 +16,12 @@ vi.mock("@/lib/storage", async () => {
   };
 });
 
+vi.mock("pdf-parse/lib/pdf-parse.js", () => ({
+  default: vi.fn()
+}));
+
 import { downloadStorageObject } from "@/lib/storage";
+import pdfParse from "pdf-parse/lib/pdf-parse.js";
 import { db } from "@/lib/db";
 import { createActivityResource } from "@/services/lecturer-service";
 import {
@@ -35,6 +40,15 @@ import {
 } from "./fixtures";
 
 const downloadStorageObjectMock = vi.mocked(downloadStorageObject);
+type PdfParseTestMock = (
+  buffer: Buffer,
+  options?: {
+    pagerender?: (pageData: {
+      getTextContent: () => Promise<{ items: Array<{ str: string }> }>;
+    }) => Promise<string>;
+  }
+) => Promise<{ text: string; numpages: number }>;
+const pdfParseMock = vi.mocked(pdfParse as PdfParseTestMock);
 
 function mockEmbeddingSuccess() {
   vi.stubGlobal(
@@ -78,6 +92,7 @@ async function createResourceFixture(params?: {
 describe("resource text extraction services", () => {
   beforeEach(() => {
     downloadStorageObjectMock.mockReset();
+    pdfParseMock.mockReset();
     mockEmbeddingSuccess();
   });
 
@@ -103,9 +118,49 @@ describe("resource text extraction services", () => {
     expect(storedResource.extractedTexts.map((chunk) => chunk.content).join(" ")).toContain(
       "Alpha mission guidance."
     );
+    expect(storedResource.extractedTexts[0]).toMatchObject({
+      lineStart: 1,
+      lineEnd: 3,
+      pageStart: null,
+      pageEnd: null
+    });
     expect(storedResource.extractedTexts[0]?.embeddingStatus).toBe(
       ActivityResourceEmbeddingStatus.READY
     );
+  });
+
+  it("stores page ranges for protected PDF resources", async () => {
+    downloadStorageObjectMock.mockResolvedValue(Buffer.from("fake pdf bytes"));
+    pdfParseMock.mockImplementation(async (_buffer: Buffer, options) => {
+      await options?.pagerender?.({
+        getTextContent: async () => ({
+          items: [{ str: "Page one mission notes." }]
+        })
+      });
+      await options?.pagerender?.({
+        getTextContent: async () => ({
+          items: [{ str: "Page two evidence notes." }]
+        })
+      });
+      return { text: "Page one mission notes.\n\nPage two evidence notes.", numpages: 2 };
+    });
+
+    const { resource } = await createResourceFixture({
+      contentType: "application/pdf",
+      fileName: "chapter.pdf"
+    });
+    const storedResource = await db.activityResource.findUniqueOrThrow({
+      where: { id: resource.id },
+      include: { extractedTexts: { orderBy: { chunkIndex: "asc" } } }
+    });
+
+    expect(storedResource.textStatus).toBe(ActivityResourceTextStatus.READY);
+    expect(storedResource.extractedTexts[0]).toMatchObject({
+      pageStart: 1,
+      pageEnd: 2,
+      lineStart: null,
+      lineEnd: null
+    });
   });
 
   it("marks unsupported resources without attempting object download", async () => {

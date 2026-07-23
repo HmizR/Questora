@@ -4,7 +4,11 @@ import { requireClassEnrollment, requireUser } from "@/lib/authorization-service
 import { formatDateTime } from "@/lib/date-format";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
-import { isSuspiciousExtractedText, sanitizeExtractedText } from "@/lib/resource-text-rules";
+import {
+  formatResourceChunkCitation,
+  isSuspiciousExtractedText,
+  sanitizeExtractedText
+} from "@/lib/resource-text-rules";
 import type { AIContextInput } from "@/schemas/ai";
 import type { AIContextResult, AISource } from "@/services/ai/ai-types";
 import { academicHonestyPrompt } from "@/services/ai/ai-prompts";
@@ -185,7 +189,8 @@ function buildRetrievedResourceContext(chunks: RetrievedResourceChunk[]) {
     );
     if (!sanitizedContent) continue;
 
-    const prefix = `[Resource: ${chunk.resourceTitle}, chunk ${chunk.chunkIndex + 1}, ${
+    const citation = formatResourceChunkCitation(chunk);
+    const prefix = `[Resource: ${chunk.resourceTitle}, ${citation}, ${
       chunk.isRequired ? "required" : "optional"
     }]\n`;
     const available = remaining - prefix.length;
@@ -203,7 +208,14 @@ function buildResourceExcerptContext(
   resources: Array<{
     title: string;
     isRequired: boolean;
-    extractedTexts: Array<{ chunkIndex: number; content: string }>;
+    extractedTexts: Array<{
+      chunkIndex: number;
+      content: string;
+      pageStart: number | null;
+      pageEnd: number | null;
+      lineStart: number | null;
+      lineEnd: number | null;
+    }>;
   }>
 ) {
   let remaining = MAX_RESOURCE_CONTEXT_CHARS;
@@ -224,7 +236,8 @@ function buildResourceExcerptContext(
       );
       if (!sanitizedContent) continue;
 
-      const prefix = `[Resource: ${resource.title}, chunk ${chunk.chunkIndex + 1}, ${
+      const citation = formatResourceChunkCitation(chunk);
+      const prefix = `[Resource: ${resource.title}, ${citation}, ${
         resource.isRequired ? "required" : "optional"
       }]\n`;
       const available = Math.min(remaining, resourceRemaining) - prefix.length;

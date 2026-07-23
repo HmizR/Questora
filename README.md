@@ -109,7 +109,9 @@ keeping the original JSON endpoint as a fallback. Chat history stays in browser 
 Student mission and realm pages provide authorized page context. Student mission context uses
 pgvector semantic retrieval over extracted resource chunks when embeddings are ready, with the
 sanitized capped extracted-text context as fallback. Hosted PostgreSQL must support the
-`vector` extension before deploying this feature.
+`vector` extension before deploying this feature. Resource citations include PDF page ranges or
+text/Markdown line ranges when extraction metadata is available; older chunks fall back to chunk
+numbers until the lecturer retries extraction.
 
 ## Database
 
