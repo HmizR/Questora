@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AppError } from "@/lib/errors";
 import { aiChatRequestSchema } from "@/schemas/ai";
+import { normalizeLatexDelimiters } from "@/components/ai/ai-markdown";
 import {
   EMBEDDING_DIMENSION,
   OllamaEmbeddingProvider,
@@ -49,6 +50,13 @@ describe("AI assistant helpers", () => {
     expect(academicHonestyPrompt).toContain("Do not complete graded assignments");
     expect(academicHonestyPrompt).toContain("Give hints");
     expect(academicHonestyPrompt).toContain("Only use the provided context");
+  });
+
+  it("normalizes common LaTeX delimiters for markdown math rendering", () => {
+    expect(normalizeLatexDelimiters("Use \\(x^2 + 1\\) here.")).toBe("Use $x^2 + 1$ here.");
+    expect(normalizeLatexDelimiters("Block:\n\\[a^2 + b^2 = c^2\\]")).toBe(
+      "Block:\n$$\na^2 + b^2 = c^2\n$$"
+    );
   });
 
   it("maps Ollama success and failure responses", async () => {

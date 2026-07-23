@@ -227,7 +227,7 @@ test("global AI assistant drawer uses student page context", async ({ page }) =>
           sources: [{ label: "Mission", detail: "E2E Assignment" }]
         })}`,
         `event: delta\ndata: ${JSON.stringify({
-          content: `**Mock AI answer** for ${body.message}\n\n`
+          content: `**Mock AI answer** for ${body.message}\n\nInline math: \\(x^2 + 1\\)\n\n`
         })}`,
         `event: delta\ndata: ${JSON.stringify({
           content: "- Review the mission brief\n- Ask for hints"
@@ -245,6 +245,7 @@ test("global AI assistant drawer uses student page context", async ({ page }) =>
   await expect(page.getByText("Using current realm")).toBeVisible();
   await page.getByRole("button", { name: "Summarize this" }).click();
   await expect(page.getByText("Mock AI answer")).toBeVisible();
+  await expect(page.locator(".katex").first()).toBeVisible();
   await expect(page.getByText("Review the mission brief")).toBeVisible();
 
   await page.reload();

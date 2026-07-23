@@ -1,12 +1,21 @@
 "use client";
 
 import ReactMarkdown from "react-markdown";
+import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+
+export function normalizeLatexDelimiters(content: string) {
+  return content
+    .replace(/\\\[((?:.|\n)*?)\\\]/g, (_match, math: string) => `$$\n${math.trim()}\n$$`)
+    .replace(/\\\((.+?)\\\)/g, (_match, math: string) => `$${math}$`);
+}
 
 export function AIMarkdown({ content }: { content: string }) {
   return (
     <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeKatex]}
+      remarkPlugins={[remarkGfm, remarkMath]}
       components={{
         a: ({ children, href }) => (
           <a
@@ -49,7 +58,7 @@ export function AIMarkdown({ content }: { content: string }) {
         ul: ({ children }) => <ul className="my-2 list-disc space-y-1 pl-5">{children}</ul>
       }}
     >
-      {content}
+      {normalizeLatexDelimiters(content)}
     </ReactMarkdown>
   );
 }
