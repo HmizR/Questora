@@ -1,6 +1,13 @@
 import { randomUUID } from "node:crypto";
 
-import { PutObjectCommand, GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  ListObjectsV2Command,
+  PutObjectCommand,
+  S3Client,
+  type _Object
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { z } from "zod";
 
@@ -14,6 +21,14 @@ import {
 export type { UploadIntent } from "@/lib/upload-rules";
 
 export const STORAGE_URL_EXPIRES_IN = 300;
+export const MANAGED_STORAGE_PREFIXES = ["avatars/", "submissions/", "mission-resources/"] as const;
+
+export type ManagedStoragePrefix = (typeof MANAGED_STORAGE_PREFIXES)[number];
+export type StorageObjectSummary = {
+  key: string;
+  size: number;
+  lastModified: Date | null;
+};
 
 export const uploadIntentSchema = z.enum(["AVATAR", "SUBMISSION", "MISSION_RESOURCE"]);
 
@@ -114,6 +129,20 @@ export function parseStorageRef(storageRef: string) {
   return key;
 }
 
+export function isManagedStorageKey(key: string) {
+  return MANAGED_STORAGE_PREFIXES.some((prefix) => key.startsWith(prefix));
+}
+
+export function parseManagedStorageRef(storageRef: string) {
+  const key = parseStorageRef(storageRef);
+
+  if (!isManagedStorageKey(key)) {
+    throw new AppError("VALIDATION_ERROR", "Storage reference is outside managed prefixes.");
+  }
+
+  return key;
+}
+
 function requiredEnv(name: string) {
   const value = process.env[name];
   if (!value) {
@@ -187,4 +216,56 @@ export async function downloadStorageObject(key: string) {
   }
 
   return Buffer.from(await response.Body.transformToByteArray());
+}
+
+export async function listStorageObjects(prefix: ManagedStoragePrefix) {
+  const config = storageConfig();
+  const client = createS3Client();
+  const objects: StorageObjectSummary[] = [];
+  let continuationToken: string | undefined;
+
+  do {
+    const response = await client.send(
+      new ListObjectsV2Command({
+        Bucket: config.bucket,
+        Prefix: prefix,
+        ContinuationToken: continuationToken
+      })
+    );
+
+    for (const object of response.Contents ?? []) {
+      const mapped = mapStorageObject(object);
+      if (mapped) objects.push(mapped);
+    }
+
+    continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
+  } while (continuationToken);
+
+  return objects;
+}
+
+export async function deleteStorageObject(key: string) {
+  if (!isManagedStorageKey(key)) {
+    throw new AppError("VALIDATION_ERROR", "Storage object is outside managed prefixes.");
+  }
+
+  const config = storageConfig();
+  await createS3Client().send(
+    new DeleteObjectCommand({
+      Bucket: config.bucket,
+      Key: key
+    })
+  );
+}
+
+function mapStorageObject(object: _Object): StorageObjectSummary | null {
+  if (!object.Key || !isManagedStorageKey(object.Key)) {
+    return null;
+  }
+
+  return {
+    key: object.Key,
+    size: object.Size ?? 0,
+    lastModified: object.LastModified ?? null
+  };
 }

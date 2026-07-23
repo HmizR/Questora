@@ -251,6 +251,7 @@ Completed:
 - Class announcements with lecturer authoring, recent overview panels, and student published-only access
 - pgvector RAG foundation for mission-scoped semantic retrieval over extracted resource chunks
 - AI resource citations with PDF page ranges and text/Markdown line ranges when available
+- Storage orphan cleanup dry-run/delete workflow for managed S3/RustFS prefixes
 
 Current automated coverage:
 
@@ -268,7 +269,7 @@ Targeted student AI assistant streaming e2e check passing
   - production smoke testing with real production-created data
 - S3-backed upload polish:
   - add optional resource previews or resource sorting refinements if needed after use
-  - add a reviewed orphan-cleanup script or storage lifecycle policy for removed S3/RustFS objects
+  - add provider-level bucket lifecycle policies for temporary or aged orphan objects
 - Quiz and assignment UX polish:
   - add true submission revision history so lecturers can inspect previous text/file versions, timestamps, and the currently graded version
   - add full calendar views later if deadline panels are not enough

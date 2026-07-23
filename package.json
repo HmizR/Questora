@@ -16,6 +16,8 @@
     "test:all": "npm test && npm run test:integration && npm run test:e2e",
     "test:watch": "vitest",
     "ai:embed:backfill": "tsx scripts/embed-resource-text.ts",
+    "storage:cleanup:dry-run": "tsx scripts/storage-cleanup.ts",
+    "storage:cleanup": "tsx scripts/storage-cleanup.ts --delete",
     "admin:bootstrap": "tsx scripts/bootstrap-admin.ts",
     "db:deploy": "prisma migrate deploy",
     "prisma:generate": "prisma generate",

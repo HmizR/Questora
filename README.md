@@ -81,10 +81,18 @@ avatars, and lecturer mission resources upload through presigned URLs while stil
 pasted URLs or `s3:` references for development compatibility. Browser-based PUT uploads require bucket CORS that
 allows `PUT` from your Questora app origin and the `Content-Type` header.
 
-Removing a lecturer mission resource currently removes the Questora database record only.
-The physical S3/RustFS object is intentionally left in storage for this MVP to avoid unsafe
-deletion edge cases. Add a reviewed orphan-cleanup script or storage lifecycle policy before
-relying on automatic physical object cleanup in production.
+Deleting database rows does not immediately delete physical S3/RustFS objects. Use the
+reviewed orphan cleanup workflow to compare managed storage prefixes against database
+references before deleting unreferenced objects:
+
+```bash
+npm run storage:cleanup:dry-run
+npm run storage:cleanup
+```
+
+Cleanup scans only `avatars/`, `submissions/`, and `mission-resources/`, skips objects newer
+than 72 hours, and should be run in dry-run mode before delete mode. A bucket lifecycle policy
+is still recommended for provider-level retention and temporary object cleanup.
 
 Questora extracts readable text from protected mission resources when lecturers add them.
 The MVP supports `text/plain`, Markdown, and PDF resources stored as `s3:<object-key>`
@@ -272,6 +280,7 @@ student5@questora.dev
 - Global leaderboards use total profile XP; class leaderboards use quest XP transactions for that class.
 - Protected submission uploads use `s3:<object-key>` storage references and short-lived signed download URLs.
 - Lecturer mission resources use `s3:<object-key>` storage references and are available only to assigned lecturers or enrolled students who can access the published mission.
+- Storage orphan cleanup is manual/scripted: dry-run first, then delete only reviewed unreferenced managed objects older than 72 hours.
 
 ## UI Workflow Coverage
 
