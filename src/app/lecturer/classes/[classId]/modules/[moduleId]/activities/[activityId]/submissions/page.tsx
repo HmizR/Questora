@@ -8,6 +8,7 @@ import { AnalyticsControls } from "@/components/ui/analytics-controls";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { ProtectedFileLink } from "@/components/ui/protected-file-link";
+import { SubmissionRevisionList } from "@/components/ui/submission-revision-list";
 import { StatusBadge, type StatusBadgeTone } from "@/components/ui/status-badge";
 import { requireClassLecturer } from "@/lib/authorization-service";
 import { formatTimestampLabel } from "@/lib/date-format";
@@ -135,7 +136,12 @@ export default async function MissionSubmissionsPage({
     ? await Promise.all([
         db.submission.findUnique({
           where: { activityId_studentId: { activityId, studentId: selectedStudentId } },
-          include: { student: true }
+          include: {
+            student: true,
+            revisions: {
+              orderBy: { revisionNo: "desc" }
+            }
+          }
         }),
         db.grade.findUnique({
           where: { activityId_studentId: { activityId, studentId: selectedStudentId } }
@@ -356,6 +362,9 @@ export default async function MissionSubmissionsPage({
                 <h3 className="text-sm font-bold">Submission timeline</h3>
                 <div className="mt-3 grid gap-2 text-sm text-ink/65">
                   <p>{formatTimestampLabel("Submitted", submission.submittedAt)}</p>
+                  <p>
+                    Current submission version. This is the version that will be graded.
+                  </p>
                   {grade?.gradedAt ? <p>{formatTimestampLabel("Graded", grade.gradedAt)}</p> : null}
                   {grade?.publishedAt ? (
                     <p>{formatTimestampLabel("Published", grade.publishedAt)}</p>
@@ -382,6 +391,10 @@ export default async function MissionSubmissionsPage({
                   />
                 </div>
               ) : null}
+              <div className="mt-5 rounded-lg border border-border/80 bg-surface-muted p-4">
+                <h3 className="text-sm font-bold">Revision history</h3>
+                <SubmissionRevisionList activityId={activityId} revisions={submission.revisions} />
+              </div>
 
               <div className="mt-6">
                 <GradeSubmissionForm returnTo={returnTo} submissionId={submission.id} />

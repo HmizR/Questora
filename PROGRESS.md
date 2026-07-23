@@ -252,12 +252,13 @@ Completed:
 - pgvector RAG foundation for mission-scoped semantic retrieval over extracted resource chunks
 - AI resource citations with PDF page ranges and text/Markdown line ranges when available
 - Storage orphan cleanup dry-run/delete workflow for managed S3/RustFS prefixes
+- Submission revision history for assignment/project resubmissions before grading
 
 Current automated coverage:
 
 ```text
-57 unit tests passing
-55 integration tests passing
+63 unit tests passing
+57 integration tests passing
 Targeted lecturer resource e2e extraction checks passing
 Targeted student AI assistant streaming e2e check passing
 ```
@@ -271,7 +272,6 @@ Targeted student AI assistant streaming e2e check passing
   - add optional resource previews or resource sorting refinements if needed after use
   - add provider-level bucket lifecycle policies for temporary or aged orphan objects
 - Quiz and assignment UX polish:
-  - add true submission revision history so lecturers can inspect previous text/file versions, timestamps, and the currently graded version
   - add full calendar views later if deadline panels are not enough
   - add quiz review improvements such as answer explanations, review settings, or question randomization
 - AI assistant roadmap:

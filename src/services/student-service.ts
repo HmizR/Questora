@@ -39,6 +39,25 @@ export async function submitAssignment(input: {
       throw new AppError("FORBIDDEN", "This submission has already been graded.");
     }
 
+    if (existingSubmission) {
+      const revisionCount = await tx.submissionRevision.count({
+        where: { submissionId: existingSubmission.id }
+      });
+
+      await tx.submissionRevision.create({
+        data: {
+          submissionId: existingSubmission.id,
+          activityId: existingSubmission.activityId,
+          studentId: existingSubmission.studentId,
+          revisionNo: revisionCount + 1,
+          textContent: existingSubmission.textContent,
+          fileUrl: existingSubmission.fileUrl,
+          status: existingSubmission.status,
+          submittedAt: existingSubmission.submittedAt
+        }
+      });
+    }
+
     const submission = await tx.submission.upsert({
       where: {
         activityId_studentId: {

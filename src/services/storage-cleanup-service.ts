@@ -73,12 +73,16 @@ export function selectStorageCleanupCandidates(params: {
 }
 
 export async function collectReferencedStorageKeys() {
-  const [users, submissions, resources] = await Promise.all([
+  const [users, submissions, submissionRevisions, resources] = await Promise.all([
     db.user.findMany({
       where: { avatarUrl: { startsWith: "s3:" } },
       select: { avatarUrl: true }
     }),
     db.submission.findMany({
+      where: { fileUrl: { startsWith: "s3:" } },
+      select: { fileUrl: true }
+    }),
+    db.submissionRevision.findMany({
       where: { fileUrl: { startsWith: "s3:" } },
       select: { fileUrl: true }
     }),
@@ -91,6 +95,7 @@ export async function collectReferencedStorageKeys() {
   return collectManagedStorageKeys([
     ...users.map((user) => user.avatarUrl),
     ...submissions.map((submission) => submission.fileUrl),
+    ...submissionRevisions.map((revision) => revision.fileUrl),
     ...resources.map((resource) => resource.fileUrl)
   ]);
 }

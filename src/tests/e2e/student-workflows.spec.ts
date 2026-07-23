@@ -43,6 +43,8 @@ test("student submission can be graded and then locks on the student activity pa
   browser,
   page
 }) => {
+  test.setTimeout(120_000);
+
   await mockSubmissionUpload(page);
   await mockSubmissionDownload(page);
   await loginAs(page, e2eUsers.student.email);

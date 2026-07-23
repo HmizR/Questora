@@ -12,6 +12,7 @@ import { AIAssistantContextRegistration } from "@/components/ai/ai-assistant-con
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { ProtectedFileLink } from "@/components/ui/protected-file-link";
+import { SubmissionRevisionList } from "@/components/ui/submission-revision-list";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireClassEnrollment } from "@/lib/authorization-service";
 import { formatDateTime, formatTimestampLabel } from "@/lib/date-format";
@@ -49,7 +50,12 @@ export default async function StudentActivityPage({
       where: { activityId_studentId: { activityId, studentId: user.id } }
     }),
     db.submission.findUnique({
-      where: { activityId_studentId: { activityId, studentId: user.id } }
+      where: { activityId_studentId: { activityId, studentId: user.id } },
+      include: {
+        revisions: {
+          orderBy: { revisionNo: "desc" }
+        }
+      }
     }),
     db.grade.findUnique({
       where: { activityId_studentId: { activityId, studentId: user.id } }
@@ -204,8 +210,18 @@ export default async function StudentActivityPage({
                     </div>
                   ) : null}
                   <p className="mt-3 text-sm text-ink/65">
-                    Updating your work replaces the current submission until your lecturer grades it.
+                    Updating your work saves the previous version. Your lecturer grades the
+                    latest submission.
                   </p>
+                  {submission ? (
+                    <div className="mt-5 border-t border-border/80 pt-4">
+                      <h3 className="text-sm font-bold">Revision history</h3>
+                      <SubmissionRevisionList
+                        activityId={activity.id}
+                        revisions={submission.revisions}
+                      />
+                    </div>
+                  ) : null}
                 </section>
                 <SubmitAssignmentForm
                   activityId={activity.id}
@@ -240,6 +256,15 @@ export default async function StudentActivityPage({
                       fileUrl={submission.fileUrl}
                       intent="SUBMISSION"
                       label="Open submitted file"
+                    />
+                  </div>
+                ) : null}
+                {submission ? (
+                  <div className="mt-5 border-t border-border/80 pt-4">
+                    <h3 className="text-sm font-bold">Revision history</h3>
+                    <SubmissionRevisionList
+                      activityId={activity.id}
+                      revisions={submission.revisions}
                     />
                   </div>
                 ) : null}

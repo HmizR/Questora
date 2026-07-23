@@ -6,6 +6,7 @@ import {
   type StorageObjectSummary
 } from "@/lib/storage";
 import {
+  collectReferencedStorageKeys,
   collectManagedStorageKeys,
   runStorageCleanup,
   selectStorageCleanupCandidates
@@ -17,6 +18,9 @@ vi.mock("@/lib/db", () => ({
       findMany: vi.fn(async () => [])
     },
     submission: {
+      findMany: vi.fn(async () => [])
+    },
+    submissionRevision: {
       findMany: vi.fn(async () => [])
     },
     activityResource: {
@@ -73,6 +77,31 @@ describe("storage cleanup helpers", () => {
       "avatars/user/avatar.png",
       "mission-resources/activity/slides.pdf"
     ]);
+  });
+
+  it("includes submission revision file refs in referenced storage keys", async () => {
+    const { db } = await import("@/lib/db");
+    const userFindMany = vi.mocked(db.user.findMany as unknown as ReturnType<typeof vi.fn>);
+    const submissionFindMany = vi.mocked(
+      db.submission.findMany as unknown as ReturnType<typeof vi.fn>
+    );
+    const revisionFindMany = vi.mocked(
+      db.submissionRevision.findMany as unknown as ReturnType<typeof vi.fn>
+    );
+    const resourceFindMany = vi.mocked(
+      db.activityResource.findMany as unknown as ReturnType<typeof vi.fn>
+    );
+
+    userFindMany.mockResolvedValueOnce([]);
+    submissionFindMany.mockResolvedValueOnce([]);
+    revisionFindMany.mockResolvedValueOnce([
+      { fileUrl: "s3:submissions/activity/student/old-version.pdf" }
+    ]);
+    resourceFindMany.mockResolvedValueOnce([]);
+
+    const keys = await collectReferencedStorageKeys();
+
+    expect([...keys]).toEqual(["submissions/activity/student/old-version.pdf"]);
   });
 
   it("selects only old unreferenced managed objects as cleanup candidates", () => {

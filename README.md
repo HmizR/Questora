@@ -272,7 +272,7 @@ student5@questora.dev
 - Duplicate XP rewards are blocked by unique idempotency keys.
 - Level calculation is centralized as `floor(sqrt(totalXp / 100)) + 1`.
 - Assignments and boss battles complete after lecturer grading, then run the same quest/XP/badge reward path.
-- Assignment/project resubmissions are allowed until grading; graded submissions can no longer be edited.
+- Assignment/project resubmissions are allowed until grading; previous versions are preserved as revision history and graded submissions can no longer be edited.
 - Quizzes are scored on the server; passing attempts update progress to completed and can trigger quest XP.
 - Quiz attempts are stored separately, and the highest attempt score is published as the quiz grade.
 - Quiz grades remain separate from XP transactions.
@@ -280,7 +280,7 @@ student5@questora.dev
 - Global leaderboards use total profile XP; class leaderboards use quest XP transactions for that class.
 - Protected submission uploads use `s3:<object-key>` storage references and short-lived signed download URLs.
 - Lecturer mission resources use `s3:<object-key>` storage references and are available only to assigned lecturers or enrolled students who can access the published mission.
-- Storage orphan cleanup is manual/scripted: dry-run first, then delete only reviewed unreferenced managed objects older than 72 hours.
+- Storage orphan cleanup is manual/scripted: dry-run first, then delete only reviewed unreferenced managed objects older than 72 hours. Submission revision file refs are treated as referenced.
 
 ## UI Workflow Coverage
 

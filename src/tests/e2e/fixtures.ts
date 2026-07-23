@@ -42,6 +42,7 @@ async function clearDatabase() {
     db.xPTransaction.deleteMany(),
     db.studentProfile.deleteMany(),
     db.grade.deleteMany(),
+    db.submissionRevision.deleteMany(),
     db.submission.deleteMany(),
     db.quizAttempt.deleteMany(),
     db.activityProgress.deleteMany(),

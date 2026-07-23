@@ -106,6 +106,7 @@ model User {
   enrollments      ClassStudent[]
   progresses       ActivityProgress[]
   submissions      Submission[]
+  submissionRevisions SubmissionRevision[]
   grades           Grade[]            @relation("StudentGrades")
   gradedGrades     Grade[]            @relation("GradedBy")
   profile          StudentProfile?
@@ -186,6 +187,7 @@ model Activity {
   requiredBy    ActivityPrerequisite[] @relation("RequiredActivity")
   progresses    ActivityProgress[]
   submissions   Submission[]
+  submissionRevisions SubmissionRevision[]
   grades        Grade[]
   questLinks    QuestActivity[]
   quizAttempts  QuizAttempt[]
@@ -313,8 +315,28 @@ model Submission {
   updatedAt   DateTime         @updatedAt
   activity    Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
   student     User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  revisions   SubmissionRevision[]
 
   @@unique([activityId, studentId])
+}
+
+model SubmissionRevision {
+  id           String           @id @default(cuid())
+  submissionId String
+  activityId   String
+  studentId    String
+  revisionNo   Int
+  textContent  String?
+  fileUrl      String?
+  status       SubmissionStatus
+  submittedAt  DateTime?
+  createdAt    DateTime         @default(now())
+  submission   Submission       @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  activity     Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  student      User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, revisionNo])
+  @@index([activityId, studentId])
 }
 
 model Grade {
