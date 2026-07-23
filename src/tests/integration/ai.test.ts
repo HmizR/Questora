@@ -170,7 +170,7 @@ describe("AI chat API", () => {
     expect(response.status).toBe(200);
     expect(body.contextLabel).toBe("Using current mission");
     expect(body.answer).toBe("Use the Required Brief and mission instructions.");
-    expect(JSON.stringify(body.sources)).toContain("Required Brief");
+    expect(JSON.stringify(body.sources)).not.toContain("Required Brief");
     const assistantBody = findAssistantRequestBody(fetchMock);
     expect(assistantBody).toContain("Required Brief");
     expect(assistantBody).toContain("[Resource: Required Brief, lines 4-6, required]");

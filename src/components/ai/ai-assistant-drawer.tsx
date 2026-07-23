@@ -131,27 +131,35 @@ export function AIAssistantDrawer() {
                   }
                   key={message.id}
                 >
-                  {message.role === "assistant" ? (
-                    <div className="break-words">
-                      <AIMarkdown content={message.content} />
-                    </div>
-                  ) : (
-                    <div className="whitespace-pre-wrap break-words">{message.content}</div>
-                  )}
-                  {message.role === "assistant" && message.sources && message.sources.length > 0 ? (
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {message.sources.slice(0, 5).map((source, index) => (
-                        <span
-                          className="max-w-full truncate rounded-full border border-border/80 bg-surface px-2 py-1 text-xs font-semibold text-ink/65"
-                          key={`${source.label}-${source.detail ?? index}`}
-                          title={source.detail}
-                        >
-                          {source.label}
-                          {source.detail ? `: ${source.detail}` : ""}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
+                  {(() => {
+                    const sources = message.sources?.slice(0, 5) ?? [];
+
+                    return (
+                      <>
+                        {message.role === "assistant" ? (
+                          <div className="break-words">
+                            <AIMarkdown content={message.content} />
+                          </div>
+                        ) : (
+                          <div className="whitespace-pre-wrap break-words">{message.content}</div>
+                        )}
+                        {message.role === "assistant" && sources.length > 0 ? (
+                          <div className="mt-3 flex flex-wrap gap-1.5">
+                            {sources.map((source, index) => (
+                          <span
+                            className="max-w-full truncate rounded-full border border-border/80 bg-surface px-2 py-1 text-xs font-semibold text-ink/65"
+                            key={`${source.label}-${source.detail ?? index}`}
+                            title={source.detail}
+                          >
+                            {source.label}
+                            {source.detail ? `: ${source.detail}` : ""}
+                          </span>
+                            ))}
+                          </div>
+                        ) : null}
+                      </>
+                    );
+                  })()}
                 </article>
               ))}
               {isSending ? (

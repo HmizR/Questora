@@ -130,7 +130,6 @@ async function buildStudentActivityContext(classId: string, activityId: string, 
     { label: "Mission", detail: activity.title },
     { label: "Region", detail: activity.module.title },
     { label: "Realm", detail: activity.module.class.name },
-    ...resources.map((resource) => ({ label: "Resource", detail: resource.title })),
     ...questLinks.map((link) => ({ label: "Quest", detail: link.quest.title })),
     ...announcements.map((announcement) => ({ label: "Announcement", detail: announcement.title }))
   ];
