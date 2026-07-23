@@ -29,6 +29,22 @@ async function text(response: Response) {
   return response.text();
 }
 
+type FetchSpy = {
+  mock: {
+    calls: Array<[unknown, RequestInit?]>;
+  };
+};
+
+function requestBodies(fetchMock: FetchSpy) {
+  return fetchMock.mock.calls.map((call) => String(call[1]?.body ?? ""));
+}
+
+function findAssistantRequestBody(fetchMock: FetchSpy) {
+  return (
+    requestBodies(fetchMock).find((body) => body.includes("Authorized Questora context")) ?? ""
+  );
+}
+
 function mockOllama(answer = "Study the mission instructions and resources first.") {
   return vi.spyOn(globalThis, "fetch").mockImplementation(async () =>
     Response.json({
@@ -153,16 +169,12 @@ describe("AI chat API", () => {
     expect(body.contextLabel).toBe("Using current mission");
     expect(body.answer).toBe("Use the Required Brief and mission instructions.");
     expect(JSON.stringify(body.sources)).toContain("Required Brief");
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        body: expect.stringContaining("Required Brief")
-      })
-    );
-    expect(String(fetchMock.mock.calls[0]?.[1]?.body)).toContain(
+    const assistantBody = findAssistantRequestBody(fetchMock);
+    expect(assistantBody).toContain("Required Brief");
+    expect(assistantBody).toContain(
       "Use claim evidence reasoning when answering the E2E resource prompt."
     );
-    expect(String(fetchMock.mock.calls[0]?.[1]?.body)).not.toContain("SHOULD_NOT_REACH_PROVIDER");
+    expect(assistantBody).not.toContain("SHOULD_NOT_REACH_PROVIDER");
   });
 
   it("streams an enrolled student's published activity answer with metadata", async () => {
@@ -292,9 +304,12 @@ describe("AI chat API", () => {
 
     expect(classResponse.status).toBe(200);
     expect(genericResponse.status).toBe(200);
-    expect(String(fetchMock.mock.calls[0]?.[1]?.body)).toContain("Published Mission");
-    expect(String(fetchMock.mock.calls[0]?.[1]?.body)).not.toContain("Draft Mission");
-    expect(String(fetchMock.mock.calls[1]?.[1]?.body)).toContain("without page-specific learning context");
+    const bodies = requestBodies(fetchMock);
+    expect(bodies.some((body) => body.includes("Published Mission"))).toBe(true);
+    expect(bodies.some((body) => body.includes("Draft Mission"))).toBe(false);
+    expect(bodies.some((body) => body.includes("without page-specific learning context"))).toBe(
+      true
+    );
   });
 
   it("returns a safe typed error when the provider fails", async () => {

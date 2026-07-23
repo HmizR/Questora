@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { ActivityResourceTextStatus, ActivityType, ClassStatus } from "@prisma/client";
+import {
+  ActivityResourceEmbeddingStatus,
+  ActivityResourceTextStatus,
+  ActivityType,
+  ClassStatus
+} from "@prisma/client";
 
 import { e2eUsers, resetE2eDatabase, type E2eSeed } from "./fixtures";
 import { loginAs } from "./helpers";
@@ -329,7 +334,8 @@ test("lecturer sees mission resource extraction status", async ({ page }) => {
       extractedTexts: {
         create: {
           chunkIndex: 0,
-          content: "Mission resource text is available to the assistant."
+          content: "Mission resource text is available to the assistant.",
+          embeddingStatus: ActivityResourceEmbeddingStatus.READY
         }
       }
     }
@@ -361,6 +367,28 @@ test("lecturer sees mission resource extraction status", async ({ page }) => {
       textError: "Temporary extraction failure"
     }
   });
+  await db.activityResource.create({
+    data: {
+      activityId: seed.activities.assignment.id,
+      title: "Failed Embedding",
+      fileName: "failed-embedding.txt",
+      fileUrl: `s3:mission-resources/${seed.activities.assignment.id}/failed-embedding.txt`,
+      contentType: "text/plain",
+      size: 900,
+      position: 4,
+      createdById: seed.users.lecturer.id,
+      textStatus: ActivityResourceTextStatus.READY,
+      textExtractedAt: new Date(),
+      extractedTexts: {
+        create: {
+          chunkIndex: 0,
+          content: "Temporary failed embedding content.",
+          embeddingStatus: ActivityResourceEmbeddingStatus.FAILED,
+          embeddingError: "Embedding provider unavailable"
+        }
+      }
+    }
+  });
 
   await loginAs(page, e2eUsers.lecturer.email);
   await page.goto(
@@ -368,12 +396,17 @@ test("lecturer sees mission resource extraction status", async ({ page }) => {
   );
 
   await expect(page.getByText("Ready Text Resource")).toBeVisible();
-  await expect(page.getByText("Text ready")).toBeVisible();
+  await expect(page.getByText("Text ready").first()).toBeVisible();
+  await expect(page.getByText("Search ready")).toBeVisible();
   await expect(page.getByText("Unsupported Archive")).toBeVisible();
   await expect(page.getByText("Unsupported", { exact: true })).toBeVisible();
   await expect(page.getByText("Failed Extraction")).toBeVisible();
   await expect(page.getByText("Extraction failed")).toBeVisible();
+  await expect(page.getByText("Failed Embedding")).toBeVisible();
+  await expect(page.getByText("Embedding failed")).toBeVisible();
   await expect(page.getByRole("button", { name: "Retry extraction" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Retry search" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Clear search" }).first()).toBeVisible();
   await page.getByRole("button", { name: "Clear extracted text" }).first().click();
   await page.getByRole("dialog").getByRole("button", { name: "Clear extracted text" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Extracted text cleared." })).toBeVisible();

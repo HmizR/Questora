@@ -38,6 +38,14 @@ export default async function EditMissionPage({
         }
       },
       resources: {
+        include: {
+          extractedTexts: {
+            select: {
+              embeddingStatus: true,
+              embeddingError: true
+            }
+          }
+        },
         orderBy: [{ isRequired: "desc" }, { position: "asc" }]
       }
     }

@@ -174,6 +174,10 @@ export const retryActivityResourceExtractionSchema = z.object({
 
 export const clearActivityResourceExtractionSchema = retryActivityResourceExtractionSchema;
 
+export const retryActivityResourceEmbeddingsSchema = retryActivityResourceExtractionSchema;
+
+export const clearActivityResourceEmbeddingsSchema = retryActivityResourceExtractionSchema;
+
 export const createAnnouncementSchema = z.object({
   classId: z.string().min(1),
   title: z.string().trim().min(2, "Title is required").max(140, "Keep titles under 140 characters."),

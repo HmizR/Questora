@@ -9,6 +9,10 @@ import type { AIContextInput } from "@/schemas/ai";
 import type { AIContextResult, AISource } from "@/services/ai/ai-types";
 import { academicHonestyPrompt } from "@/services/ai/ai-prompts";
 import { getPublishedAnnouncementsForStudent } from "@/services/announcement-service";
+import {
+  retrieveRelevantActivityResourceChunks,
+  type RetrievedResourceChunk
+} from "@/services/ai/resource-retrieval-service";
 import { getStudentDeadlineItems } from "@/services/deadline-service";
 import { assertStudentCanAccessActivity } from "@/services/progress-service";
 
@@ -37,9 +41,12 @@ function createContextResult(params: {
   };
 }
 
-export async function buildAIContext(input: AIContextInput): Promise<AIContextResult> {
+export async function buildAIContext(
+  input: AIContextInput,
+  options?: { query?: string }
+): Promise<AIContextResult> {
   if (input.type === "STUDENT_ACTIVITY") {
-    return buildStudentActivityContext(input.classId, input.activityId);
+    return buildStudentActivityContext(input.classId, input.activityId, options?.query);
   }
 
   if (input.type === "STUDENT_CLASS") {
@@ -55,7 +62,7 @@ export async function buildAIContext(input: AIContextInput): Promise<AIContextRe
   });
 }
 
-async function buildStudentActivityContext(classId: string, activityId: string) {
+async function buildStudentActivityContext(classId: string, activityId: string, query?: string) {
   const { user } = await requireClassEnrollment(classId);
   const activity = await assertStudentCanAccessActivity(activityId, user.id);
 
@@ -95,7 +102,13 @@ async function buildStudentActivityContext(classId: string, activityId: string) 
               )}. File: ${resource.fileName}. Text status: ${resource.textStatus}.`
           )
           .join("\n");
-  const resourceExcerpts = buildResourceExcerptContext(resources);
+  const retrievedChunks = query
+    ? await retrieveRelevantActivityChunksSafely({ activityId, query })
+    : [];
+  const resourceExcerpts =
+    retrievedChunks.length > 0
+      ? buildRetrievedResourceContext(retrievedChunks)
+      : buildResourceExcerptContext(resources);
   const questText =
     questLinks.length === 0
       ? "No published connected quests."
@@ -138,7 +151,7 @@ Progress percent: ${progress?.progressPercent ?? 0}
 Resource metadata:
 ${resourceText}
 
-Extracted resource excerpts when available:
+Relevant extracted resource excerpts when available:
 ${resourceExcerpts || "No extracted resource text is available yet."}
 
 Connected published quests:
@@ -148,6 +161,42 @@ Recent published announcements:
 ${announcementText}
 `.trim()
   });
+}
+
+async function retrieveRelevantActivityChunksSafely(params: { activityId: string; query: string }) {
+  try {
+    return await retrieveRelevantActivityResourceChunks(params);
+  } catch {
+    return [];
+  }
+}
+
+function buildRetrievedResourceContext(chunks: RetrievedResourceChunk[]) {
+  let remaining = MAX_RESOURCE_CONTEXT_CHARS;
+  const excerpts: string[] = [];
+
+  for (const chunk of chunks) {
+    if (remaining <= 0) break;
+    if (isSuspiciousExtractedText(chunk.content)) continue;
+
+    const sanitizedContent = sanitizeExtractedText(chunk.content).slice(
+      0,
+      Math.min(MAX_RESOURCE_CONTEXT_PER_CHUNK_CHARS, remaining)
+    );
+    if (!sanitizedContent) continue;
+
+    const prefix = `[Resource: ${chunk.resourceTitle}, chunk ${chunk.chunkIndex + 1}, ${
+      chunk.isRequired ? "required" : "optional"
+    }]\n`;
+    const available = remaining - prefix.length;
+    if (available <= 0) break;
+
+    const content = sanitizedContent.slice(0, available);
+    excerpts.push(`${prefix}${content}`);
+    remaining -= prefix.length + content.length;
+  }
+
+  return excerpts.join("\n\n");
 }
 
 function buildResourceExcerptContext(

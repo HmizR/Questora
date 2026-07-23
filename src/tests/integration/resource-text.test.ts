@@ -1,5 +1,11 @@
-import { ActivityResourceKind, ActivityResourceTextStatus, ActivityType, UserRole } from "@prisma/client";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  ActivityResourceEmbeddingStatus,
+  ActivityResourceKind,
+  ActivityResourceTextStatus,
+  ActivityType,
+  UserRole
+} from "@prisma/client";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/storage", async () => {
   const actual = await vi.importActual<typeof import("@/lib/storage")>("@/lib/storage");
@@ -15,8 +21,11 @@ import { db } from "@/lib/db";
 import { createActivityResource } from "@/services/lecturer-service";
 import {
   clearActivityResourceExtraction,
+  clearActivityResourceEmbeddingState,
+  retryActivityResourceEmbeddings,
   retryActivityResourceExtraction
 } from "@/services/resource-text-service";
+import { EMBEDDING_DIMENSION } from "@/services/ai/embedding-provider";
 
 import {
   createActivityFixture,
@@ -26,6 +35,17 @@ import {
 } from "./fixtures";
 
 const downloadStorageObjectMock = vi.mocked(downloadStorageObject);
+
+function mockEmbeddingSuccess() {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () =>
+      Response.json({
+        embeddings: [Array.from({ length: EMBEDDING_DIMENSION }, () => 0.2)]
+      })
+    )
+  );
+}
 
 async function createResourceFixture(params?: {
   contentType?: string;
@@ -58,6 +78,11 @@ async function createResourceFixture(params?: {
 describe("resource text extraction services", () => {
   beforeEach(() => {
     downloadStorageObjectMock.mockReset();
+    mockEmbeddingSuccess();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("stores extracted chunks and marks supported protected text resources ready", async () => {
@@ -77,6 +102,9 @@ describe("resource text extraction services", () => {
     expect(storedResource.extractedTexts.length).toBeGreaterThan(0);
     expect(storedResource.extractedTexts.map((chunk) => chunk.content).join(" ")).toContain(
       "Alpha mission guidance."
+    );
+    expect(storedResource.extractedTexts[0]?.embeddingStatus).toBe(
+      ActivityResourceEmbeddingStatus.READY
     );
   });
 
@@ -108,6 +136,26 @@ describe("resource text extraction services", () => {
     expect(storedResource.textStatus).toBe(ActivityResourceTextStatus.FAILED);
     expect(storedResource.textError).toContain("Object store refused");
     expect(storedResource.extractedTexts).toEqual([]);
+  });
+
+  it("marks embedding failure without changing extracted text readiness", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ embeddings: [[1, 2, 3]] }))
+    );
+    downloadStorageObjectMock.mockResolvedValue(Buffer.from("Searchable text content.", "utf8"));
+
+    const { resource } = await createResourceFixture();
+    const storedResource = await db.activityResource.findUniqueOrThrow({
+      where: { id: resource.id },
+      include: { extractedTexts: true }
+    });
+
+    expect(storedResource.textStatus).toBe(ActivityResourceTextStatus.READY);
+    expect(storedResource.extractedTexts[0]?.embeddingStatus).toBe(
+      ActivityResourceEmbeddingStatus.FAILED
+    );
+    expect(storedResource.extractedTexts[0]?.embeddingError).toContain("unexpected vector size");
   });
 
   it("marks unreadable extracted text as failed", async () => {
@@ -184,5 +232,62 @@ describe("resource text extraction services", () => {
     expect(storedResource.textExtractedAt).toBeNull();
     expect(storedResource.textError).toBeNull();
     expect(storedResource.extractedTexts).toEqual([]);
+  });
+
+  it("allows lecturers to retry and clear embeddings only for their own mission resource", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ embeddings: [[1, 2, 3]] }))
+    );
+    downloadStorageObjectMock.mockResolvedValue(Buffer.from("Retryable embedding content.", "utf8"));
+    const { lecturer, activity, resource } = await createResourceFixture();
+    const otherLecturer = await createUser(UserRole.LECTURER, "Other Embedding Lecturer");
+
+    await expect(
+      retryActivityResourceEmbeddings({
+        lecturerId: otherLecturer.id,
+        activityId: activity.id,
+        resourceId: resource.id
+      })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+
+    mockEmbeddingSuccess();
+    await retryActivityResourceEmbeddings({
+      lecturerId: lecturer.id,
+      activityId: activity.id,
+      resourceId: resource.id
+    });
+
+    let storedResource = await db.activityResource.findUniqueOrThrow({
+      where: { id: resource.id },
+      include: { extractedTexts: true }
+    });
+
+    expect(storedResource.extractedTexts[0]?.embeddingStatus).toBe(
+      ActivityResourceEmbeddingStatus.READY
+    );
+
+    await expect(
+      clearActivityResourceEmbeddingState({
+        lecturerId: otherLecturer.id,
+        activityId: activity.id,
+        resourceId: resource.id
+      })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+
+    await clearActivityResourceEmbeddingState({
+      lecturerId: lecturer.id,
+      activityId: activity.id,
+      resourceId: resource.id
+    });
+
+    storedResource = await db.activityResource.findUniqueOrThrow({
+      where: { id: resource.id },
+      include: { extractedTexts: true }
+    });
+
+    expect(storedResource.extractedTexts[0]?.embeddingStatus).toBe(
+      ActivityResourceEmbeddingStatus.NOT_EMBEDDED
+    );
   });
 });

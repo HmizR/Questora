@@ -85,6 +85,12 @@ enum ActivityResourceTextStatus {
   FAILED
 }
 
+enum ActivityResourceEmbeddingStatus {
+  NOT_EMBEDDED
+  READY
+  FAILED
+}
+
 model User {
   id               String             @id @default(cuid())
   name             String
@@ -232,14 +238,19 @@ model ActivityResource {
 }
 
 model ActivityResourceText {
-  id         String           @id @default(cuid())
-  resourceId String
-  chunkIndex Int
-  content    String
-  createdAt  DateTime         @default(now())
-  resource   ActivityResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  id              String                          @id @default(cuid())
+  resourceId      String
+  chunkIndex      Int
+  content         String
+  embedding       Unsupported("vector(768)")?
+  embeddingStatus ActivityResourceEmbeddingStatus @default(NOT_EMBEDDED)
+  embeddedAt      DateTime?
+  embeddingError  String?
+  createdAt       DateTime                        @default(now())
+  resource        ActivityResource                @relation(fields: [resourceId], references: [id], onDelete: Cascade)
 
   @@unique([resourceId, chunkIndex])
+  @@index([embeddingStatus])
 }
 
 model Announcement {

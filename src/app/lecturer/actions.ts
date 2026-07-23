@@ -19,6 +19,7 @@ import {
   activityPrerequisiteSchema,
   announcementIdSchema,
   clearActivityResourceExtractionSchema,
+  clearActivityResourceEmbeddingsSchema,
   connectQuestActivitySchema,
   createAnnouncementSchema,
   createActivityResourceSchema,
@@ -33,6 +34,7 @@ import {
   removeActivityPrerequisiteSchema,
   removeQuestActivitySchema,
   retryActivityResourceExtractionSchema,
+  retryActivityResourceEmbeddingsSchema,
   updateAnnouncementSchema,
   updateActivitySchema,
   updateActivityResourceSchema,
@@ -71,6 +73,8 @@ import {
 } from "@/services/lecturer-service";
 import {
   clearActivityResourceExtraction,
+  clearActivityResourceEmbeddingState,
+  retryActivityResourceEmbeddings,
   retryActivityResourceExtraction
 } from "@/services/resource-text-service";
 
@@ -415,6 +419,46 @@ export async function clearActivityResourceExtractionAction(
       `/lecturer/classes/${parsed.data.classId}/modules/${parsed.data.moduleId}/activities/${parsed.data.activityId}/edit`
     );
     return { ok: true, data: { message: "Extracted text cleared." } };
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+}
+
+export async function retryActivityResourceEmbeddingsAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = retryActivityResourceEmbeddingsSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  try {
+    const user = await requireRole("LECTURER");
+    await retryActivityResourceEmbeddings({ ...parsed.data, lecturerId: user.id });
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}/modules`);
+    revalidatePath(
+      `/lecturer/classes/${parsed.data.classId}/modules/${parsed.data.moduleId}/activities/${parsed.data.activityId}/edit`
+    );
+    return { ok: true, data: { message: "Resource search embeddings retried." } };
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+}
+
+export async function clearActivityResourceEmbeddingsAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = clearActivityResourceEmbeddingsSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  try {
+    const user = await requireRole("LECTURER");
+    await clearActivityResourceEmbeddingState({ ...parsed.data, lecturerId: user.id });
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}/modules`);
+    revalidatePath(
+      `/lecturer/classes/${parsed.data.classId}/modules/${parsed.data.moduleId}/activities/${parsed.data.activityId}/edit`
+    );
+    return { ok: true, data: { message: "Resource search embeddings cleared." } };
   } catch (error) {
     return { ok: false, error: toActionError(error) };
   }

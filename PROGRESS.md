@@ -53,6 +53,7 @@ Post-MVP UI refresh completed:
 - Student mission AI context now includes extracted resource excerpts when available, capped and source-labeled
 - Suspicious extracted resource text is excluded from AI prompts so bad PDFs do not break mission chat
 - Streaming AI assistant responses with SSE, Ollama stream parsing, and stop-generation control
+- pgvector RAG foundation for mission-scoped semantic retrieval over extracted resource chunks
 - Isolated PostgreSQL integration test setup with service and server action coverage
 - Playwright UI-level workflow test setup for admin, lecturer, and student paths
 - GitHub Actions CI quality gate for Prisma validation, typecheck, lint, tests, e2e, and build
@@ -270,7 +271,7 @@ Targeted student AI assistant streaming e2e check passing
   - add full calendar views later if deadline panels are not enough
   - add quiz review improvements such as answer explanations, review settings, or question randomization
 - AI assistant roadmap:
-  - add embeddings or full document RAG after resource text extraction
+  - expand pgvector RAG from mission-scoped resource chunks to class-wide retrieval after usage patterns are clearer
   - consider Office document text extraction after upload safety, conversion tooling, and performance limits are clearer
   - make the assistant cite the resource or mission content it used where possible
   - add academic-honesty guardrails so it explains, hints, quizzes, and summarizes instead of completing graded work for students

@@ -10,6 +10,10 @@ import {
 } from "@/lib/resource-text-rules";
 import { parseStorageRef, downloadStorageObject } from "@/lib/storage";
 import { isProtectedStorageRef } from "@/lib/upload-rules";
+import {
+  clearActivityResourceEmbeddings,
+  embedActivityResourceTextChunks
+} from "@/services/ai/resource-retrieval-service";
 
 const MAX_SAFE_ERROR_LENGTH = 180;
 
@@ -67,6 +71,13 @@ export async function extractTextFromResource(resource: ActivityResource) {
       ActivityResourceTextStatus.FAILED,
       safeExtractionError(error)
     );
+    return;
+  }
+
+  try {
+    await embedActivityResourceTextChunks(resource.id);
+  } catch {
+    // Embeddings are a search enhancement; failed embedding setup must not undo extraction.
   }
 }
 
@@ -87,6 +98,24 @@ export async function clearActivityResourceExtraction(input: {
 }) {
   await getLecturerResource(input);
   await markExtractionStatus(input.resourceId, ActivityResourceTextStatus.NOT_EXTRACTED);
+}
+
+export async function retryActivityResourceEmbeddings(input: {
+  lecturerId: string;
+  activityId: string;
+  resourceId: string;
+}) {
+  await getLecturerResource(input);
+  await embedActivityResourceTextChunks(input.resourceId);
+}
+
+export async function clearActivityResourceEmbeddingState(input: {
+  lecturerId: string;
+  activityId: string;
+  resourceId: string;
+}) {
+  await getLecturerResource(input);
+  await clearActivityResourceEmbeddings(input.resourceId);
 }
 
 async function getLecturerResource(input: {

@@ -117,6 +117,10 @@ page. Extracted text is sanitized before storage and again before AI prompt asse
 or unreadable extraction output is marked failed or excluded from AI context so one bad PDF does
 not block students from using the assistant with the rest of the mission.
 
+Extracted resource chunks can also store pgvector embeddings for mission-scoped semantic
+retrieval. Questora keeps vector-specific writes/searches in raw SQL and keeps ordinary
+resource metadata in Prisma. Hosted PostgreSQL must support `CREATE EXTENSION vector`.
+
 Resource deletion currently removes database rows only. Physical S3/RustFS object cleanup should be handled later with a reviewed cleanup helper or lifecycle policy.
 
 ## UI Structure
@@ -181,6 +185,7 @@ Current AI MVP:
 - falls back to general help on unsupported protected pages
 - stores chat history in browser state only
 - includes authorized extracted resource excerpts for student mission context when available
+- retrieves relevant mission resource chunks through pgvector when embeddings are ready
 - caps extracted resource context before sending it to the provider
 - re-sanitizes extracted resource excerpts before provider requests and skips suspicious chunks
 
@@ -194,6 +199,8 @@ Initial local configuration:
 AI_PROVIDER=ollama
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=qwen3:8b
+EMBEDDING_PROVIDER=ollama
+OLLAMA_EMBEDDING_MODEL=nomic-embed-text
 ```
 
 Ollama keeps early experimentation inexpensive and local. `qwen3:8b` is the preferred first model for mission Q&A, summaries, hints, and study support.
@@ -209,6 +216,9 @@ OPENAI_MODEL=...
 Streaming responses are supported for Ollama through the provider interface. Additional hosted
 providers should implement the same stream/fallback contract instead of changing drawer or
 authorization logic.
+
+Embeddings use the same provider-boundary approach. The first implementation uses Ollama's
+`nomic-embed-text` model and stores 768-dimensional vectors in pgvector.
 
 ### Lecturer Grading Assistant
 

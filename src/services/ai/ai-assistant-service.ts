@@ -15,7 +15,7 @@ async function buildAIChatRequest(rawInput: unknown): Promise<{
   providerRequest: AIProviderRequest;
 }> {
   const input: AIChatRequestInput = aiChatRequestSchema.parse(rawInput);
-  const context = await buildAIContext(input.context);
+  const context = await buildAIContext(input.context, { query: input.message });
   const recentMessages = limitRecentMessages(input.history);
 
   return {

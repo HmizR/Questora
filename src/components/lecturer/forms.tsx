@@ -1,4 +1,5 @@
 import {
+  ActivityResourceEmbeddingStatus,
   ActivityType,
   ActivityResourceKind,
   AnnouncementStatus,
@@ -13,6 +14,7 @@ import {
 import {
   addActivityPrerequisiteAction,
   archiveAnnouncementAction,
+  clearActivityResourceEmbeddingsAction,
   clearActivityResourceExtractionAction,
   connectQuestActivityAction,
   createAnnouncementAction,
@@ -33,6 +35,7 @@ import {
   publishQuestAction,
   removeActivityPrerequisiteAction,
   removeQuestActivityAction,
+  retryActivityResourceEmbeddingsAction,
   retryActivityResourceExtractionAction,
   updateActivityAction,
   updateAnnouncementAction,
@@ -53,6 +56,12 @@ type PrerequisiteView = {
   requiredActivityId: string;
   minimumScore: { toString(): string } | null;
   requiredActivity: ActivityOption;
+};
+type ResourceWithEmbeddingSummary = ActivityResource & {
+  extractedTexts?: Array<{
+    embeddingStatus: ActivityResourceEmbeddingStatus;
+    embeddingError: string | null;
+  }>;
 };
 
 const smallActionButton =
@@ -98,6 +107,41 @@ const resourceTextStatusLabels = {
   UNSUPPORTED: "Unsupported",
   FAILED: "Extraction failed"
 } as const;
+
+const resourceEmbeddingStatusLabels = {
+  NOT_EMBEDDED: "Not embedded",
+  READY: "Search ready",
+  FAILED: "Embedding failed"
+} as const;
+
+function getResourceEmbeddingSummary(resource: ResourceWithEmbeddingSummary) {
+  const chunks = resource.extractedTexts ?? [];
+  const failedChunk = chunks.find(
+    (chunk) => chunk.embeddingStatus === ActivityResourceEmbeddingStatus.FAILED
+  );
+
+  if (failedChunk) {
+    return {
+      status: ActivityResourceEmbeddingStatus.FAILED,
+      error: failedChunk.embeddingError
+    };
+  }
+
+  if (
+    chunks.length > 0 &&
+    chunks.every((chunk) => chunk.embeddingStatus === ActivityResourceEmbeddingStatus.READY)
+  ) {
+    return {
+      status: ActivityResourceEmbeddingStatus.READY,
+      error: null
+    };
+  }
+
+  return {
+    status: ActivityResourceEmbeddingStatus.NOT_EMBEDDED,
+    error: null
+  };
+}
 
 export function CreateModuleForm({ classId }: { classId: string }) {
   return (
@@ -382,7 +426,7 @@ export function MissionResourcesPanel({
   activityId: string;
   classId: string;
   moduleId: string;
-  resources: ActivityResource[];
+  resources: ResourceWithEmbeddingSummary[];
 }) {
   return (
     <div className="rounded-lg border border-ink/10 bg-parchment/50 p-4">
@@ -396,6 +440,9 @@ export function MissionResourcesPanel({
         ) : (
           resources.map((resource) => (
             <div className="space-y-3" key={resource.id}>
+              {(() => {
+                const embeddingSummary = getResourceEmbeddingSummary(resource);
+                return (
               <ResourceFileCard
                 actionSlot={
                   <div className="flex flex-col items-start gap-2 sm:items-end">
@@ -410,6 +457,18 @@ export function MissionResourcesPanel({
                       title={resource.textError ?? undefined}
                     >
                       {resourceTextStatusLabels[resource.textStatus]}
+                    </span>
+                    <span
+                      className={`rounded-full border px-2.5 py-1 text-xs font-bold ${
+                        embeddingSummary.status === ActivityResourceEmbeddingStatus.READY
+                          ? "border-moss/30 bg-moss/10 text-moss"
+                          : embeddingSummary.status === ActivityResourceEmbeddingStatus.FAILED
+                            ? "border-ember/30 bg-ember/10 text-ember"
+                            : "border-border/80 bg-surface-muted text-ink/60"
+                      }`}
+                      title={embeddingSummary.error ?? undefined}
+                    >
+                      {resourceEmbeddingStatusLabels[embeddingSummary.status]}
                     </span>
                     {resource.textStatus === "FAILED" || resource.textStatus === "NOT_EXTRACTED" ? (
                       <LecturerActionForm action={retryActivityResourceExtractionAction}>
@@ -434,6 +493,35 @@ export function MissionResourcesPanel({
                           description="This removes stored text chunks from AI context. The uploaded file remains available."
                           label="Clear extracted text"
                           title="Clear extracted text?"
+                        />
+                      </LecturerActionForm>
+                    ) : null}
+                    {resource.textStatus === "READY" &&
+                    (embeddingSummary.status === ActivityResourceEmbeddingStatus.FAILED ||
+                      embeddingSummary.status === ActivityResourceEmbeddingStatus.NOT_EMBEDDED) ? (
+                      <LecturerActionForm action={retryActivityResourceEmbeddingsAction}>
+                        <input name="classId" type="hidden" value={classId} />
+                        <input name="moduleId" type="hidden" value={moduleId} />
+                        <input name="activityId" type="hidden" value={activityId} />
+                        <input name="resourceId" type="hidden" value={resource.id} />
+                        <button className="rounded-md border border-ink/20 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-ink hover:text-white">
+                          Retry search
+                        </button>
+                      </LecturerActionForm>
+                    ) : null}
+                    {embeddingSummary.status === ActivityResourceEmbeddingStatus.READY ||
+                    embeddingSummary.status === ActivityResourceEmbeddingStatus.FAILED ? (
+                      <LecturerActionForm action={clearActivityResourceEmbeddingsAction}>
+                        <input name="classId" type="hidden" value={classId} />
+                        <input name="moduleId" type="hidden" value={moduleId} />
+                        <input name="activityId" type="hidden" value={activityId} />
+                        <input name="resourceId" type="hidden" value={resource.id} />
+                        <ConfirmAction
+                          className="rounded-md border border-ink/20 bg-white px-3 py-1.5 text-xs font-semibold text-ink/65 hover:bg-ink hover:text-white"
+                          confirmLabel="Clear search"
+                          description="This removes stored vector embeddings for semantic search. Extracted text remains available."
+                          label="Clear search"
+                          title="Clear search embeddings?"
                         />
                       </LecturerActionForm>
                     ) : null}
@@ -465,6 +553,8 @@ export function MissionResourcesPanel({
                 size={resource.size}
                 title={resource.title}
               />
+                );
+              })()}
               <details className="rounded-lg border border-border/80 bg-surface p-4">
                 <summary className="cursor-pointer list-none text-sm font-bold text-ink/75">
                   Edit details

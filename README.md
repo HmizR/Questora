@@ -72,6 +72,8 @@ S3_SECRET_ACCESS_KEY="replace-with-secret-key"
 AI_PROVIDER="ollama"
 OLLAMA_BASE_URL="http://localhost:11434"
 OLLAMA_MODEL="qwen3:8b"
+EMBEDDING_PROVIDER="ollama"
+OLLAMA_EMBEDDING_MODEL="nomic-embed-text"
 ```
 
 The S3 variables power protected uploads. Student assignment/project submissions, account
@@ -98,14 +100,16 @@ Ollama for local development:
 
 ```bash
 ollama pull qwen3:8b
+ollama pull nomic-embed-text
 ollama serve
 ```
 
 The AI assistant streams responses through Server-Sent Events for a faster chat feel while
 keeping the original JSON endpoint as a fallback. Chat history stays in browser state only.
-Student mission and realm pages provide authorized page context; student mission context
-includes resource metadata plus extracted resource excerpts when available. Other protected
-pages use general help until richer context is added.
+Student mission and realm pages provide authorized page context. Student mission context uses
+pgvector semantic retrieval over extracted resource chunks when embeddings are ready, with the
+sanitized capped extracted-text context as fallback. Hosted PostgreSQL must support the
+`vector` extension before deploying this feature.
 
 ## Database
 
@@ -114,6 +118,7 @@ npm install
 npx prisma validate
 npx prisma migrate dev --name init
 npm run prisma:seed
+npm run ai:embed:backfill
 ```
 
 ## Integration Tests

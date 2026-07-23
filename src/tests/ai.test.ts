@@ -3,6 +3,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppError } from "@/lib/errors";
 import { aiChatRequestSchema } from "@/schemas/ai";
 import {
+  EMBEDDING_DIMENSION,
+  OllamaEmbeddingProvider,
+  assertEmbeddingVector,
+  serializeEmbeddingVector
+} from "@/services/ai/embedding-provider";
+import {
   createThinkingBlockFilter,
   OllamaProvider,
   parseOllamaStreamLine,
@@ -72,6 +78,46 @@ describe("AI assistant helpers", () => {
         messages: [{ role: "user", content: "Help" }]
       })
     ).rejects.toBeInstanceOf(AppError);
+  });
+
+  it("validates and serializes embedding vectors", () => {
+    const vector = Array.from({ length: EMBEDDING_DIMENSION }, (_, index) => index / 1000);
+
+    expect(assertEmbeddingVector(vector)).toBe(vector);
+    expect(serializeEmbeddingVector(vector)).toBe(`[${vector.join(",")}]`);
+    expect(() => assertEmbeddingVector([1, 2, 3])).toThrow(AppError);
+    expect(() => assertEmbeddingVector(Array.from({ length: EMBEDDING_DIMENSION }, () => Number.NaN))).toThrow(
+      AppError
+    );
+  });
+
+  it("maps Ollama embedding responses and rejects wrong dimensions", async () => {
+    const vector = Array.from({ length: EMBEDDING_DIMENSION }, () => 0.25);
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        embeddings: [vector]
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const provider = new OllamaEmbeddingProvider({
+      baseUrl: "http://ollama.test",
+      model: "nomic-embed-text"
+    });
+
+    await expect(provider.embed("resource excerpt")).resolves.toEqual(vector);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://ollama.test/api/embed",
+      expect.objectContaining({
+        body: JSON.stringify({
+          model: "nomic-embed-text",
+          input: "resource excerpt"
+        })
+      })
+    );
+
+    fetchMock.mockResolvedValueOnce(Response.json({ embeddings: [[1, 2, 3]] }));
+    await expect(provider.embed("bad vector")).rejects.toBeInstanceOf(AppError);
   });
 
   it("parses Ollama stream lines and ignores empty lines", () => {
