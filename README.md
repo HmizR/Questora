@@ -86,10 +86,12 @@ relying on automatic physical object cleanup in production.
 
 Questora extracts readable text from protected mission resources when lecturers add them.
 The MVP supports `text/plain`, Markdown, and PDF resources stored as `s3:<object-key>`
-references. Office files, images, zip archives, unknown files, and pasted external URLs remain
-download/preview-only for now. Lecturers can see extraction status on the mission edit page
-and retry failed extraction. Students do not see extraction internals; the AI assistant uses
-authorized extracted excerpts when available.
+references. PDF extraction is best-effort: unreadable or suspicious extracted text is marked
+failed and excluded from AI context, while the original file remains downloadable/previewable.
+Office files, images, zip archives, unknown files, and pasted external URLs remain
+download/preview-only for now. Lecturers can see extraction status, clear extracted text, and
+retry failed extraction on the mission edit page. Students do not see extraction internals;
+the AI assistant uses authorized extracted excerpts when available.
 
 The AI assistant uses a provider-agnostic service layer. The first supported provider is
 Ollama for local development:

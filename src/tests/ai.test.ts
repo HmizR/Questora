@@ -76,6 +76,7 @@ describe("AI assistant helpers", () => {
 
   it("parses Ollama stream lines and ignores empty lines", () => {
     expect(parseOllamaStreamLine("")).toBeNull();
+    expect(parseOllamaStreamLine("this is not json")).toBeNull();
     expect(
       parseOllamaStreamLine(JSON.stringify({ message: { content: "Hello" }, done: false }))
     ).toEqual({

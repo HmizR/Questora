@@ -109,6 +109,26 @@ describe("AI chat API", () => {
         }
       }
     });
+    await db.activityResource.create({
+      data: {
+        activityId: activity.id,
+        title: "Broken PDF",
+        fileName: "broken.pdf",
+        fileUrl: "s3:mission-resources/example/broken.pdf",
+        contentType: "application/pdf",
+        size: 1000,
+        position: 2,
+        createdById: teachingClass.lecturerId,
+        textStatus: ActivityResourceTextStatus.READY,
+        textExtractedAt: new Date(),
+        extractedTexts: {
+          create: {
+            chunkIndex: 0,
+            content: `${"\u0001".repeat(80)}SHOULD_NOT_REACH_PROVIDER`
+          }
+        }
+      }
+    });
     setMockSession({
       id: student.id,
       name: student.name,
@@ -142,6 +162,7 @@ describe("AI chat API", () => {
     expect(String(fetchMock.mock.calls[0]?.[1]?.body)).toContain(
       "Use claim evidence reasoning when answering the E2E resource prompt."
     );
+    expect(String(fetchMock.mock.calls[0]?.[1]?.body)).not.toContain("SHOULD_NOT_REACH_PROVIDER");
   });
 
   it("streams an enrolled student's published activity answer with metadata", async () => {

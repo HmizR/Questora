@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   chunkExtractedText,
   getResourceExtractability,
+  isSuspiciousExtractedText,
   normalizeExtractedText
 } from "@/lib/resource-text-rules";
 
@@ -19,6 +20,7 @@ describe("resource text extraction helpers", () => {
 
   it("normalizes and chunks extracted text in order", () => {
     expect(normalizeExtractedText(" First   line\r\n\r\n\r\nSecond\tline ")).toBe("First line\n\nSecond line");
+    expect(normalizeExtractedText("Alpha\u0000\u0007\uFFFD Beta!!!!!!!!!")).toBe("Alpha Beta!!!!!!!!");
 
     const chunks = chunkExtractedText("Alpha sentence. Beta sentence. Gamma sentence.", 20);
 
@@ -26,5 +28,13 @@ describe("resource text extraction helpers", () => {
     expect(chunks.join(" ")).toContain("Alpha sentence.");
     expect(chunks.join(" ")).toContain("Gamma sentence.");
     expect(chunkExtractedText("   ")).toEqual([]);
+  });
+
+  it("rejects suspicious extracted text before chunking", () => {
+    const brokenText = `${"\u0000".repeat(50)}${"\uFFFD".repeat(50)}abc`;
+
+    expect(isSuspiciousExtractedText(brokenText)).toBe(true);
+    expect(chunkExtractedText(brokenText)).toEqual([]);
+    expect(isSuspiciousExtractedText("Readable mission notes with normal punctuation.")).toBe(false);
   });
 });

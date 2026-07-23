@@ -13,7 +13,10 @@ vi.mock("@/lib/storage", async () => {
 import { downloadStorageObject } from "@/lib/storage";
 import { db } from "@/lib/db";
 import { createActivityResource } from "@/services/lecturer-service";
-import { retryActivityResourceExtraction } from "@/services/resource-text-service";
+import {
+  clearActivityResourceExtraction,
+  retryActivityResourceExtraction
+} from "@/services/resource-text-service";
 
 import {
   createActivityFixture,
@@ -107,6 +110,20 @@ describe("resource text extraction services", () => {
     expect(storedResource.extractedTexts).toEqual([]);
   });
 
+  it("marks unreadable extracted text as failed", async () => {
+    downloadStorageObjectMock.mockResolvedValue(Buffer.from(`${"\u0000".repeat(80)}broken`, "utf8"));
+
+    const { resource } = await createResourceFixture();
+    const storedResource = await db.activityResource.findUniqueOrThrow({
+      where: { id: resource.id },
+      include: { extractedTexts: true }
+    });
+
+    expect(storedResource.textStatus).toBe(ActivityResourceTextStatus.FAILED);
+    expect(storedResource.textError).toBe("No readable text could be extracted.");
+    expect(storedResource.extractedTexts).toEqual([]);
+  });
+
   it("allows retry only for the lecturer who owns the mission resource", async () => {
     downloadStorageObjectMock.mockRejectedValueOnce(new Error("Temporary failure"));
     const { lecturer, activity, resource } = await createResourceFixture();
@@ -137,5 +154,35 @@ describe("resource text extraction services", () => {
     expect(storedResource.extractedTexts.map((chunk) => chunk.content).join(" ")).toContain(
       "Recovered text content."
     );
+  });
+
+  it("allows lecturers to clear extracted text only for their own mission resource", async () => {
+    downloadStorageObjectMock.mockResolvedValue(Buffer.from("Clearable text content.", "utf8"));
+    const { lecturer, activity, resource } = await createResourceFixture();
+    const otherLecturer = await createUser(UserRole.LECTURER, "Other Clear Lecturer");
+
+    await expect(
+      clearActivityResourceExtraction({
+        lecturerId: otherLecturer.id,
+        activityId: activity.id,
+        resourceId: resource.id
+      })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+
+    await clearActivityResourceExtraction({
+      lecturerId: lecturer.id,
+      activityId: activity.id,
+      resourceId: resource.id
+    });
+
+    const storedResource = await db.activityResource.findUniqueOrThrow({
+      where: { id: resource.id },
+      include: { extractedTexts: true }
+    });
+
+    expect(storedResource.textStatus).toBe(ActivityResourceTextStatus.NOT_EXTRACTED);
+    expect(storedResource.textExtractedAt).toBeNull();
+    expect(storedResource.textError).toBeNull();
+    expect(storedResource.extractedTexts).toEqual([]);
   });
 });

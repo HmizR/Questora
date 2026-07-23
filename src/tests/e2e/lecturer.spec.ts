@@ -215,20 +215,20 @@ test("lecturer filters analytics tables and downloads CSV exports", async ({ pag
 
 test("lecturer uploads and removes a mission resource", async ({ page }) => {
   const longResourceFileName =
-    "e2e-resource-pack-with-a-very-long-name-that-should-stay-inside-the-card.pdf";
+    "e2e-resource-pack-with-a-very-long-name-that-should-stay-inside-the-card.zip";
 
   await page.route("**/api/uploads/presign", async (route) => {
     await route.fulfill({
       contentType: "application/json",
       body: JSON.stringify({
-        uploadUrl: "https://uploads.questora.test/e2e-resource.pdf",
-        storageRef: `s3:mission-resources/${seed.activities.assignment.id}/e2e-resource.pdf`,
-        key: `mission-resources/${seed.activities.assignment.id}/e2e-resource.pdf`,
+        uploadUrl: "https://uploads.questora.test/e2e-resource.zip",
+        storageRef: `s3:mission-resources/${seed.activities.assignment.id}/e2e-resource.zip`,
+        key: `mission-resources/${seed.activities.assignment.id}/e2e-resource.zip`,
         expiresIn: 300
       })
     });
   });
-  await page.route("https://uploads.questora.test/e2e-resource.pdf", async (route) => {
+  await page.route("https://uploads.questora.test/e2e-resource.zip", async (route) => {
     await route.fulfill({ status: 200, body: "" });
   });
 
@@ -247,7 +247,7 @@ test("lecturer uploads and removes a mission resource", async ({ page }) => {
   await addResourceForm.getByLabel("Required resource").check();
   await page.setInputFiles("#mission-resource-file", {
     name: longResourceFileName,
-    mimeType: "application/pdf",
+    mimeType: "application/zip",
     buffer: Buffer.from("E2E resource")
   });
   await expect(page.getByRole("status").filter({ hasText: "Resource uploaded." })).toBeVisible();
@@ -258,7 +258,7 @@ test("lecturer uploads and removes a mission resource", async ({ page }) => {
   await expect(page.locator("span").filter({ hasText: "Starter file" }).first()).toBeVisible();
   await expect(page.locator("span").filter({ hasText: "Required" }).first()).toBeVisible();
   await expect(page.getByText(longResourceFileName).first()).toBeVisible();
-  await expect(page.getByText("PDF").first()).toBeVisible();
+  await expect(page.getByText("Zip").first()).toBeVisible();
   await expect(page.getByText("12 B").first()).toBeVisible();
   await page.getByText("Edit details").click();
   const editDetails = page.locator("details").filter({ hasText: "Edit details" }).first();
@@ -287,7 +287,7 @@ test("lecturer uploads and removes a mission resource", async ({ page }) => {
     await route.fulfill({
       contentType: "application/json",
       body: JSON.stringify({
-        downloadUrl: "https://downloads.questora.test/e2e-resource.pdf",
+        downloadUrl: "https://downloads.questora.test/e2e-resource.zip",
         expiresIn: 300
       })
     });
@@ -298,7 +298,7 @@ test("lecturer uploads and removes a mission resource", async ({ page }) => {
   await expect(page.getByText("E2E Resource Pack Updated")).toBeVisible();
   await expect(page.getByTitle("Optional review packet after the workshop.")).toBeVisible();
   await expect(page.getByText(longResourceFileName).first()).toBeVisible();
-  await expect(page.getByText("PDF").first()).toBeVisible();
+  await expect(page.getByText("Zip").first()).toBeVisible();
   await expect(page.getByText("12 B").first()).toBeVisible();
   await page.getByRole("button", { name: "Open resource" }).click();
   await expect.poll(() => downloadRequested).toBe(true);
@@ -374,6 +374,10 @@ test("lecturer sees mission resource extraction status", async ({ page }) => {
   await expect(page.getByText("Failed Extraction")).toBeVisible();
   await expect(page.getByText("Extraction failed")).toBeVisible();
   await expect(page.getByRole("button", { name: "Retry extraction" })).toBeVisible();
+  await page.getByRole("button", { name: "Clear extracted text" }).first().click();
+  await page.getByRole("dialog").getByRole("button", { name: "Clear extracted text" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Extracted text cleared." })).toBeVisible();
+  await expect(page.getByText("Not extracted")).toBeVisible();
 });
 
 test("lecturer mission deletion requires confirmation", async ({ page }) => {

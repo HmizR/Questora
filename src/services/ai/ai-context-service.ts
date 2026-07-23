@@ -4,6 +4,7 @@ import { requireClassEnrollment, requireUser } from "@/lib/authorization-service
 import { formatDateTime } from "@/lib/date-format";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
+import { isSuspiciousExtractedText, sanitizeExtractedText } from "@/lib/resource-text-rules";
 import type { AIContextInput } from "@/schemas/ai";
 import type { AIContextResult, AISource } from "@/services/ai/ai-types";
 import { academicHonestyPrompt } from "@/services/ai/ai-prompts";
@@ -12,6 +13,8 @@ import { getStudentDeadlineItems } from "@/services/deadline-service";
 import { assertStudentCanAccessActivity } from "@/services/progress-service";
 
 const MAX_RESOURCE_CONTEXT_CHARS = 12000;
+const MAX_RESOURCE_CONTEXT_PER_RESOURCE_CHARS = 4000;
+const MAX_RESOURCE_CONTEXT_PER_CHUNK_CHARS = 1500;
 
 function compact(value: string | null | undefined) {
   return value?.trim() || "None";
@@ -159,19 +162,29 @@ function buildResourceExcerptContext(
 
   for (const resource of resources) {
     if (remaining <= 0) break;
+    let resourceRemaining = Math.min(MAX_RESOURCE_CONTEXT_PER_RESOURCE_CHARS, remaining);
 
     for (const chunk of resource.extractedTexts) {
-      if (remaining <= 0) break;
+      if (remaining <= 0 || resourceRemaining <= 0) break;
+
+      if (isSuspiciousExtractedText(chunk.content)) continue;
+
+      const sanitizedContent = sanitizeExtractedText(chunk.content).slice(
+        0,
+        Math.min(MAX_RESOURCE_CONTEXT_PER_CHUNK_CHARS, resourceRemaining)
+      );
+      if (!sanitizedContent) continue;
 
       const prefix = `[Resource: ${resource.title}, chunk ${chunk.chunkIndex + 1}, ${
         resource.isRequired ? "required" : "optional"
       }]\n`;
-      const available = remaining - prefix.length;
+      const available = Math.min(remaining, resourceRemaining) - prefix.length;
       if (available <= 0) break;
 
-      const content = chunk.content.slice(0, available);
+      const content = sanitizedContent.slice(0, available);
       excerpts.push(`${prefix}${content}`);
       remaining -= prefix.length + content.length;
+      resourceRemaining -= prefix.length + content.length;
     }
   }
 

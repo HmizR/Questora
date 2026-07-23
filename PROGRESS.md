@@ -43,6 +43,7 @@ Post-MVP UI refresh completed:
 - Mission resources include required/optional indicators, learning labels, descriptions, editable details, and required-first ordering
 - Student inline mission resource previews for PDF, image, and text/markdown files
 - AI resource text extraction for protected text, Markdown, and PDF mission resources
+- AI context hardening for unreadable PDF text with sanitization, exclusion, clear, and retry recovery
 - Admin/user polish with avatar-aware rosters, role/status badges, compact account details, and clearer account-control guidance
 - Quiz and assignment UX polish with clearer student work states, quiz attempt summaries, submission stats, and analytics labels
 - Lecturer roster, grades, submission review, and quiz analytics filters, sorting, needs-attention highlights, and CSV exports
@@ -50,6 +51,7 @@ Post-MVP UI refresh completed:
 - Class announcements with lecturer draft/publish/archive/delete workflow and student published-only viewing
 - Global AI assistant drawer MVP with Ollama provider, student mission/realm context, generic fallback, and client-only chat history
 - Student mission AI context now includes extracted resource excerpts when available, capped and source-labeled
+- Suspicious extracted resource text is excluded from AI prompts so bad PDFs do not break mission chat
 - Streaming AI assistant responses with SSE, Ollama stream parsing, and stop-generation control
 - Isolated PostgreSQL integration test setup with service and server action coverage
 - Playwright UI-level workflow test setup for admin, lecturer, and student paths
@@ -239,6 +241,7 @@ Completed:
 - Resource file display polish with type labels, sizes, icons, and safer filename truncation
 - Resource organization polish with required/optional metadata, controlled resource labels, descriptions, and editable ordering
 - Server-side text extraction for protected text, Markdown, and PDF mission resources
+- Extracted-text hardening and lecturer clear/retry recovery for problematic PDF resources
 - Admin user/account polish for clearer rosters, account summaries, and reset/deactivation guidance
 - Quiz and assignment UX polish for student work states, lecturer submission stats, and clearer analytics labels
 - Lecturer analytics usability polish with filters, sorting, needs-attention highlights, and protected CSV exports
@@ -248,8 +251,8 @@ Completed:
 Current automated coverage:
 
 ```text
-50 unit tests passing
-48 integration tests passing
+51 unit tests passing
+50 integration tests passing
 Targeted lecturer resource e2e extraction checks passing
 Targeted student AI assistant streaming e2e check passing
 ```

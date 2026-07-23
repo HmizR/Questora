@@ -20,7 +20,12 @@ export function parseOllamaStreamLine(line: string): { content: string; done: bo
   const trimmed = line.trim();
   if (!trimmed) return null;
 
-  const data = JSON.parse(trimmed) as OllamaStreamResponse;
+  let data: OllamaStreamResponse;
+  try {
+    data = JSON.parse(trimmed) as OllamaStreamResponse;
+  } catch {
+    return null;
+  }
 
   return {
     content: data.message?.content ?? data.response ?? "",

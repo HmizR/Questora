@@ -75,6 +75,25 @@ export async function retryActivityResourceExtraction(input: {
   activityId: string;
   resourceId: string;
 }) {
+  const resource = await getLecturerResource(input);
+
+  await extractTextFromResource(resource);
+}
+
+export async function clearActivityResourceExtraction(input: {
+  lecturerId: string;
+  activityId: string;
+  resourceId: string;
+}) {
+  await getLecturerResource(input);
+  await markExtractionStatus(input.resourceId, ActivityResourceTextStatus.NOT_EXTRACTED);
+}
+
+async function getLecturerResource(input: {
+  lecturerId: string;
+  activityId: string;
+  resourceId: string;
+}) {
   const resource = await db.activityResource.findFirst({
     where: {
       id: input.resourceId,
@@ -93,7 +112,7 @@ export async function retryActivityResourceExtraction(input: {
     throw new AppError("NOT_FOUND", "Resource not found.");
   }
 
-  await extractTextFromResource(resource);
+  return resource;
 }
 
 async function extractPdfText(buffer: Buffer) {

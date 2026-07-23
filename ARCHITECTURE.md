@@ -113,7 +113,9 @@ protected `s3:<object-key>` resources that are plain text, Markdown, or PDF. Off
 images, zip archives, unknown types, and external URLs are marked unsupported for extraction
 while remaining available for authorized download/preview. Extraction is synchronous when a
 lecturer creates a resource, and lecturers can retry failed extraction from the mission edit
-page.
+page. Extracted text is sanitized before storage and again before AI prompt assembly. Suspicious
+or unreadable extraction output is marked failed or excluded from AI context so one bad PDF does
+not block students from using the assistant with the rest of the mission.
 
 Resource deletion currently removes database rows only. Physical S3/RustFS object cleanup should be handled later with a reviewed cleanup helper or lifecycle policy.
 
@@ -180,6 +182,7 @@ Current AI MVP:
 - stores chat history in browser state only
 - includes authorized extracted resource excerpts for student mission context when available
 - caps extracted resource context before sending it to the provider
+- re-sanitizes extracted resource excerpts before provider requests and skips suspicious chunks
 
 ### AI Provider Strategy
 
