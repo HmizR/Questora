@@ -249,12 +249,14 @@ Completed:
 - Lecturer analytics usability polish with filters, sorting, needs-attention highlights, and protected CSV exports
 - Due-date UX with dashboard deadline panels, class deadline panels, and mission due-date badges
 - Class announcements with lecturer authoring, recent overview panels, and student published-only access
+- pgvector RAG foundation for mission-scoped semantic retrieval over extracted resource chunks
+- AI resource citations with PDF page ranges and text/Markdown line ranges when available
 
 Current automated coverage:
 
 ```text
-51 unit tests passing
-50 integration tests passing
+57 unit tests passing
+55 integration tests passing
 Targeted lecturer resource e2e extraction checks passing
 Targeted student AI assistant streaming e2e check passing
 ```
@@ -274,7 +276,7 @@ Targeted student AI assistant streaming e2e check passing
 - AI assistant roadmap:
   - expand pgvector RAG from mission-scoped resource chunks to class-wide retrieval after usage patterns are clearer
   - consider Office document text extraction after upload safety, conversion tooling, and performance limits are clearer
-  - make the assistant cite the resource or mission content it used where possible
+  - improve assistant source display in the drawer now that resource chunks can cite PDF pages and text/Markdown lines
   - add academic-honesty guardrails so it explains, hints, quizzes, and summarizes instead of completing graded work for students
   - later add a lecturer grading assistant for summarizing submissions, suggesting feedback, and checking rubric coverage
   - keep lecturer AI grading suggestions human-reviewed and never auto-publish grades
