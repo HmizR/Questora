@@ -1,4 +1,4 @@
-import NextAuth, { type DefaultSession } from "next-auth";
+import NextAuth, { CredentialsSignin, type DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { UserRole, UserStatus } from "@prisma/client";
 import { z } from "zod";
@@ -17,6 +17,10 @@ const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1)
 });
+
+class RateLimitedSigninError extends CredentialsSignin {
+  code = "rate_limited";
+}
 
 declare module "next-auth" {
   interface Session {
@@ -64,7 +68,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         try {
           if (await isRateLimited(rateLimitKey)) {
-            return null;
+            throw new RateLimitedSigninError();
           }
 
           const user = await db.user.findUnique({

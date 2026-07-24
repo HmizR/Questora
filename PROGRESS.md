@@ -253,7 +253,7 @@ Completed:
 - AI resource citations with PDF page ranges and text/Markdown line ranges when available
 - Storage orphan cleanup dry-run/delete workflow for managed S3/RustFS prefixes
 - Submission revision history for assignment/project resubmissions before grading
-- Redis-backed auth login rate limiting with Upstash REST, TCP Redis, and local memory fallback
+- Redis-backed auth login rate limiting with Upstash REST, TCP Redis, local memory fallback, and visible temporary lockout feedback on `/login`
 
 Current automated coverage:
 

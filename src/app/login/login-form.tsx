@@ -13,17 +13,33 @@ export function LoginForm() {
   function onSubmit(formData: FormData) {
     setError(null);
     startTransition(async () => {
+      const email = String(formData.get("email") ?? "")
+        .trim()
+        .toLowerCase();
+      const nextFailedAttemptCount = incrementBrowserFailedAttempts(email);
+
       const result = await signIn("credentials", {
-        email: formData.get("email"),
+        email,
         password: formData.get("password"),
         redirect: false
       });
 
       if (result?.error) {
+        const isRateLimited =
+          result.code === "rate_limited" ||
+          (await checkLoginRateLimitStatus(email)) ||
+          nextFailedAttemptCount >= 5;
+
+        if (isRateLimited) {
+          setError("Too many failed sign-in attempts. Please wait a minute, then try again.");
+          return;
+        }
+
         setError("Invalid credentials or inactive account.");
         return;
       }
 
+      clearBrowserFailedAttempts(email);
       router.push(searchParams.get("callbackUrl") ?? "/");
       router.refresh();
     });
@@ -57,7 +73,14 @@ export function LoginForm() {
           required
         />
       </div>
-      {error ? <p className="text-sm font-medium text-ember">{error}</p> : null}
+      {error ? (
+        <div
+          className="rounded-md border border-ember/30 bg-ember/10 px-3 py-2 text-sm font-medium text-ember"
+          role="alert"
+        >
+          {error}
+        </div>
+      ) : null}
       <button
         className="w-full rounded-md bg-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-steel disabled:cursor-not-allowed disabled:opacity-70"
         disabled={isPending}
@@ -67,4 +90,49 @@ export function LoginForm() {
       </button>
     </form>
   );
+}
+
+function browserFailedAttemptsKey(email: string) {
+  return `questora-login-attempts:${email}`;
+}
+
+function incrementBrowserFailedAttempts(email: string) {
+  if (typeof window === "undefined") {
+    return 1;
+  }
+
+  const key = browserFailedAttemptsKey(email);
+  const previous = Number.parseInt(window.sessionStorage.getItem(key) ?? "0", 10);
+  const next = Number.isFinite(previous) ? previous + 1 : 1;
+  window.sessionStorage.setItem(key, String(next));
+  return next;
+}
+
+function clearBrowserFailedAttempts(email: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.sessionStorage.removeItem(browserFailedAttemptsKey(email));
+}
+
+async function checkLoginRateLimitStatus(email: string) {
+  try {
+    const response = await fetch("/api/login/rate-limit", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email })
+    });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    const data = (await response.json()) as { rateLimited?: boolean };
+    return data.rateLimited === true;
+  } catch {
+    return false;
+  }
 }

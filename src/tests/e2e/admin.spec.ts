@@ -19,6 +19,25 @@ test("admin can log in and view dashboard stats", async ({ page }) => {
   await expect(page.getByText("Active realms")).toBeVisible();
 });
 
+test("login shows a temporary lockout message after repeated failures", async ({ page }) => {
+  await page.route("**/api/login/rate-limit", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ rateLimited: true })
+    });
+  });
+
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(e2eUsers.admin.email);
+  await page.getByLabel("Password").fill("WrongPassword!");
+  await page.getByRole("button", { name: "Enter Questora" }).click();
+  await expect(page.getByRole("button", { name: "Enter Questora" })).toBeEnabled();
+
+  await expect(
+    page.getByText("Too many failed sign-in attempts. Please wait a minute, then try again.")
+  ).toBeVisible();
+});
+
 test("admin can enroll an active student into a realm", async ({ page }) => {
   await loginAs(page, e2eUsers.admin.email);
   await page.goto(`/admin/classes/${seed.class.id}`);
