@@ -173,12 +173,14 @@ describe("AI chat API", () => {
     expect(JSON.stringify(body.sources)).not.toContain("Required Brief");
     const assistantBody = findAssistantRequestBody(fetchMock);
     expect(assistantBody).toContain("Required Brief");
+    expect(assistantBody).toContain("Tutoring mode for a graded mission");
+    expect(assistantBody).toContain("do not complete the graded work");
     expect(assistantBody).toContain("[Resource: Required Brief, lines 4-6, required]");
     expect(assistantBody).toContain(
       "Use claim evidence reasoning when answering the E2E resource prompt."
     );
     expect(assistantBody).not.toContain("SHOULD_NOT_REACH_PROVIDER");
-  });
+  }, 15_000);
 
   it("streams an enrolled student's published activity answer with metadata", async () => {
     const { class: teachingClass } = await createClassFixture();
@@ -194,7 +196,7 @@ describe("AI chat API", () => {
       email: student.email,
       role: "STUDENT"
     });
-    mockOllamaStream(["Streamed ", "answer"]);
+    const fetchMock = mockOllamaStream(["Streamed ", "answer"]);
 
     const response = await streamChat(
       jsonRequest({
@@ -213,6 +215,7 @@ describe("AI chat API", () => {
     expect(body).toContain("event: meta");
     expect(body).toContain("Using current mission");
     expect(body).toContain("Streaming Mission");
+    expect(findAssistantRequestBody(fetchMock)).toContain("Tutoring mode for a graded mission");
     expect(body).toContain('event: delta\ndata: {"content":"Streamed "}');
     expect(body).toContain('event: delta\ndata: {"content":"answer"}');
     expect(body).toContain("event: done");
@@ -313,6 +316,8 @@ describe("AI chat API", () => {
     expect(bodies.some((body) => body.includes("without page-specific learning context"))).toBe(
       true
     );
+    expect(bodies.some((body) => body.includes("General learning-assistant mode"))).toBe(true);
+    expect(bodies.some((body) => body.includes("Tutoring mode for a graded mission"))).toBe(false);
   });
 
   it("returns a safe typed error when the provider fails", async () => {

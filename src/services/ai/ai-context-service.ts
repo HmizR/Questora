@@ -36,12 +36,16 @@ function createContextResult(params: {
   label: string;
   contextText: string;
   sources: AISource[];
+  contextType?: AIContextResult["contextType"];
+  activityType?: AIContextResult["activityType"];
 }): AIContextResult {
   return {
     label: params.label,
     systemPrompt: academicHonestyPrompt,
     contextText: params.contextText,
-    sources: params.sources
+    sources: params.sources,
+    contextType: params.contextType,
+    activityType: params.activityType
   };
 }
 
@@ -60,6 +64,7 @@ export async function buildAIContext(
   await requireUser();
   return createContextResult({
     label: "General help",
+    contextType: "GENERIC",
     contextText:
       "The user is on a protected Questora page without page-specific learning context. Help with general navigation, study habits, and how to use Questora. Do not claim access to page data.",
     sources: [{ label: "Questora", detail: "General protected app context" }]
@@ -136,6 +141,8 @@ async function buildStudentActivityContext(classId: string, activityId: string, 
 
   return createContextResult({
     label: "Using current mission",
+    contextType: "STUDENT_ACTIVITY",
+    activityType: activity.type,
     sources,
     contextText: `
 Student mission context:
@@ -330,6 +337,7 @@ async function buildStudentClassContext(classId: string) {
 
   return createContextResult({
     label: "Using current realm",
+    contextType: "STUDENT_CLASS",
     sources: [
       { label: "Realm", detail: teachingClass.name },
       ...teachingClass.modules.map((module) => ({ label: "Region", detail: module.title })),

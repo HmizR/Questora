@@ -2,6 +2,7 @@ import { AppError } from "@/lib/errors";
 import { aiChatRequestSchema, type AIChatRequestInput } from "@/schemas/ai";
 import { buildAIContext } from "@/services/ai/ai-context-service";
 import { getAIProvider } from "@/services/ai/ai-provider";
+import { buildAcademicGuardrailInstruction } from "@/services/ai/ai-prompts";
 import type {
   AIChatResponse,
   AIContextResult,
@@ -17,6 +18,7 @@ async function buildAIChatRequest(rawInput: unknown): Promise<{
   const input: AIChatRequestInput = aiChatRequestSchema.parse(rawInput);
   const context = await buildAIContext(input.context, { query: input.message });
   const recentMessages = limitRecentMessages(input.history);
+  const guardrailInstruction = buildAcademicGuardrailInstruction(context);
 
   return {
     context,
@@ -24,6 +26,7 @@ async function buildAIChatRequest(rawInput: unknown): Promise<{
       temperature: 0.25,
       messages: [
         { role: "system", content: context.systemPrompt },
+        { role: "system", content: guardrailInstruction },
         {
           role: "user",
           content: `Authorized Questora context:\n${context.contextText}`

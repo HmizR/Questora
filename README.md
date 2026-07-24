@@ -40,7 +40,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Students can preview PDF, image, and text/markdown mission resources inline on mission pages; Office files and archives remain download-only.
 - Text, Markdown, and PDF mission resources can be extracted server-side so the AI assistant can use authorized resource excerpts.
 - User avatars appear in account menus, leaderboards, profiles, lecturer rosters, and submission review.
-- A global AI assistant drawer can answer with page-aware student mission/realm context through a local Ollama provider.
+- A global AI assistant drawer can answer with page-aware student mission/realm context through a local Ollama provider and tutoring-mode guardrails.
 - Seed data with one admin, two lecturers, five students, two classes, example modules, activities, quests, badges, and student profiles.
 
 ## Tech Stack
@@ -131,7 +131,10 @@ pgvector semantic retrieval over extracted resource chunks when embeddings are r
 sanitized capped extracted-text context as fallback. Hosted PostgreSQL must support the
 `vector` extension before deploying this feature. Resource citations include PDF page ranges or
 text/Markdown line ranges when extraction metadata is available; older chunks fall back to chunk
-numbers until the lecturer retries extraction.
+numbers until the lecturer retries extraction. For graded quiz, assignment, and project missions,
+Questora adds tutoring-mode guardrails so the assistant favors hints, guiding questions, outlines,
+rubrics, and explanations instead of direct answers or copy-paste graded work. Output review is
+intentionally deferred to avoid extra latency and local model usage.
 
 ## Database
 

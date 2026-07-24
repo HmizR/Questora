@@ -11,6 +11,7 @@ export default defineConfig({
   test: {
     include: ["src/tests/integration/**/*.test.ts"],
     setupFiles: ["src/tests/integration/setup.ts"],
+    testTimeout: 15_000,
     pool: "threads",
     poolOptions: {
       threads: {

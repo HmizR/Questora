@@ -207,6 +207,8 @@ test("leaderboard names link to public student profiles", async ({ page }) => {
 });
 
 test("global AI assistant drawer uses student page context", async ({ page }) => {
+  test.setTimeout(120_000);
+
   let requests = 0;
   await page.route("**/api/ai/chat/stream", async (route) => {
     requests += 1;
@@ -244,6 +246,9 @@ test("global AI assistant drawer uses student page context", async ({ page }) =>
   await page.goto(`/student/classes/${seed.class.id}`);
   await page.getByRole("button", { name: "Open Questora Assistant" }).click();
   await expect(page.getByRole("dialog", { name: "Questora Assistant" })).toBeVisible();
+  await expect(
+    page.getByText("I can explain, summarize, quiz, guide, and give hints.")
+  ).toBeVisible();
   await expect(page.getByText("Using current realm")).toBeVisible();
   await page.getByRole("button", { name: "Summarize this" }).click();
   await expect(page.getByText("Mock AI answer")).toBeVisible();

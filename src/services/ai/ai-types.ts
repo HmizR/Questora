@@ -1,3 +1,5 @@
+import type { ActivityType } from "@prisma/client";
+
 import type { AIChatMessageInput } from "@/schemas/ai";
 
 export type AISource = {
@@ -25,6 +27,8 @@ export type AIContextResult = {
   systemPrompt: string;
   contextText: string;
   sources: AISource[];
+  contextType?: "GENERIC" | "STUDENT_CLASS" | "STUDENT_ACTIVITY";
+  activityType?: ActivityType;
 };
 
 export type AIChatResponse = {

@@ -15,7 +15,7 @@ import {
   parseOllamaStreamLine,
   stripThinkingBlocks
 } from "@/services/ai/ollama-provider";
-import { academicHonestyPrompt } from "@/services/ai/ai-prompts";
+import { academicHonestyPrompt, buildAcademicGuardrailInstruction } from "@/services/ai/ai-prompts";
 
 describe("AI assistant helpers", () => {
   afterEach(() => {
@@ -50,6 +50,30 @@ describe("AI assistant helpers", () => {
     expect(academicHonestyPrompt).toContain("Do not complete graded assignments");
     expect(academicHonestyPrompt).toContain("Give hints");
     expect(academicHonestyPrompt).toContain("Only use the provided context");
+    expect(academicHonestyPrompt).toContain("Disallowed help includes selecting quiz options");
+  });
+
+  it("builds strict tutoring instructions for graded missions", () => {
+    const instruction = buildAcademicGuardrailInstruction({
+      contextType: "STUDENT_ACTIVITY",
+      activityType: "QUIZ"
+    });
+
+    expect(instruction).toContain("Tutoring mode for a graded mission");
+    expect(instruction).toContain("do not complete the graded work");
+    expect(instruction).toContain("do not choose options");
+  });
+
+  it("builds lighter learning guidance outside graded missions", () => {
+    const lessonInstruction = buildAcademicGuardrailInstruction({
+      contextType: "STUDENT_ACTIVITY",
+      activityType: "LESSON"
+    });
+    const genericInstruction = buildAcademicGuardrailInstruction({ contextType: "GENERIC" });
+
+    expect(lessonInstruction).toContain("General learning-assistant mode");
+    expect(genericInstruction).toContain("General learning-assistant mode");
+    expect(lessonInstruction).not.toContain("Tutoring mode for a graded mission");
   });
 
   it("normalizes common LaTeX delimiters for markdown math rendering", () => {

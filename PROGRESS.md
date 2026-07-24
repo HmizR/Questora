@@ -254,11 +254,12 @@ Completed:
 - Storage orphan cleanup dry-run/delete workflow for managed S3/RustFS prefixes
 - Submission revision history for assignment/project resubmissions before grading
 - Redis-backed auth login rate limiting with Upstash REST, TCP Redis, local memory fallback, visible temporary lockout feedback, and inline email validation on `/login`
+- AI tutoring-mode guardrails for graded student quiz, assignment, and project contexts without extra output-review model calls
 
 Current automated coverage:
 
 ```text
-68 unit tests passing
+70 unit tests passing
 57 integration tests passing
 Targeted lecturer resource e2e extraction checks passing
 Targeted student AI assistant streaming e2e check passing
@@ -279,7 +280,6 @@ Targeted student AI assistant streaming e2e check passing
   - expand pgvector RAG from mission-scoped resource chunks to class-wide retrieval after usage patterns are clearer
   - consider Office document text extraction after upload safety, conversion tooling, and performance limits are clearer
   - improve assistant source display in the drawer now that resource chunks can cite PDF pages and text/Markdown lines
-  - add academic-honesty guardrails so it explains, hints, quizzes, and summarizes instead of completing graded work for students
   - later add a lecturer grading assistant for summarizing submissions, suggesting feedback, and checking rubric coverage
   - keep lecturer AI grading suggestions human-reviewed and never auto-publish grades
   - consider AI conversation/message persistence only after deciding whether chat history is needed

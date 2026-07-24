@@ -203,6 +203,7 @@ Current AI MVP:
 - includes authorized extracted resource excerpts for student mission context when available
 - retrieves relevant mission resource chunks through pgvector when embeddings are ready
 - caps extracted resource context before sending it to the provider
+- adds tutoring-mode guardrail instructions for graded quiz, assignment, and project contexts
 - re-sanitizes extracted resource excerpts before provider requests and skips suspicious chunks
 
 ### AI Provider Strategy
@@ -271,5 +272,7 @@ AI authorization should reuse existing ownership and enrollment rules:
 - Do not send another student's private work to a student chat.
 - Keep prompts and responses scoped to authorized resources.
 - Treat AI output as advisory.
+- Use tutoring-mode prompt shaping for graded student missions; output review is intentionally
+  deferred until the product needs stricter controls and can accept the extra latency/model usage.
 - Add logging and rate limiting before public production usage.
 - Consider whether chat history should be persisted before adding conversation tables.

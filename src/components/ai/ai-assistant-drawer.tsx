@@ -180,7 +180,8 @@ export function AIAssistantDrawer() {
 
         <footer className="border-t border-border/80 p-4">
           <p className="mb-3 text-xs leading-5 text-ink/55">
-            Use this for hints and explanations. It should not complete graded work for you.
+            I can explain, summarize, quiz, guide, and give hints. I will not complete graded work
+            for you.
           </p>
           <form className="flex gap-2" onSubmit={onSubmit}>
             <textarea
