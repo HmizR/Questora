@@ -253,11 +253,12 @@ Completed:
 - AI resource citations with PDF page ranges and text/Markdown line ranges when available
 - Storage orphan cleanup dry-run/delete workflow for managed S3/RustFS prefixes
 - Submission revision history for assignment/project resubmissions before grading
+- Redis-backed auth login rate limiting with Upstash REST, TCP Redis, and local memory fallback
 
 Current automated coverage:
 
 ```text
-63 unit tests passing
+68 unit tests passing
 57 integration tests passing
 Targeted lecturer resource e2e extraction checks passing
 Targeted student AI assistant streaming e2e check passing
@@ -283,4 +284,4 @@ Targeted student AI assistant streaming e2e check passing
   - keep lecturer AI grading suggestions human-reviewed and never auto-publish grades
   - consider AI conversation/message persistence only after deciding whether chat history is needed
 - Production hardening:
-  - replace in-memory auth rate limiting with Redis before public/multi-instance deployment
+  - reuse the Redis abstraction later for AI rate limits, upload/API throttles, duplicate-sensitive short-lived locks, temporary signed URL caches, and background job coordination if extraction or embeddings move async

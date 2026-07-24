@@ -5,7 +5,13 @@ import { z } from "zod";
 
 import { db } from "@/lib/db";
 import { verifyPassword } from "@/lib/password";
-import { clearAttempts, isRateLimited, recordFailedAttempt } from "@/lib/rate-limit";
+import {
+  buildLoginRateLimitKey,
+  clearAttempts,
+  isRateLimited,
+  RateLimitUnavailableError,
+  recordFailedAttempt
+} from "@/lib/rate-limit";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -54,36 +60,45 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         const email = parsed.data.email.toLowerCase();
-        const rateLimitKey = `login:${email}`;
-        if (isRateLimited(rateLimitKey)) {
-          return null;
+        const rateLimitKey = buildLoginRateLimitKey(email);
+
+        try {
+          if (await isRateLimited(rateLimitKey)) {
+            return null;
+          }
+
+          const user = await db.user.findUnique({
+            where: { email }
+          });
+
+          if (!user || user.status !== "ACTIVE") {
+            await recordFailedAttempt(rateLimitKey);
+            return null;
+          }
+
+          const isValid = await verifyPassword(parsed.data.password, user.passwordHash);
+          if (!isValid) {
+            await recordFailedAttempt(rateLimitKey);
+            return null;
+          }
+
+          await clearAttempts(rateLimitKey);
+
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.avatarUrl,
+            role: user.role,
+            status: user.status
+          };
+        } catch (error) {
+          if (error instanceof RateLimitUnavailableError) {
+            return null;
+          }
+
+          throw error;
         }
-
-        const user = await db.user.findUnique({
-          where: { email }
-        });
-
-        if (!user || user.status !== "ACTIVE") {
-          recordFailedAttempt(rateLimitKey);
-          return null;
-        }
-
-        const isValid = await verifyPassword(parsed.data.password, user.passwordHash);
-        if (!isValid) {
-          recordFailedAttempt(rateLimitKey);
-          return null;
-        }
-
-        clearAttempts(rateLimitKey);
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          image: user.avatarUrl,
-          role: user.role,
-          status: user.status
-        };
       }
     })
   ],

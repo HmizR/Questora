@@ -5,7 +5,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 ## Features
 
 - Credential authentication with active-account checks.
-- Basic login throttling for repeated failed credential attempts.
+- Redis-backed login throttling for repeated failed credential attempts, with local in-memory fallback.
 - Three primary roles: `ADMIN`, `LECTURER`, and `STUDENT`.
 - Prisma/PostgreSQL domain schema for users, classes, modules, activities, quizzes, quests, progress, submissions, grades, XP, and badges.
 - Role-aware route protection for `/admin`, `/lecturer`, and `/student`.
@@ -63,6 +63,12 @@ Copy `.env.example` to `.env` and set:
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/questora?schema=public"
 AUTH_SECRET="replace-with-a-long-random-secret"
 AUTH_URL="http://localhost:3000"
+RATE_LIMIT_BACKEND="auto"
+# REDIS_URL="redis://default:password@host:6379"
+# UPSTASH_REDIS_REST_URL="https://example.upstash.io"
+# UPSTASH_REDIS_REST_TOKEN="replace-with-upstash-token"
+# AUTH_RATE_LIMIT_ATTEMPTS="5"
+# AUTH_RATE_LIMIT_WINDOW_MS="60000"
 S3_BUCKET="questora-uploads"
 S3_REGION="us-east-1"
 S3_ACCESS_KEY_ID="replace-with-access-key"
@@ -75,6 +81,12 @@ OLLAMA_MODEL="qwen3:8b"
 EMBEDDING_PROVIDER="ollama"
 OLLAMA_EMBEDDING_MODEL="nomic-embed-text"
 ```
+
+Questora rate-limits repeated failed credential logins. `RATE_LIMIT_BACKEND=auto` chooses
+Upstash REST first, then TCP Redis, then in-memory fallback when Redis is not configured. For
+Vercel production, Upstash REST is recommended. Local and test environments can use
+`RATE_LIMIT_BACKEND=memory`; production should configure Redis so throttling works across app
+instances.
 
 The S3 variables power protected uploads. Student assignment/project submissions, account
 avatars, and lecturer mission resources upload through presigned URLs while still accepting

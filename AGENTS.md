@@ -111,5 +111,5 @@ Existing coverage includes:
 
 - Quiz handling is intentionally simple.
 - File uploads are represented as `fileUrl`.
-- Login rate limiting is in-memory and should use Redis or a shared store for production multi-instance deployments.
+- Login rate limiting supports Redis through Upstash REST or TCP Redis, with in-memory fallback for local/test.
 - Tests are unit-focused; database-backed integration tests are a strong next step.

@@ -161,6 +161,20 @@ Production should use:
 
 Development seed data should not be used in production.
 
+## Redis Rate Limiting
+
+Questora uses a small shared rate-limit abstraction for credential login throttling.
+
+The first Redis-backed use case is authentication rate limiting. `RATE_LIMIT_BACKEND=auto`
+prefers Upstash REST, then TCP Redis, then in-memory fallback when Redis is not configured.
+Upstash REST is the recommended Vercel production target. Local and test environments can use
+memory fallback; production denies credential login safely if an explicitly configured Redis
+backend is unavailable.
+
+The same abstraction can later support AI request limits, upload and API throttles,
+duplicate-sensitive short-lived locks, temporary signed URL caches, and background job
+coordination if resource extraction or embedding generation moves to async workers.
+
 ## Future AI Assistant Layer
 
 AI should be introduced as a controlled assistant layer, not as a replacement for LMS rules or lecturer judgment.
