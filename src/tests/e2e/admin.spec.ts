@@ -38,6 +38,20 @@ test("login shows a temporary lockout message after repeated failures", async ({
   ).toBeVisible();
 });
 
+test("login validates malformed emails while typing and on submit", async ({ page }) => {
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill("not-an-email");
+  await expect(page.getByText("Enter a valid email address.")).toBeVisible();
+
+  await page.getByLabel("Email").fill("");
+  await page.getByRole("button", { name: "Enter Questora" }).click();
+  await expect(page.getByText("Enter a valid email address.")).toBeVisible();
+
+  await page.getByLabel("Email").fill(e2eUsers.admin.email);
+  await expect(page.getByText("Enter a valid email address.")).toHaveCount(0);
+});
+
 test("admin can enroll an active student into a realm", async ({ page }) => {
   await loginAs(page, e2eUsers.admin.email);
   await page.goto(`/admin/classes/${seed.class.id}`);

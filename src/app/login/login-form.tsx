@@ -4,18 +4,30 @@ import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 
+const INVALID_EMAIL_MESSAGE = "Enter a valid email address.";
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const [emailValue, setEmailValue] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function onSubmit(formData: FormData) {
     setError(null);
+    const email = String(formData.get("email") ?? "")
+      .trim()
+      .toLowerCase();
+
+    if (!isValidEmail(email)) {
+      setEmailError(INVALID_EMAIL_MESSAGE);
+      return;
+    }
+
+    setEmailError(null);
     startTransition(async () => {
-      const email = String(formData.get("email") ?? "")
-        .trim()
-        .toLowerCase();
       const nextFailedAttemptCount = incrementBrowserFailedAttempts(email);
 
       const result = await signIn("credentials", {
@@ -46,19 +58,41 @@ export function LoginForm() {
   }
 
   return (
-    <form action={onSubmit} className="space-y-5">
+    <form action={onSubmit} className="space-y-5" noValidate>
       <div>
         <label className="text-sm font-medium" htmlFor="email">
           Email
         </label>
         <input
-          className="mt-2 w-full rounded-md border border-ink/15 bg-white px-3 py-2 outline-none ring-moss/40 focus:ring-4"
+          aria-describedby={emailError ? "email-error" : undefined}
+          aria-invalid={emailError ? "true" : "false"}
+          className="mt-2 w-full rounded-md border border-ink/15 bg-white px-3 py-2 outline-none ring-moss/40 focus:ring-4 aria-[invalid=true]:border-ember aria-[invalid=true]:ring-ember/20"
           id="email"
           name="email"
-          type="email"
+          type="text"
+          inputMode="email"
           autoComplete="email"
+          value={emailValue}
+          onBlur={() => {
+            const normalizedEmail = emailValue.trim().toLowerCase();
+            setEmailValue(normalizedEmail);
+            setEmailError(normalizedEmail && !isValidEmail(normalizedEmail) ? INVALID_EMAIL_MESSAGE : null);
+          }}
+          onChange={(event) => {
+            const nextValue = event.target.value;
+            setEmailValue(nextValue);
+            setError(null);
+            setEmailError(
+              nextValue.trim() && !isValidEmail(nextValue.trim()) ? INVALID_EMAIL_MESSAGE : null
+            );
+          }}
           required
         />
+        {emailError ? (
+          <p className="mt-2 text-sm font-medium text-ember" id="email-error" role="alert">
+            {emailError}
+          </p>
+        ) : null}
       </div>
       <div>
         <label className="text-sm font-medium" htmlFor="password">
@@ -90,6 +124,10 @@ export function LoginForm() {
       </button>
     </form>
   );
+}
+
+function isValidEmail(email: string) {
+  return emailPattern.test(email);
 }
 
 function browserFailedAttemptsKey(email: string) {
