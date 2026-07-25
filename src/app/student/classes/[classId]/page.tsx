@@ -6,6 +6,7 @@ import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { DeadlineBadge, DeadlineCard } from "@/components/ui/deadline-card";
 import { Expander } from "@/components/ui/expander";
+import { MissionTypeIcon, ProgressStatusBadge } from "@/components/ui/mission-display";
 import { requireClassEnrollment } from "@/lib/authorization-service";
 import { classifyDeadline } from "@/lib/deadlines";
 import { db } from "@/lib/db";
@@ -147,33 +148,38 @@ export default async function StudentClassPage({
                   return completed && scoreMet;
                 });
                 const cardContent = (
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="font-semibold">
-                        {activity.position}. {activity.title}
-                      </p>
-                      <p className="text-sm text-ink/60">
-                        {activity.type} - {progress?.status ?? "NOT_STARTED"}
-                      </p>
-                      <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink/55">
-                        <span>Due: {dueDate}</span>
-                        {activity.dueAt ? <DeadlineBadge state={deadlineState} /> : null}
-                      </p>
-                      {activity.resources.length > 0 ? (
-                        <p className="mt-1 text-sm font-medium text-moss">
-                          {requiredResourceCount > 0
-                            ? `${requiredResourceCount} required resource${requiredResourceCount === 1 ? "" : "s"}`
-                            : `${activity.resources.length} resource${activity.resources.length === 1 ? "" : "s"} available`}
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 gap-3">
+                      <MissionTypeIcon type={activity.type} />
+                      <div className="min-w-0">
+                        <p className="font-semibold">
+                          {activity.position}. {activity.title}
                         </p>
-                      ) : null}
-                      {!isUnlocked ? (
-                        <p className="mt-1 text-sm font-medium text-ember">
-                          Locked until prerequisite missions are complete.
+                        <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink/55">
+                          <span>Due: {dueDate}</span>
+                          {activity.dueAt ? <DeadlineBadge state={deadlineState} /> : null}
                         </p>
-                      ) : null}
+                        {activity.resources.length > 0 ? (
+                          <p className="mt-1 text-sm font-medium text-moss">
+                            {requiredResourceCount > 0
+                              ? `${requiredResourceCount} required resource${requiredResourceCount === 1 ? "" : "s"}`
+                              : `${activity.resources.length} resource${activity.resources.length === 1 ? "" : "s"} available`}
+                          </p>
+                        ) : null}
+                        {!isUnlocked ? (
+                          <p className="mt-1 text-sm font-medium text-ember">
+                            Locked until prerequisite missions are complete.
+                          </p>
+                        ) : null}
+                      </div>
                     </div>
-                    <div className="text-sm text-ink/65">
-                      {grade ? `Grade: ${grade.score.toString()}` : `${progress?.progressPercent ?? 0}%`}
+                    <div className="shrink-0 sm:text-right">
+                      <ProgressStatusBadge status={progress?.status} />
+                      {grade ? (
+                        <p className="mt-2 text-xs font-semibold text-ink/55">
+                          Grade: {grade.score.toString()}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                 );

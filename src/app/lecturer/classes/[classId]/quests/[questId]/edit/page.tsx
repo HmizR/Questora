@@ -8,6 +8,7 @@ import {
 } from "@/components/lecturer/forms";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { activityTypeLabel, MissionTypeIcon } from "@/components/ui/mission-display";
 import { requireClassLecturer } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
 
@@ -60,13 +61,16 @@ export default async function EditQuestPage({
                   className="flex flex-col gap-3 rounded-md border border-ink/10 p-3 sm:flex-row sm:items-center sm:justify-between"
                   key={link.activityId}
                 >
-                  <div>
-                    <p className="text-sm font-semibold">
-                      {link.position}. {link.activity.title}
-                    </p>
-                    <p className="mt-1 text-xs text-ink/60">
-                      {link.activity.type} - {link.activity.isRequired ? "Required" : "Optional"}
-                    </p>
+                  <div className="flex min-w-0 gap-3">
+                    <MissionTypeIcon className="h-9 w-9" type={link.activity.type} />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">
+                        {link.position}. {link.activity.title}
+                      </p>
+                      <p className="mt-1 text-xs text-ink/60">
+                        {activityTypeLabel(link.activity.type)} - {link.activity.isRequired ? "Required" : "Optional"}
+                      </p>
+                    </div>
                   </div>
                   <RemoveQuestActivityForm
                     activityId={link.activityId}

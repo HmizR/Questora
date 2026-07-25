@@ -5,6 +5,7 @@ import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AnalyticsControls, SortHeader } from "@/components/ui/analytics-controls";
+import { activityTypeLabel } from "@/components/ui/mission-display";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireClassLecturer } from "@/lib/authorization-service";
 import { formatTimestampLabel } from "@/lib/date-format";
@@ -198,7 +199,7 @@ export default async function LecturerGradesPage({
                 <th className="min-w-44 px-4 py-3 font-semibold" key={mission.id}>
                   <span className="block">{mission.title}</span>
                   <span className="mt-1 block text-xs font-medium text-white/70">
-                    {mission.moduleTitle} - {mission.type}
+                    {mission.moduleTitle} - {activityTypeLabel(mission.type)}
                   </span>
                 </th>
               ))}

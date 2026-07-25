@@ -47,6 +47,7 @@ import { LecturerActionForm } from "@/components/lecturer/action-form";
 import { MissionResourceUpload } from "@/components/lecturer/mission-resource-upload";
 import { SelectField, TextAreaField, TextField } from "@/components/admin/form-fields";
 import { ConfirmAction } from "@/components/ui/confirm-action";
+import { activityTypeLabel } from "@/components/ui/mission-display";
 import { ResourceFileCard } from "@/components/ui/resource-file-card";
 import { QuizBuilderFields } from "@/components/lecturer/quiz-builder-fields";
 import { getQuizQuestionFieldDefaults } from "@/lib/quiz";
@@ -84,7 +85,7 @@ function dateInput(value?: Date | null) {
 function activityOptions(activities: ActivityOption[]) {
   return activities.map((activity) => ({
     value: activity.id,
-    label: `${activity.position}. ${activity.title} (${activity.type})`
+    label: `${activity.position}. ${activity.title} (${activityTypeLabel(activity.type)})`
   }));
 }
 
@@ -232,7 +233,7 @@ export function CreateActivityForm({ moduleId }: { moduleId: string }) {
         label="Mission type"
         name="type"
         defaultValue={ActivityType.LESSON}
-        options={Object.values(ActivityType).map((type) => ({ value: type, label: type }))}
+        options={Object.values(ActivityType).map((type) => ({ value: type, label: activityTypeLabel(type) }))}
       />
       <TextField label="Mission title" name="title" />
       <TextAreaField label="Description" name="description" />
@@ -272,7 +273,7 @@ export function UpdateActivityForm({ activity }: { activity: Activity }) {
         label="Mission type"
         name="type"
         defaultValue={activity.type}
-        options={Object.values(ActivityType).map((type) => ({ value: type, label: type }))}
+        options={Object.values(ActivityType).map((type) => ({ value: type, label: activityTypeLabel(type) }))}
       />
       <TextField label="Mission title" name="title" defaultValue={activity.title} />
       <TextAreaField label="Description" name="description" defaultValue={activity.description} />

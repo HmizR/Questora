@@ -277,6 +277,9 @@ Targeted student AI assistant streaming e2e check passing
   - add full calendar views later if deadline panels are not enough
   - add quiz review improvements such as answer explanations, review settings, or question randomization
 - AI assistant roadmap:
+  - harden student AI guardrails beyond prompt-only behavior with context minimization and anti-impersonation/jailbreak instructions
+  - for graded quiz/assignment/project contexts, avoid sending answer-key-like data unless it is safe for tutoring
+  - keep output-review model calls as a later option because they add latency and resource usage
   - expand pgvector RAG from mission-scoped resource chunks to class-wide retrieval after usage patterns are clearer
   - consider Office document text extraction after upload safety, conversion tooling, and performance limits are clearer
   - improve assistant source display in the drawer now that resource chunks can cite PDF pages and text/Markdown lines

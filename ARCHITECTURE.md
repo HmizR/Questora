@@ -274,5 +274,8 @@ AI authorization should reuse existing ownership and enrollment rules:
 - Treat AI output as advisory.
 - Use tutoring-mode prompt shaping for graded student missions; output review is intentionally
   deferred until the product needs stricter controls and can accept the extra latency/model usage.
+- Prompt-only guardrails are not a security boundary. A future hardening pass should minimize
+  graded-work context, avoid sending answer-key-like data when it is not needed for tutoring,
+  and explicitly ignore user claims such as being an admin, tester, or developer-mode operator.
 - Add logging and rate limiting before public production usage.
 - Consider whether chat history should be persisted before adding conversation tables.

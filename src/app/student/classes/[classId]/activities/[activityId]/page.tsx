@@ -11,6 +11,7 @@ import { StudentResourceSection } from "@/components/student/student-resource-se
 import { AIAssistantContextRegistration } from "@/components/ai/ai-assistant-context-registration";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { activityTypeLabel, MissionTypeIcon } from "@/components/ui/mission-display";
 import { ProtectedFileLink } from "@/components/ui/protected-file-link";
 import { SubmissionRevisionList } from "@/components/ui/submission-revision-list";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -99,14 +100,19 @@ export default async function StudentActivityPage({
       ? quizAttempts.map((attempt) => parseStoredQuizAttempt(attempt))
       : [];
   return (
-    <DashboardShell title={activity.title} subtitle={`${activity.type} mission in ${activity.module.title}`}>
+    <DashboardShell title={activity.title} subtitle={`${activityTypeLabel(activity.type)} mission in ${activity.module.title}`}>
       <AIAssistantContextRegistration
         context={{ type: "STUDENT_ACTIVITY", classId, activityId: activity.id }}
       />
       <ClassTabs classId={classId} role="STUDENT" />
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <section className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">
-          <p className="text-sm font-semibold uppercase tracking-wide text-moss">{activity.type}</p>
+          <div className="flex items-center gap-3">
+            <MissionTypeIcon type={activity.type} />
+            <p className="text-sm font-semibold uppercase tracking-wide text-moss">
+              {activityTypeLabel(activity.type)}
+            </p>
+          </div>
           {activity.description ? <p className="mt-3 text-ink/70">{activity.description}</p> : null}
           {displayContent ? (
             <section className="mt-5 rounded-lg border border-border/80 bg-parchment p-5">

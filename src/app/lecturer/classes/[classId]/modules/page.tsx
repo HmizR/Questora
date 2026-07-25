@@ -15,6 +15,7 @@ import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Expander } from "@/components/ui/expander";
+import { activityTypeLabel, MissionTypeIcon } from "@/components/ui/mission-display";
 import { requireClassLecturer } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
 
@@ -139,8 +140,15 @@ export default async function LecturerModulesPage({
                   <Expander
                     className="shadow-none"
                     key={activity.id}
-                    meta={`${activity.type} - ${activity.isPublished ? "Published" : "Draft"}`}
-                    title={`${activity.position}. ${activity.title}`}
+                    meta={`${activityTypeLabel(activity.type)} - ${activity.isPublished ? "Published" : "Draft"}`}
+                    title={
+                      <span className="flex min-w-0 items-center gap-3">
+                        <MissionTypeIcon className="h-9 w-9" type={activity.type} />
+                        <span className="truncate">
+                          {activity.position}. {activity.title}
+                        </span>
+                      </span>
+                    }
                   >
                     <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <p className="text-sm text-ink/60">

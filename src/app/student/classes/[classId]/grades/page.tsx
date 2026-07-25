@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { EmptyState } from "@/components/ui/empty-state";
+import { activityTypeLabel } from "@/components/ui/mission-display";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireClassEnrollment } from "@/lib/authorization-service";
 import { formatDate, formatDateTime, formatTimestampLabel } from "@/lib/date-format";
@@ -106,7 +107,7 @@ export default async function StudentClassGradesPage({
                       </Link>
                       <p className="mt-1 text-xs text-ink/55">{mission.regionTitle}</p>
                     </td>
-                    <td className="px-4 py-3">{mission.type}</td>
+                    <td className="px-4 py-3">{activityTypeLabel(mission.type)}</td>
                     <td className="px-4 py-3">{formatDate(mission.dueAt)}</td>
                     <td className="px-4 py-3 text-ink/70">
                       {isQuiz ? (

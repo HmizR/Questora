@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { MissionTypeIcon, ProgressStatusBadge } from "@/components/ui/mission-display";
 import { requireClassEnrollment } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
 
@@ -59,7 +60,7 @@ export default async function StudentQuestsPage({
                   <p className="text-xs font-semibold uppercase tracking-wide text-moss">{quest.type}</p>
                   <h2 className="mt-1 text-xl font-bold">{quest.title}</h2>
                   <p className="mt-2 text-sm text-ink/65">
-                    {quest.xpReward} XP · {quest.isOptional ? "Optional" : "Main path"}
+                    {quest.xpReward} XP - {quest.isOptional ? "Optional" : "Main path"}
                   </p>
                 </div>
                 <p className="text-sm font-semibold text-ink/70">
@@ -73,9 +74,18 @@ export default async function StudentQuestsPage({
                 {quest.activities.map((link) => {
                   const progress = link.activity.progresses[0];
                   return (
-                    <p className="text-sm text-ink/70" key={link.activityId}>
-                      {link.position}. {link.activity.title} · {progress?.status ?? "NOT_STARTED"}
-                    </p>
+                    <div
+                      className="flex items-center justify-between gap-3 rounded-lg border border-border/80 bg-surface-muted p-3"
+                      key={link.activityId}
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <MissionTypeIcon className="h-9 w-9" type={link.activity.type} />
+                        <p className="min-w-0 truncate text-sm font-semibold text-ink/80">
+                          {link.position}. {link.activity.title}
+                        </p>
+                      </div>
+                      <ProgressStatusBadge status={progress?.status} />
+                    </div>
                   );
                 })}
               </div>
