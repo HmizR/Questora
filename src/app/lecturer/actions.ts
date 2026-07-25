@@ -134,8 +134,9 @@ export async function createModuleAction(
   let redirectTo: string;
   try {
     const user = await requireRole("LECTURER");
-    await createModule({ ...parsed.data, lecturerId: user.id });
-    redirectTo = `/lecturer/classes/${parsed.data.classId}/modules`;
+    const learningModule = await createModule({ ...parsed.data, lecturerId: user.id });
+    redirectTo = `/lecturer/classes/${parsed.data.classId}/modules/${learningModule.id}/edit`;
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}/modules`);
     revalidatePath(redirectTo);
   } catch (error) {
     return { ok: false, error: toActionError(error) };
@@ -217,8 +218,11 @@ export async function createActivityAction(
       select: { classId: true }
     });
     redirectTo = learningModule
-      ? `/lecturer/classes/${learningModule.classId}/modules`
+      ? `/lecturer/classes/${learningModule.classId}/modules/${activity.moduleId}/activities/${activity.id}/edit`
       : "/lecturer/classes";
+    if (learningModule) {
+      revalidatePath(`/lecturer/classes/${learningModule.classId}/modules`);
+    }
     revalidatePath(redirectTo);
   } catch (error) {
     return { ok: false, error: toActionError(error) };
@@ -474,8 +478,9 @@ export async function createAnnouncementAction(
   let redirectTo: string;
   try {
     const user = await requireRole("LECTURER");
-    await createAnnouncement({ ...parsed.data, lecturerId: user.id });
-    redirectTo = `/lecturer/classes/${parsed.data.classId}/announcements`;
+    const announcement = await createAnnouncement({ ...parsed.data, lecturerId: user.id });
+    redirectTo = `/lecturer/classes/${parsed.data.classId}/announcements/${announcement.id}/edit`;
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}/announcements`);
     revalidatePath(redirectTo);
     revalidatePath(`/lecturer/classes/${parsed.data.classId}`);
   } catch (error) {
@@ -570,8 +575,9 @@ export async function createQuestAction(
   let redirectTo: string;
   try {
     const user = await requireRole("LECTURER");
-    await createQuest({ ...parsed.data, lecturerId: user.id });
-    redirectTo = `/lecturer/classes/${parsed.data.classId}/quests`;
+    const quest = await createQuest({ ...parsed.data, lecturerId: user.id });
+    redirectTo = `/lecturer/classes/${parsed.data.classId}/quests/${quest.id}/edit`;
+    revalidatePath(`/lecturer/classes/${parsed.data.classId}/quests`);
     revalidatePath(redirectTo);
   } catch (error) {
     return { ok: false, error: toActionError(error) };

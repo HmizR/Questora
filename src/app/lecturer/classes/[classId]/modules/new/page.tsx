@@ -4,6 +4,7 @@ import { CreateModuleForm } from "@/components/lecturer/forms";
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { requireClassLecturer } from "@/lib/authorization-service";
+import { db } from "@/lib/db";
 
 export default async function NewRegionPage({
   params
@@ -12,6 +13,12 @@ export default async function NewRegionPage({
 }) {
   const { classId } = await params;
   await requireClassLecturer(classId);
+  const lastModule = await db.module.findFirst({
+    where: { classId },
+    orderBy: { position: "desc" },
+    select: { position: true }
+  });
+  const nextPosition = (lastModule?.position ?? 0) + 1;
 
   return (
     <DashboardShell title="New region" subtitle="Create a new learning region for this realm.">
@@ -24,7 +31,7 @@ export default async function NewRegionPage({
           Back to regions
         </Link>
       </div>
-      <CreateModuleForm classId={classId} />
+      <CreateModuleForm classId={classId} initialPosition={nextPosition} />
     </DashboardShell>
   );
 }

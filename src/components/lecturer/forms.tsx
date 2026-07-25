@@ -144,13 +144,19 @@ function getResourceEmbeddingSummary(resource: ResourceWithEmbeddingSummary) {
   };
 }
 
-export function CreateModuleForm({ classId }: { classId: string }) {
+export function CreateModuleForm({
+  classId,
+  initialPosition = 1
+}: {
+  classId: string;
+  initialPosition?: number;
+}) {
   return (
     <LecturerActionForm action={createModuleAction} className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">
       <input name="classId" type="hidden" value={classId} />
-      <TextField label="Region title" name="title" />
+      <TextField label="Region title" name="title" minLength={2} />
       <TextAreaField label="Description" name="description" />
-      <TextField label="Position" name="position" type="number" defaultValue="1" />
+      <TextField label="Position" name="position" type="number" defaultValue={String(initialPosition)} />
       <TextField label="Available from" name="availableFrom" type="date" required={false} />
       <label className="flex items-center gap-2 text-sm font-medium">
         <input name="isPublished" type="checkbox" /> Published
@@ -167,7 +173,7 @@ export function UpdateModuleForm({ module }: { module: Module }) {
     <LecturerActionForm action={updateModuleAction} className="rounded-lg border border-ink/10 bg-white p-5 shadow-sm">
       <input name="classId" type="hidden" value={module.classId} />
       <input name="moduleId" type="hidden" value={module.id} />
-      <TextField label="Region title" name="title" defaultValue={module.title} />
+      <TextField label="Region title" name="title" defaultValue={module.title} minLength={2} />
       <TextAreaField label="Description" name="description" defaultValue={module.description} />
       <TextField label="Position" name="position" type="number" defaultValue={String(module.position)} />
       <TextField
@@ -225,7 +231,13 @@ export function DeleteModuleForm({
   );
 }
 
-export function CreateActivityForm({ moduleId }: { moduleId: string }) {
+export function CreateActivityForm({
+  moduleId,
+  initialPosition = 1
+}: {
+  moduleId: string;
+  initialPosition?: number;
+}) {
   return (
     <LecturerActionForm action={createActivityAction} className="rounded-lg border border-ink/10 bg-white p-5 shadow-sm">
       <input name="moduleId" type="hidden" value={moduleId} />
@@ -235,12 +247,12 @@ export function CreateActivityForm({ moduleId }: { moduleId: string }) {
         defaultValue={ActivityType.LESSON}
         options={Object.values(ActivityType).map((type) => ({ value: type, label: activityTypeLabel(type) }))}
       />
-      <TextField label="Mission title" name="title" />
+      <TextField label="Mission title" name="title" minLength={2} />
       <TextAreaField label="Description" name="description" />
       <TextAreaField label="Content or instructions" name="content" />
       <QuizBuilderFields />
       <div className="grid gap-4 sm:grid-cols-4">
-        <TextField label="Position" name="position" type="number" defaultValue="1" />
+        <TextField label="Position" name="position" type="number" defaultValue={String(initialPosition)} />
         <TextField label="Max score" name="maxScore" type="number" required={false} />
         <TextField label="Passing score" name="passingScore" type="number" required={false} />
         <TextField label="Max attempts" name="maxAttempts" type="number" required={false} />
@@ -275,7 +287,7 @@ export function UpdateActivityForm({ activity }: { activity: Activity }) {
         defaultValue={activity.type}
         options={Object.values(ActivityType).map((type) => ({ value: type, label: activityTypeLabel(type) }))}
       />
-      <TextField label="Mission title" name="title" defaultValue={activity.title} />
+      <TextField label="Mission title" name="title" defaultValue={activity.title} minLength={2} />
       <TextAreaField label="Description" name="description" defaultValue={activity.description} />
       <TextAreaField
         label="Content or instructions"
@@ -568,7 +580,7 @@ export function MissionResourcesPanel({
                   <input name="moduleId" type="hidden" value={moduleId} />
                   <input name="activityId" type="hidden" value={activityId} />
                   <input name="resourceId" type="hidden" value={resource.id} />
-                  <TextField label="Resource title" name="title" defaultValue={resource.title} />
+                  <TextField label="Resource title" name="title" defaultValue={resource.title} minLength={2} />
                   <TextAreaField
                     label="Description"
                     name="description"
@@ -608,7 +620,7 @@ export function MissionResourcesPanel({
         <input name="classId" type="hidden" value={classId} />
         <input name="moduleId" type="hidden" value={moduleId} />
         <input name="activityId" type="hidden" value={activityId} />
-        <TextField label="Resource title" name="title" />
+        <TextField label="Resource title" name="title" minLength={2} />
         <TextAreaField label="Description" name="description" required={false} />
         <SelectField
           defaultValue={ActivityResourceKind.OTHER}
@@ -638,8 +650,8 @@ export function CreateAnnouncementForm({ classId }: { classId: string }) {
   return (
     <LecturerActionForm action={createAnnouncementAction} className="rounded-lg border border-border/80 bg-surface p-6 shadow-sm">
       <input name="classId" type="hidden" value={classId} />
-      <TextField label="Announcement title" name="title" />
-      <TextAreaField label="Update" name="body" />
+      <TextField label="Announcement title" name="title" maxLength={140} minLength={2} />
+      <TextAreaField label="Update" name="body" maxLength={5000} minLength={2} required />
       <SelectField
         defaultValue={AnnouncementStatus.DRAFT}
         label="Status"
@@ -661,8 +673,15 @@ export function UpdateAnnouncementForm({ announcement }: { announcement: Announc
     <LecturerActionForm action={updateAnnouncementAction} className="rounded-lg border border-border/80 bg-surface p-6 shadow-sm">
       <input name="classId" type="hidden" value={announcement.classId} />
       <input name="announcementId" type="hidden" value={announcement.id} />
-      <TextField label="Announcement title" name="title" defaultValue={announcement.title} />
-      <TextAreaField label="Update" name="body" defaultValue={announcement.body} />
+      <TextField label="Announcement title" name="title" defaultValue={announcement.title} maxLength={140} minLength={2} />
+      <TextAreaField
+        label="Update"
+        name="body"
+        defaultValue={announcement.body}
+        maxLength={5000}
+        minLength={2}
+        required
+      />
       <SelectField
         defaultValue={announcement.status}
         label="Status"
@@ -740,11 +759,17 @@ export function DeleteAnnouncementForm({
   );
 }
 
-export function CreateQuestForm({ classId }: { classId: string }) {
+export function CreateQuestForm({
+  classId,
+  initialPosition = 1
+}: {
+  classId: string;
+  initialPosition?: number;
+}) {
   return (
     <LecturerActionForm action={createQuestAction} className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">
       <input name="classId" type="hidden" value={classId} />
-      <TextField label="Quest title" name="title" />
+      <TextField label="Quest title" name="title" minLength={2} />
       <TextAreaField label="Description" name="description" />
       <SelectField
         label="Quest type"
@@ -753,7 +778,7 @@ export function CreateQuestForm({ classId }: { classId: string }) {
         options={Object.values(QuestType).map((type) => ({ value: type, label: type }))}
       />
       <div className="grid gap-4 sm:grid-cols-2">
-        <TextField label="Position" name="position" type="number" defaultValue="1" />
+        <TextField label="Position" name="position" type="number" defaultValue={String(initialPosition)} />
         <TextField label="XP reward" name="xpReward" type="number" defaultValue="100" />
       </div>
       <div className="flex flex-wrap gap-4">
@@ -776,7 +801,7 @@ export function UpdateQuestForm({ quest }: { quest: Quest }) {
     <LecturerActionForm action={updateQuestAction} className="rounded-lg border border-ink/10 bg-white p-5 shadow-sm">
       <input name="classId" type="hidden" value={quest.classId} />
       <input name="questId" type="hidden" value={quest.id} />
-      <TextField label="Quest title" name="title" defaultValue={quest.title} />
+      <TextField label="Quest title" name="title" defaultValue={quest.title} minLength={2} />
       <TextAreaField label="Description" name="description" defaultValue={quest.description} />
       <SelectField
         label="Quest type"
@@ -847,18 +872,20 @@ export const lecturerMenuDangerClassName = menuDangerButton;
 export function ConnectQuestActivityForm({
   classId,
   questId,
-  activities
+  activities,
+  initialPosition = 1
 }: {
   classId: string;
   questId: string;
   activities: ActivityOption[];
+  initialPosition?: number;
 }) {
   return (
     <LecturerActionForm action={connectQuestActivityAction} className="mt-4 border-t border-ink/10 pt-4">
       <input name="classId" type="hidden" value={classId} />
       <input name="questId" type="hidden" value={questId} />
       <SelectField label="Mission" name="activityId" options={activityOptions(activities)} />
-      <TextField label="Quest order" name="position" type="number" defaultValue="1" />
+      <TextField label="Quest order" name="position" type="number" defaultValue={String(initialPosition)} />
       <button className="rounded-md border border-ink/20 bg-white px-3 py-2 text-sm font-semibold hover:bg-ink hover:text-white">
         Connect mission
       </button>

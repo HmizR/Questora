@@ -22,6 +22,13 @@ export default async function NewMissionPage({
 
   if (!learningModule) notFound();
 
+  const lastActivity = await db.activity.findFirst({
+    where: { moduleId },
+    orderBy: { position: "desc" },
+    select: { position: true }
+  });
+  const nextPosition = (lastActivity?.position ?? 0) + 1;
+
   return (
     <DashboardShell
       title="New mission"
@@ -36,7 +43,7 @@ export default async function NewMissionPage({
           Back to regions
         </Link>
       </div>
-      <CreateActivityForm moduleId={moduleId} />
+      <CreateActivityForm moduleId={moduleId} initialPosition={nextPosition} />
     </DashboardShell>
   );
 }

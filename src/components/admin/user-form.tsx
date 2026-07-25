@@ -13,9 +13,9 @@ import { ConfirmAction } from "@/components/ui/confirm-action";
 export function CreateUserForm() {
   return (
     <ActionForm action={createUserAction} className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">
-      <TextField label="Name" name="name" />
+      <TextField label="Name" name="name" minLength={2} />
       <TextField label="Email" name="email" type="email" />
-      <TextField label="Temporary password" name="password" type="password" />
+      <TextField label="Temporary password" name="password" type="password" minLength={8} />
       <SelectField label="Role" name="role" defaultValue={UserRole.STUDENT} options={roleOptions} />
       <SelectField
         label="Status"
@@ -35,7 +35,7 @@ export function UpdateUserForm({ user }: { user: User }) {
   return (
     <ActionForm action={updateUserAction} className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">
       <input name="userId" type="hidden" value={user.id} />
-      <TextField label="Name" name="name" defaultValue={user.name} />
+      <TextField label="Name" name="name" defaultValue={user.name} minLength={2} />
       <TextField label="Email" name="email" type="email" defaultValue={user.email} />
       <SelectField label="Role" name="role" defaultValue={user.role} options={roleOptions} />
       <SelectField label="Status" name="status" defaultValue={user.status} options={userStatusOptions} />
@@ -66,8 +66,8 @@ export function ResetUserPasswordForm({ userId }: { userId: string }) {
   return (
     <ActionForm action={resetUserPasswordAction} className="mt-5 border-t border-ink/10 pt-5">
       <input name="userId" type="hidden" value={userId} />
-      <TextField label="Temporary password" name="newPassword" type="password" />
-      <TextField label="Confirm temporary password" name="confirmPassword" type="password" />
+      <TextField label="Temporary password" name="newPassword" type="password" minLength={8} />
+      <TextField label="Confirm temporary password" name="confirmPassword" type="password" minLength={8} />
       <button className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-steel">
         Reset password
       </button>

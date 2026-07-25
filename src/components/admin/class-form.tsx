@@ -29,8 +29,8 @@ function lecturerOptions(lecturers: User[]) {
 export function CreateClassForm({ lecturers }: { lecturers: User[] }) {
   return (
     <ActionForm action={createClassAction} className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">
-      <TextField label="Realm name" name="name" />
-      <TextField label="Class code" name="code" />
+      <TextField label="Realm name" name="name" minLength={2} />
+      <TextField label="Class code" name="code" minLength={2} />
       <TextAreaField label="Description" name="description" />
       <SelectField label="Lecturer" name="lecturerId" options={lecturerOptions(lecturers)} />
       <SelectField
@@ -60,8 +60,8 @@ export function UpdateClassForm({
   return (
     <ActionForm action={updateClassAction} className="rounded-lg border border-ink/10 bg-white p-6 shadow-sm">
       <input name="classId" type="hidden" value={teachingClass.id} />
-      <TextField label="Realm name" name="name" defaultValue={teachingClass.name} />
-      <TextField label="Class code" name="code" defaultValue={teachingClass.code} />
+      <TextField label="Realm name" name="name" defaultValue={teachingClass.name} minLength={2} />
+      <TextField label="Class code" name="code" defaultValue={teachingClass.code} minLength={2} />
       <TextAreaField label="Description" name="description" defaultValue={teachingClass.description} />
       <SelectField
         label="Lecturer"

@@ -36,6 +36,8 @@ export default async function EditQuestPage({
     where: { module: { classId } },
     orderBy: [{ module: { position: "asc" } }, { position: "asc" }]
   });
+  const nextQuestActivityPosition =
+    Math.max(0, ...quest.activities.map((link) => link.position)) + 1;
 
   return (
     <DashboardShell title="Edit quest" subtitle={`Update ${quest.title}.`}>
@@ -84,6 +86,7 @@ export default async function EditQuestPage({
           <ConnectQuestActivityForm
             activities={activities}
             classId={classId}
+            initialPosition={nextQuestActivityPosition}
             questId={quest.id}
           />
         </section>
