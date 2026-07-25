@@ -61,7 +61,7 @@ export default async function StudentClassPage({
   if (!teachingClass) notFound();
 
   return (
-    <DashboardShell title={teachingClass.name} subtitle="Choose a mission and continue your quest.">
+    <DashboardShell title={`${teachingClass.name} missions`} subtitle="Choose a mission and continue your quest.">
       <AIAssistantContextRegistration context={{ type: "STUDENT_CLASS", classId }} />
       <ClassTabs classId={classId} role="STUDENT" />
       <section className="mb-6 rounded-lg border border-border/80 bg-surface p-5 shadow-sm">

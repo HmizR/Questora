@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { requireClassEnrollment } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
 import { getPublishedAnnouncementsForStudent } from "@/services/announcement-service";
+import { notFound } from "next/navigation";
 
 export default async function StudentAnnouncementsPage({
   params
@@ -19,10 +20,12 @@ export default async function StudentAnnouncementsPage({
     getPublishedAnnouncementsForStudent({ studentId: user.id, classId })
   ]);
 
+  if (!teachingClass) notFound();
+
   return (
     <DashboardShell
-      title="Announcements"
-      subtitle={`Latest updates from ${teachingClass?.name ?? "this realm"}.`}
+      title={`${teachingClass.name} announcements`}
+      subtitle="Latest updates from your lecturer."
     >
       <ClassTabs classId={classId} role="STUDENT" />
       {announcements.length === 0 ? (

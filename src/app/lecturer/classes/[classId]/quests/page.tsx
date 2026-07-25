@@ -58,7 +58,7 @@ export default async function LecturerQuestsPage({
 
   return (
     <DashboardShell
-      title="Quest management"
+      title={`${teachingClass.name} quests`}
       subtitle="Create RPG-style quest chains, connect missions, and configure XP rewards."
     >
       <ClassTabs classId={classId} role="LECTURER" />

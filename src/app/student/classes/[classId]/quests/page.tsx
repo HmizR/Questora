@@ -39,7 +39,10 @@ export default async function StudentQuestsPage({
   if (!teachingClass) notFound();
 
   return (
-    <DashboardShell title="Quest log" subtitle="Quest completion is derived from required mission progress.">
+    <DashboardShell
+      title={`${teachingClass.name} quests`}
+      subtitle="Quest completion is derived from required mission progress."
+    >
       <ClassTabs classId={classId} role="STUDENT" />
       <div className="grid gap-4">
         {teachingClass.quests.map((quest) => {

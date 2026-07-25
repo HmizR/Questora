@@ -68,7 +68,7 @@ export default async function LecturerModulesPage({
 
   return (
     <DashboardShell
-      title="Regions and missions"
+      title={`${teachingClass.name} regions`}
       subtitle="Create, update, publish, and delete regions and their learning missions."
     >
       <ClassTabs classId={classId} role="LECTURER" />

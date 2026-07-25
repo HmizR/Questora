@@ -58,7 +58,10 @@ export default async function LecturerClassDashboardPage({
   const overdue = overdueWork.slice(0, 5);
 
   return (
-    <DashboardShell title={teachingClass.name} subtitle={teachingClass.description ?? "Realm overview"}>
+    <DashboardShell
+      title={`${teachingClass.name} overview`}
+      subtitle={teachingClass.description ?? "Realm overview"}
+    >
       <ClassTabs classId={classId} role="LECTURER" />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Students" value={teachingClass.students.length} />

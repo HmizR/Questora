@@ -140,7 +140,10 @@ export default async function LecturerGradesPage({
   });
 
   return (
-    <DashboardShell title="Grades" subtitle="Review grade coverage across students and missions.">
+    <DashboardShell
+      title={`${teachingClass.name} grades`}
+      subtitle="Review grade coverage across students and missions."
+    >
       <ClassTabs classId={classId} role="LECTURER" />
       <AnalyticsControls
         action={pathname}

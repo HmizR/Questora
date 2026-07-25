@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import { AnnouncementCard } from "@/components/ui/announcement-card";
 import { ClassTabs } from "@/components/ui/class-tabs";
@@ -29,10 +30,12 @@ export default async function LecturerAnnouncementsPage({
     })
   ]);
 
+  if (!teachingClass) notFound();
+
   return (
     <DashboardShell
-      title="Announcements"
-      subtitle={`Post realm updates for ${teachingClass?.name ?? "this realm"}.`}
+      title={`${teachingClass.name} announcements`}
+      subtitle="Post realm updates for enrolled students."
     >
       <ClassTabs classId={classId} role="LECTURER" />
       <div className="mb-5 flex justify-end">

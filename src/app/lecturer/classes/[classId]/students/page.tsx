@@ -139,7 +139,10 @@ export default async function LecturerStudentsPage({
   });
 
   return (
-    <DashboardShell title="Student roster" subtitle="View learner XP, progress, and grading status.">
+    <DashboardShell
+      title={`${teachingClass.name} students`}
+      subtitle="View learner XP, progress, and grading status."
+    >
       <ClassTabs classId={classId} role="LECTURER" />
       <AnalyticsControls
         action={pathname}
