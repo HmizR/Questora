@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppError } from "@/lib/errors";
 import { aiChatRequestSchema } from "@/schemas/ai";
 import { normalizeLatexDelimiters } from "@/components/ai/ai-markdown";
+import { createOllamaHeaders } from "@/services/ai/ollama-auth";
 import {
   EMBEDDING_DIMENSION,
   OllamaEmbeddingProvider,
@@ -112,6 +113,43 @@ describe("AI assistant helpers", () => {
     ).rejects.toBeInstanceOf(AppError);
   });
 
+  it("adds Ollama basic auth headers when credentials are configured", async () => {
+    expect(createOllamaHeaders()).toEqual({ "Content-Type": "application/json" });
+    expect(createOllamaHeaders({ username: "questora", password: "secret" })).toEqual({
+      "Content-Type": "application/json",
+      Authorization: "Basic cXVlc3RvcmE6c2VjcmV0"
+    });
+
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        message: {
+          content: "Authenticated response."
+        }
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const provider = new OllamaProvider({
+      baseUrl: "http://ollama.test",
+      model: "qwen3:8b",
+      username: "questora",
+      password: "secret"
+    });
+
+    await provider.complete({
+      messages: [{ role: "user", content: "Help" }]
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://ollama.test/api/chat",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: "Basic cXVlc3RvcmE6c2VjcmV0"
+        })
+      })
+    );
+  });
+
   it("validates and serializes embedding vectors", () => {
     const vector = Array.from({ length: EMBEDDING_DIMENSION }, (_, index) => index / 1000);
 
@@ -134,13 +172,18 @@ describe("AI assistant helpers", () => {
 
     const provider = new OllamaEmbeddingProvider({
       baseUrl: "http://ollama.test",
-      model: "nomic-embed-text"
+      model: "nomic-embed-text",
+      username: "questora",
+      password: "secret"
     });
 
     await expect(provider.embed("resource excerpt")).resolves.toEqual(vector);
     expect(fetchMock).toHaveBeenCalledWith(
       "http://ollama.test/api/embed",
       expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: "Basic cXVlc3RvcmE6c2VjcmV0"
+        }),
         body: JSON.stringify({
           model: "nomic-embed-text",
           input: "resource excerpt"

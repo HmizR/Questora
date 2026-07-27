@@ -78,6 +78,8 @@ S3_SECRET_ACCESS_KEY="replace-with-secret-key"
 AI_PROVIDER="ollama"
 OLLAMA_BASE_URL="http://localhost:11434"
 OLLAMA_MODEL="qwen3:8b"
+# OLLAMA_BASIC_AUTH_USERNAME="replace-with-ollama-username"
+# OLLAMA_BASIC_AUTH_PASSWORD="replace-with-ollama-password"
 EMBEDDING_PROVIDER="ollama"
 OLLAMA_EMBEDDING_MODEL="nomic-embed-text"
 ```
@@ -123,6 +125,10 @@ ollama pull qwen3:8b
 ollama pull nomic-embed-text
 ollama serve
 ```
+
+If Ollama is behind Basic Auth, set both `OLLAMA_BASIC_AUTH_USERNAME` and
+`OLLAMA_BASIC_AUTH_PASSWORD`. Questora sends those credentials to Ollama chat and
+embedding endpoints only from the server-side provider layer.
 
 The AI assistant streams responses through Server-Sent Events for a faster chat feel while
 keeping the original JSON endpoint as a fallback. Chat history stays in browser state only.

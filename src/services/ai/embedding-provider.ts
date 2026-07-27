@@ -1,4 +1,5 @@
 import { AppError } from "@/lib/errors";
+import { createOllamaHeaders, type OllamaAuthParams } from "@/services/ai/ollama-auth";
 
 export const EMBEDDING_DIMENSION = 768;
 
@@ -31,17 +32,22 @@ export function serializeEmbeddingVector(value: number[]) {
 export class OllamaEmbeddingProvider implements EmbeddingProvider {
   private readonly baseUrl: string;
   private readonly model: string;
+  private readonly auth?: OllamaAuthParams;
 
-  constructor(params?: { baseUrl?: string; model?: string }) {
+  constructor(params?: { baseUrl?: string; model?: string } & OllamaAuthParams) {
     this.baseUrl = params?.baseUrl ?? process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
     this.model = params?.model ?? process.env.OLLAMA_EMBEDDING_MODEL ?? "nomic-embed-text";
+    this.auth = {
+      username: params?.username,
+      password: params?.password
+    };
   }
 
   async embed(text: string) {
     try {
       const response = await fetch(`${this.baseUrl.replace(/\/$/, "")}/api/embed`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: createOllamaHeaders(this.auth),
         body: JSON.stringify({
           model: this.model,
           input: text

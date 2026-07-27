@@ -1,4 +1,5 @@
 import { AppError } from "@/lib/errors";
+import { createOllamaHeaders, type OllamaAuthParams } from "@/services/ai/ollama-auth";
 import type { AIProvider, AIProviderRequest } from "@/services/ai/ai-types";
 
 type OllamaChatResponse = {
@@ -107,17 +108,22 @@ export function createThinkingBlockFilter() {
 export class OllamaProvider implements AIProvider {
   private readonly baseUrl: string;
   private readonly model: string;
+  private readonly auth?: OllamaAuthParams;
 
-  constructor(params?: { baseUrl?: string; model?: string }) {
+  constructor(params?: { baseUrl?: string; model?: string } & OllamaAuthParams) {
     this.baseUrl = params?.baseUrl ?? process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
     this.model = params?.model ?? process.env.OLLAMA_MODEL ?? "qwen3:8b";
+    this.auth = {
+      username: params?.username,
+      password: params?.password
+    };
   }
 
   async complete(request: AIProviderRequest) {
     try {
       const response = await fetch(`${this.baseUrl.replace(/\/$/, "")}/api/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: createOllamaHeaders(this.auth),
         body: JSON.stringify({
           model: this.model,
           messages: request.messages,
@@ -152,7 +158,7 @@ export class OllamaProvider implements AIProvider {
   async *stream(request: AIProviderRequest) {
     const response = await fetch(`${this.baseUrl.replace(/\/$/, "")}/api/chat`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: createOllamaHeaders(this.auth),
       body: JSON.stringify({
         model: this.model,
         messages: request.messages,
