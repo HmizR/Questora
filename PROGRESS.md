@@ -57,7 +57,7 @@ Post-MVP UI refresh completed:
 - AI resource citations now use PDF page ranges or text/Markdown line ranges when available
 - Isolated PostgreSQL integration test setup with service and server action coverage
 - Playwright UI-level workflow test setup for admin, lecturer, and student paths
-- GitHub Actions CI quality gate for Prisma validation, typecheck, lint, tests, e2e, and build
+- GitHub Actions CI quality gate with a pgvector-enabled PostgreSQL service for Prisma validation, typecheck, lint, tests, e2e, and build
 - Structured quiz attempts with multiple-choice/true-false questions and server-side scoring
 - Lecturer-configured quiz attempt caps and best-attempt quiz grades
 - Lecturer quiz analytics with participation, pass rate, and question-level answer distribution

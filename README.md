@@ -198,8 +198,9 @@ npm run build
 ## Continuous Integration
 
 GitHub Actions runs the full quality gate on pull requests and pushes to `main`.
-The workflow uses a disposable PostgreSQL service database named `questora_test`
-and uploads Playwright traces, screenshots, and videos when browser tests fail.
+The workflow uses a disposable pgvector-enabled PostgreSQL service database named
+`questora_test` and uploads Playwright traces, screenshots, and videos when browser
+tests fail.
 
 CI runs:
 
