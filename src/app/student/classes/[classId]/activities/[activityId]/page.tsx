@@ -205,6 +205,23 @@ export default async function StudentActivityPage({
                       ? formatTimestampLabel("Submitted", submission.submittedAt)
                       : "No submission has been sent yet."}
                   </p>
+                  {submission?.status === "RETURNED" ? (
+                    <div className="mt-4 rounded-lg border border-ember/25 bg-ember/10 p-4">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StatusBadge tone="warning">Returned for revision</StatusBadge>
+                        {submission.returnedAt ? (
+                          <span className="text-xs font-semibold text-ink/55">
+                            {formatTimestampLabel("Returned", submission.returnedAt)}
+                          </span>
+                        ) : null}
+                      </div>
+                      {submission.returnFeedback ? (
+                        <div className="mt-3 whitespace-pre-wrap text-sm leading-6 text-ink/75">
+                          {submission.returnFeedback}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
                   {submission?.fileUrl ? (
                     <div className="mt-3">
                       <ProtectedFileLink

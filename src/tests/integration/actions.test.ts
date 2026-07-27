@@ -1,9 +1,9 @@
-import { ActivityType, ClassStatus, SubmissionStatus, UserRole } from "@prisma/client";
+import { ActivityType, ClassStatus, ProgressStatus, SubmissionStatus, UserRole } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 
 import { enrollStudentAction } from "@/app/admin/actions";
 import { changeOwnPasswordAction, updateOwnProfileAction } from "@/app/account/actions";
-import { gradeSubmissionAction } from "@/app/lecturer/actions";
+import { gradeSubmissionAction, returnSubmissionAction } from "@/app/lecturer/actions";
 import { completeLessonAction, submitAssignmentAction } from "@/app/student/actions";
 import { initialAccountActionState } from "@/app/account/action-state";
 import { initialAdminActionState } from "@/app/admin/action-state";
@@ -225,6 +225,125 @@ describe("database-backed server actions", () => {
         where: { activityId_studentId: { activityId: activity.id, studentId: student.id } }
       })
     ).resolves.toMatchObject({ feedback: "Latest version graded" });
+  });
+
+  it("returns submissions for revision without grading and preserves return notes on resubmission", async () => {
+    const { lecturer, class: teachingClass } = await createClassFixture();
+    const { student } = await enrollStudentFixture(teachingClass.id);
+    const learningModule = await createModuleFixture(teachingClass.id);
+    const activity = await createActivityFixture(learningModule.id, {
+      type: ActivityType.ASSIGNMENT,
+      maxScore: 100
+    });
+    const submission = await createSubmissionFixture(activity.id, student.id);
+    setMockSession({
+      id: lecturer.id,
+      name: lecturer.name,
+      email: lecturer.email,
+      role: "LECTURER"
+    });
+
+    const returned = await returnSubmissionAction(
+      initialLecturerActionState,
+      formData({
+        submissionId: submission.id,
+        returnFeedback: "Please add more evidence before grading."
+      })
+    );
+    const returnedSubmission = await db.submission.findUniqueOrThrow({
+      where: { id: submission.id }
+    });
+    const progress = await db.activityProgress.findUniqueOrThrow({
+      where: { activityId_studentId: { activityId: activity.id, studentId: student.id } }
+    });
+
+    expect(returned).toMatchObject({ ok: true });
+    expect(returnedSubmission.status).toBe(SubmissionStatus.RETURNED);
+    expect(returnedSubmission.returnFeedback).toBe("Please add more evidence before grading.");
+    expect(returnedSubmission.returnedAt).toBeInstanceOf(Date);
+    expect(progress.status).toBe(ProgressStatus.IN_PROGRESS);
+    expect(progress.completedAt).toBeNull();
+    expect(await db.grade.count()).toBe(0);
+    expect(await db.xPTransaction.count()).toBe(0);
+
+    setMockSession({
+      id: student.id,
+      name: student.name,
+      email: student.email,
+      role: "STUDENT"
+    });
+    const resubmitted = await submitAssignmentAction(
+      initialStudentActionState,
+      formData({
+        activityId: activity.id,
+        textContent: "Revised work with more evidence.",
+        fileUrl: ""
+      })
+    );
+    const latest = await db.submission.findUniqueOrThrow({
+      where: { id: submission.id },
+      include: { revisions: true }
+    });
+
+    expect(resubmitted).toMatchObject({ ok: true });
+    expect(latest.status).toBe(SubmissionStatus.SUBMITTED);
+    expect(latest.textContent).toBe("Revised work with more evidence.");
+    expect(latest.returnFeedback).toBeNull();
+    expect(latest.returnedAt).toBeNull();
+    expect(latest.revisions).toHaveLength(1);
+    expect(latest.revisions[0]).toMatchObject({
+      revisionNo: 1,
+      textContent: "Submitted work",
+      status: SubmissionStatus.RETURNED,
+      returnFeedback: "Please add more evidence before grading."
+    });
+    expect(latest.revisions[0]?.returnedAt).toBeInstanceOf(Date);
+  });
+
+  it("blocks returning graded submissions and another lecturer's submissions", async () => {
+    const otherLecturer = await createUser(UserRole.LECTURER, "Return Other Lecturer");
+    const { lecturer, class: teachingClass } = await createClassFixture();
+    const { student } = await enrollStudentFixture(teachingClass.id);
+    const learningModule = await createModuleFixture(teachingClass.id);
+    const activity = await createActivityFixture(learningModule.id, {
+      type: ActivityType.PROJECT
+    });
+    const submission = await createSubmissionFixture(activity.id, student.id);
+
+    setMockSession({
+      id: otherLecturer.id,
+      name: otherLecturer.name,
+      email: otherLecturer.email,
+      role: "LECTURER"
+    });
+    const forbidden = await returnSubmissionAction(
+      initialLecturerActionState,
+      formData({ submissionId: submission.id, returnFeedback: "Try again." })
+    );
+
+    setMockSession({
+      id: lecturer.id,
+      name: lecturer.name,
+      email: lecturer.email,
+      role: "LECTURER"
+    });
+    await gradeSubmissionAction(
+      initialLecturerActionState,
+      formData({ submissionId: submission.id, score: "90", feedback: "Final grade" })
+    );
+    const graded = await returnSubmissionAction(
+      initialLecturerActionState,
+      formData({ submissionId: submission.id, returnFeedback: "Too late." })
+    );
+    const invalid = await returnSubmissionAction(
+      initialLecturerActionState,
+      formData({ submissionId: submission.id, returnFeedback: "" })
+    );
+
+    expect(forbidden).toMatchObject({ ok: false, error: { code: "FORBIDDEN" } });
+    expect(graded).toMatchObject({ ok: false, error: { code: "FORBIDDEN" } });
+    expect(invalid).toMatchObject({ ok: false, error: { code: "VALIDATION_ERROR" } });
+    expect(await db.submissionRevision.count({ where: { submissionId: submission.id } })).toBe(0);
   });
 
   it("rejects grading by a lecturer who does not own the class", async () => {

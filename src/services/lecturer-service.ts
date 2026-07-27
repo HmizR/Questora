@@ -1,4 +1,4 @@
-import { ActivityResourceKind, ProgressStatus, SubmissionStatus, type ActivityType, type QuestType } from "@prisma/client";
+import { ActivityResourceKind, ActivityType, ProgressStatus, SubmissionStatus, type QuestType } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
@@ -557,6 +557,10 @@ export async function gradeSubmission(input: {
     throw new AppError("FORBIDDEN", "You can only grade submissions in your own realms.");
   }
 
+  if (submission.status === SubmissionStatus.RETURNED) {
+    throw new AppError("BAD_REQUEST", "Returned submissions must be resubmitted before grading.");
+  }
+
   return db.$transaction(async (tx) => {
     const grade = await tx.grade.upsert({
       where: {
@@ -613,5 +617,83 @@ export async function gradeSubmission(input: {
     await processActivityCompletionRewards(tx, submission.activityId, submission.studentId);
 
     return grade;
+  });
+}
+
+export async function returnSubmissionForRevision(input: {
+  lecturerId: string;
+  submissionId: string;
+  returnFeedback: string;
+}) {
+  const submission = await db.submission.findUnique({
+    where: { id: input.submissionId },
+    include: {
+      activity: {
+        include: {
+          module: {
+            include: { class: true }
+          }
+        }
+      }
+    }
+  });
+
+  if (!submission) {
+    throw new AppError("NOT_FOUND", "Submission not found.");
+  }
+
+  if (submission.activity.module.class.lecturerId !== input.lecturerId) {
+    throw new AppError("FORBIDDEN", "You can only return submissions in your own realms.");
+  }
+
+  if (
+    submission.activity.type !== ActivityType.ASSIGNMENT &&
+    submission.activity.type !== ActivityType.PROJECT
+  ) {
+    throw new AppError("BAD_REQUEST", "Only assignments and boss battles can be returned.");
+  }
+
+  if (submission.status === SubmissionStatus.GRADED) {
+    throw new AppError("FORBIDDEN", "This submission has already been graded.");
+  }
+
+  const feedback = input.returnFeedback.trim();
+  if (!feedback) {
+    throw new AppError("VALIDATION_ERROR", "Revision feedback is required.");
+  }
+
+  return db.$transaction(async (tx) => {
+    const returned = await tx.submission.update({
+      where: { id: submission.id },
+      data: {
+        status: SubmissionStatus.RETURNED,
+        returnFeedback: feedback,
+        returnedAt: new Date()
+      }
+    });
+
+    await tx.activityProgress.upsert({
+      where: {
+        activityId_studentId: {
+          activityId: submission.activityId,
+          studentId: submission.studentId
+        }
+      },
+      update: {
+        status: ProgressStatus.IN_PROGRESS,
+        progressPercent: 75,
+        completedAt: null
+      },
+      create: {
+        activityId: submission.activityId,
+        studentId: submission.studentId,
+        status: ProgressStatus.IN_PROGRESS,
+        progressPercent: 75,
+        startedAt: submission.createdAt,
+        submittedAt: submission.submittedAt
+      }
+    });
+
+    return returned;
   });
 }

@@ -13,7 +13,7 @@ import {
 } from "@/lib/lecturer-analytics";
 
 const submissionSorts = ["name", "submitted", "grade", "score"] as const;
-const submissionStatuses = ["submitted", "not-submitted", "ungraded", "draft", "published"] as const;
+const submissionStatuses = ["submitted", "not-submitted", "ungraded", "returned", "draft", "published"] as const;
 type SubmissionSort = (typeof submissionSorts)[number];
 type SubmissionStatusFilter = (typeof submissionStatuses)[number];
 
@@ -73,7 +73,16 @@ export async function GET(
     const rows = enrollments.map((enrollment) => {
       const submission = enrollment.student.submissions[0];
       const grade = enrollment.student.grades[0];
-      const state = grade?.publishedAt ? "published" : grade ? "draft" : submission ? "ungraded" : "not-submitted";
+      const state =
+        submission?.status === "RETURNED"
+          ? "returned"
+          : grade?.publishedAt
+            ? "published"
+            : grade
+              ? "draft"
+              : submission
+                ? "ungraded"
+                : "not-submitted";
       const needsAttention = missionNeedsAttention({
         type: activity.type,
         dueAt: activity.dueAt,

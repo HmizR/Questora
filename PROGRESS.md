@@ -23,6 +23,7 @@ Post-MVP UI refresh completed:
 - Compact lecturer action menus for edit, publish, and delete actions
 - Mission-specific submission review and class-level Grades tab
 - Assignment/project submission edits locked after grading
+- Lecturer return-for-revision workflow for assignment/project submissions
 - Quest connected-mission management with completion stats
 - Global and class-specific student leaderboards
 - Public student profiles linked from leaderboards
@@ -131,6 +132,7 @@ Completed:
 - Quest completion stats for active students
 - Student roster and progress summary
 - Mission-specific submission review
+- Return assignment/project submissions for revision without grading
 - Quiz analytics for quiz missions
 - Class grade matrix across students and non-lesson missions
 - Assignment grading and grade publishing
@@ -169,6 +171,7 @@ Completed:
 - Complete lesson
 - Submit assignment/project
 - Edit assignment/project submissions until lecturer grading
+- View lecturer return feedback and resubmit returned assignment/project work
 - Attempt structured quizzes with unlimited attempts and best-score progress
 - Attempt structured quizzes with lecturer-configured attempt caps
 - Review quiz attempt history with correct answers revealed after passing or exhausting attempts
@@ -212,6 +215,7 @@ Completed:
   - Perfect Score
 - Assignment/project grading triggers activity completion reward flow
 - Graded assignment/project submissions are locked from further student edits
+- Returned assignment/project submissions remain editable and preserve return notes in revision history
 - Quiz attempts store attempt history, update best score, and trigger completion rewards only after passing
 - Quiz grades are auto-published from each student's highest quiz attempt score
 - Quiz analytics are read-only and use stored quiz attempt answer JSON
@@ -254,6 +258,7 @@ Completed:
 - AI resource citations with PDF page ranges and text/Markdown line ranges when available
 - Storage orphan cleanup dry-run/delete workflow for managed S3/RustFS prefixes
 - Submission revision history for assignment/project resubmissions before grading
+- Return-for-revision workflow with feedback preserved across resubmission history
 - Redis-backed auth login rate limiting with Upstash REST, TCP Redis, local memory fallback, visible temporary lockout feedback, and inline email validation on `/login`
 - AI tutoring-mode guardrails for graded student quiz, assignment, and project contexts without extra output-review model calls
 - Lecturer AI feedback helper for assignment/project submission review with human-reviewed, non-persisted suggestions and no score recommendations

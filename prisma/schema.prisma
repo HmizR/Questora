@@ -310,6 +310,8 @@ model Submission {
   textContent String?
   fileUrl     String?
   status      SubmissionStatus @default(DRAFT)
+  returnFeedback String?
+  returnedAt  DateTime?
   submittedAt DateTime?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -329,6 +331,8 @@ model SubmissionRevision {
   textContent  String?
   fileUrl      String?
   status       SubmissionStatus
+  returnFeedback String?
+  returnedAt    DateTime?
   submittedAt  DateTime?
   createdAt    DateTime         @default(now())
   submission   Submission       @relation(fields: [submissionId], references: [id], onDelete: Cascade)

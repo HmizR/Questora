@@ -22,7 +22,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Lecturer and student class workspaces use compact main-content tabs for regions, missions, quests, grades, and roster views.
 - Lecturer region, mission, and quest creation/editing use dedicated pages and compact action menus to keep management lists clean.
 - Lecturer submission review is mission-specific for assignments and projects, with a class-level Grades matrix.
-- Assignment and project submissions can be edited until a lecturer grades them, then they lock.
+- Assignment and project submissions can be edited until grading; lecturers can return work for revision without grading.
 - Assignment and quiz pages show clearer work status, attempt summaries, and review guidance for students and lecturers.
 - Lecturer roster, grades, submission review, and quiz analytics tables support filters, sorting, needs-attention highlights, and protected CSV exports.
 - Student and lecturer dashboards show due-soon and overdue deadline panels, with clearer deadline badges on student mission cards.
@@ -303,7 +303,7 @@ student5@questora.dev
 - Duplicate XP rewards are blocked by unique idempotency keys.
 - Level calculation is centralized as `floor(sqrt(totalXp / 100)) + 1`.
 - Assignments and boss battles complete after lecturer grading, then run the same quest/XP/badge reward path.
-- Assignment/project resubmissions are allowed until grading; previous versions are preserved as revision history and graded submissions can no longer be edited.
+- Assignment/project resubmissions are allowed until grading; lecturers can return work for revision, previous versions preserve return notes in revision history, and graded submissions can no longer be edited.
 - Quizzes are scored on the server; passing attempts update progress to completed and can trigger quest XP.
 - Quiz attempts are stored separately, and the highest attempt score is published as the quiz grade.
 - Quiz grades remain separate from XP transactions.
@@ -316,7 +316,7 @@ student5@questora.dev
 ## UI Workflow Coverage
 
 Playwright e2e tests cover login, admin enrollment, lecturer region/mission creation,
-student assignment submission, lecturer grading/publishing, graded submission locking,
+student assignment submission, lecturer return-for-revision, lecturer grading/publishing, graded submission locking,
 quiz attempt exhaustion, and leaderboard profile links.
 They also assert toast feedback for representative admin, lecturer, and student actions.
 Data-safety workflows cover destructive-action confirmation and empty-state rendering.

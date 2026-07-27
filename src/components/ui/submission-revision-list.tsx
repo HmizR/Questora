@@ -7,7 +7,14 @@ import { StatusBadge } from "@/components/ui/status-badge";
 
 type RevisionView = Pick<
   SubmissionRevision,
-  "revisionNo" | "textContent" | "fileUrl" | "status" | "submittedAt" | "createdAt"
+  | "revisionNo"
+  | "textContent"
+  | "fileUrl"
+  | "status"
+  | "returnFeedback"
+  | "returnedAt"
+  | "submittedAt"
+  | "createdAt"
 >;
 
 export function SubmissionRevisionList({
@@ -44,6 +51,19 @@ export function SubmissionRevisionList({
           {revision.textContent ? (
             <div className="mt-3 max-h-48 overflow-y-auto whitespace-pre-wrap rounded-md bg-parchment p-3 text-sm leading-6">
               {revision.textContent}
+            </div>
+          ) : null}
+          {revision.returnFeedback ? (
+            <div className="mt-3 rounded-md border border-ember/20 bg-ember/10 p-3 text-sm leading-6">
+              <p className="font-semibold text-ember">Returned feedback</p>
+              {revision.returnedAt ? (
+                <p className="mt-1 text-xs font-semibold text-ink/55">
+                  {formatTimestampLabel("Returned", revision.returnedAt)}
+                </p>
+              ) : null}
+              <div className="mt-2 whitespace-pre-wrap text-ink/75">
+                {revision.returnFeedback}
+              </div>
             </div>
           ) : null}
           {revision.fileUrl ? (

@@ -2,7 +2,7 @@ import { ActivityType } from "@prisma/client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { GradeSubmissionForm, PublishGradeForm } from "@/components/lecturer/forms";
+import { GradeSubmissionForm, PublishGradeForm, ReturnSubmissionForm } from "@/components/lecturer/forms";
 import { GradingAssistantPanel } from "@/components/lecturer/grading-assistant-panel";
 import { AvatarImage } from "@/components/ui/avatar-image";
 import { AnalyticsControls } from "@/components/ui/analytics-controls";
@@ -24,7 +24,7 @@ import {
 import { readableStatus } from "@/lib/status-label";
 
 const submissionSorts = ["name", "submitted", "grade", "score"] as const;
-const submissionStatuses = ["submitted", "not-submitted", "ungraded", "draft", "published"] as const;
+const submissionStatuses = ["submitted", "not-submitted", "ungraded", "returned", "draft", "published"] as const;
 type SubmissionSort = (typeof submissionSorts)[number];
 type SubmissionStatusFilter = (typeof submissionStatuses)[number];
 
@@ -84,7 +84,9 @@ export default async function MissionSubmissionsPage({
   const enrichedEnrollments = enrollments.map((enrollment) => {
     const submissionEntry = enrollment.student.submissions[0];
     const gradeEntry = enrollment.student.grades[0];
-    const state = gradeEntry?.publishedAt
+    const state = submissionEntry?.status === "RETURNED"
+      ? "returned"
+      : gradeEntry?.publishedAt
       ? "published"
       : gradeEntry
         ? "draft"
@@ -183,6 +185,12 @@ export default async function MissionSubmissionsPage({
     );
   }
 
+  function submissionBadgeTone(status: string | undefined): StatusBadgeTone {
+    if (status === "RETURNED") return "warning";
+    if (status === "GRADED") return "success";
+    return "success";
+  }
+
   return (
     <DashboardShell
       title="Mission submissions"
@@ -213,6 +221,7 @@ export default async function MissionSubmissionsPage({
           { label: "Submitted", value: "submitted" },
           { label: "Not submitted", value: "not-submitted" },
           { label: "Ungraded", value: "ungraded" },
+          { label: "Returned", value: "returned" },
           { label: "Draft grade", value: "draft" },
           { label: "Published", value: "published" }
         ]}
@@ -279,9 +288,9 @@ export default async function MissionSubmissionsPage({
                         <span className="flex flex-wrap items-center gap-2">
                           <StatusBadge
                             className={isSelected ? "border-white/25 bg-white/15 text-white" : ""}
-                            tone="success"
+                            tone={submissionBadgeTone(studentSubmission.status)}
                           >
-                            Submitted
+                            {readableStatus(studentSubmission.status)}
                           </StatusBadge>
                           <span>
                             {studentSubmission.submittedAt
@@ -336,7 +345,9 @@ export default async function MissionSubmissionsPage({
                     </div>
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-ink/65">
-                    <StatusBadge tone="success">{readableStatus(submission.status)}</StatusBadge>
+                    <StatusBadge tone={submissionBadgeTone(submission.status)}>
+                      {readableStatus(submission.status)}
+                    </StatusBadge>
                     {submission.submittedAt ? (
                       <span>{formatTimestampLabel("Submitted", submission.submittedAt)}</span>
                     ) : null}
@@ -369,6 +380,8 @@ export default async function MissionSubmissionsPage({
                   {grade?.gradedAt ? <p>{formatTimestampLabel("Graded", grade.gradedAt)}</p> : null}
                   {grade?.publishedAt ? (
                     <p>{formatTimestampLabel("Published", grade.publishedAt)}</p>
+                  ) : submission.status === "RETURNED" && submission.returnedAt ? (
+                    <p>{formatTimestampLabel("Returned", submission.returnedAt)}</p>
                   ) : grade ? (
                     <p>Grade is saved as draft and is not visible to the student yet.</p>
                   ) : (
@@ -376,6 +389,25 @@ export default async function MissionSubmissionsPage({
                   )}
                 </div>
               </div>
+
+              {submission.status === "RETURNED" ? (
+                <div className="mt-5 rounded-lg border border-ember/25 bg-ember/10 p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-sm font-bold">Returned for revision</h3>
+                    <StatusBadge tone="warning">Waiting for resubmission</StatusBadge>
+                  </div>
+                  {submission.returnedAt ? (
+                    <p className="mt-2 text-sm text-ink/65">
+                      {formatTimestampLabel("Returned", submission.returnedAt)}
+                    </p>
+                  ) : null}
+                  {submission.returnFeedback ? (
+                    <div className="mt-3 whitespace-pre-wrap rounded-md bg-surface p-3 text-sm leading-6">
+                      {submission.returnFeedback}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
 
               {submission.textContent ? (
                 <div className="mt-5 whitespace-pre-wrap rounded-md bg-parchment p-4 text-sm leading-6">
@@ -401,10 +433,13 @@ export default async function MissionSubmissionsPage({
                 <GradingAssistantPanel submissionId={submission.id} />
               </div>
 
-              <div className="mt-6">
-                <GradeSubmissionForm returnTo={returnTo} submissionId={submission.id} />
-              </div>
-              {grade && !grade.publishedAt ? (
+              {submission.status !== "RETURNED" ? (
+                <div className="mt-6 space-y-4">
+                  <ReturnSubmissionForm returnTo={returnTo} submissionId={submission.id} />
+                  <GradeSubmissionForm returnTo={returnTo} submissionId={submission.id} />
+                </div>
+              ) : null}
+              {submission.status !== "RETURNED" && grade && !grade.publishedAt ? (
                 <div className="mt-4">
                   <PublishGradeForm gradeId={grade.id} returnTo={returnTo} />
                 </div>

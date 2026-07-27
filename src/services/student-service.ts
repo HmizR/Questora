@@ -53,6 +53,8 @@ export async function submitAssignment(input: {
           textContent: existingSubmission.textContent,
           fileUrl: existingSubmission.fileUrl,
           status: existingSubmission.status,
+          returnFeedback: existingSubmission.returnFeedback,
+          returnedAt: existingSubmission.returnedAt,
           submittedAt: existingSubmission.submittedAt
         }
       });
@@ -69,6 +71,8 @@ export async function submitAssignment(input: {
         textContent: input.textContent,
         fileUrl: input.fileUrl,
         status: SubmissionStatus.SUBMITTED,
+        returnFeedback: null,
+        returnedAt: null,
         submittedAt: new Date()
       },
       create: {

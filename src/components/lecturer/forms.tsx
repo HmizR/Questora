@@ -37,6 +37,7 @@ import {
   removeQuestActivityAction,
   retryActivityResourceEmbeddingsAction,
   retryActivityResourceExtractionAction,
+  returnSubmissionAction,
   updateActivityAction,
   updateAnnouncementAction,
   updateActivityResourceAction,
@@ -936,6 +937,28 @@ export function GradeSubmissionForm({
           Grade
         </button>
       </div>
+    </LecturerActionForm>
+  );
+}
+
+export function ReturnSubmissionForm({
+  submissionId,
+  returnTo
+}: {
+  submissionId: string;
+  returnTo?: string;
+}) {
+  return (
+    <LecturerActionForm
+      action={returnSubmissionAction}
+      className="rounded-lg border border-ember/20 bg-ember/5 p-4"
+    >
+      <input name="submissionId" type="hidden" value={submissionId} />
+      {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
+      <TextAreaField label="Revision feedback" name="returnFeedback" />
+      <button className="rounded-md border border-ember/30 bg-white px-4 py-2 text-sm font-semibold text-ember hover:bg-ember hover:text-white">
+        Return for revision
+      </button>
     </LecturerActionForm>
   );
 }

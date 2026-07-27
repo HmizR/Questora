@@ -237,6 +237,12 @@ export const gradeSubmissionSchema = z.object({
   returnTo: optionalText.optional()
 });
 
+export const returnSubmissionSchema = z.object({
+  submissionId: z.string().min(1),
+  returnFeedback: z.string().trim().min(2, "Revision feedback is required."),
+  returnTo: optionalText.optional()
+});
+
 export const publishGradeSchema = z.object({
   gradeId: z.string().min(1),
   returnTo: optionalText.optional()

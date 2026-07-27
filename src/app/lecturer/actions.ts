@@ -35,6 +35,7 @@ import {
   removeQuestActivitySchema,
   retryActivityResourceExtractionSchema,
   retryActivityResourceEmbeddingsSchema,
+  returnSubmissionSchema,
   updateAnnouncementSchema,
   updateActivitySchema,
   updateActivityResourceSchema,
@@ -66,6 +67,7 @@ import {
   publishQuest,
   removeActivityPrerequisite,
   removeActivityFromQuest,
+  returnSubmissionForRevision,
   updateActivity,
   updateActivityResource,
   updateModule,
@@ -695,6 +697,29 @@ export async function gradeSubmissionAction(
   }
 
   return { ok: true, data: { message: "Submission graded." } };
+}
+
+export async function returnSubmissionAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = returnSubmissionSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  const returnTo = safeLecturerReturnPath(parsed.data.returnTo);
+  try {
+    const user = await requireRole("LECTURER");
+    await returnSubmissionForRevision({ ...parsed.data, lecturerId: user.id });
+    revalidatePath(returnTo ?? "/lecturer/classes");
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+
+  if (returnTo) {
+    redirect(returnTo);
+  }
+
+  return { ok: true, data: { message: "Submission returned for revision." } };
 }
 
 export async function publishGradeAction(

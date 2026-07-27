@@ -107,6 +107,50 @@ test("student submission can be graded and then locks on the student activity pa
   );
 });
 
+test("lecturer can return a submission for revision and student can resubmit", async ({
+  browser,
+  page
+}) => {
+  test.setTimeout(120_000);
+
+  await loginAs(page, e2eUsers.student.email);
+  await page.goto(`/student/classes/${seed.class.id}/activities/${seed.activities.assignment.id}`);
+  await page.getByLabel("Submission text").fill("First answer for revision.");
+  await page.getByRole("button", { name: "Submit assignment" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Submission sent." })).toBeVisible();
+
+  const lecturerContext = await browser.newContext();
+  const lecturerPage = await lecturerContext.newPage();
+  await loginAs(lecturerPage, e2eUsers.lecturer.email);
+  await lecturerPage.goto(
+    `/lecturer/classes/${seed.class.id}/modules/${seed.module.id}/activities/` +
+      `${seed.activities.assignment.id}/submissions?studentId=${seed.users.student.id}`
+  );
+  await expect(lecturerPage.getByText("First answer for revision.")).toBeVisible();
+  await lecturerPage
+    .getByLabel("Revision feedback")
+    .fill("Please add another source and clarify the conclusion.");
+  await lecturerPage.getByRole("button", { name: "Return for revision" }).click();
+  await expect(lecturerPage.locator("span").filter({ hasText: "Returned" }).first()).toBeVisible();
+  await expect(lecturerPage.getByText("Waiting for resubmission")).toBeVisible();
+  await expect(
+    lecturerPage.getByText("Please add another source and clarify the conclusion.")
+  ).toBeVisible();
+  await expect(lecturerPage.getByRole("button", { name: "Grade" })).toHaveCount(0);
+  await lecturerContext.close();
+
+  await page.reload();
+  await expect(page.getByText("Returned, editable").first()).toBeVisible();
+  await expect(page.getByText("Returned for revision")).toBeVisible();
+  await expect(page.getByText("Please add another source and clarify the conclusion.")).toBeVisible();
+  await page.getByLabel("Submission text").fill("Revised answer with another source.");
+  await page.getByRole("button", { name: "Update submission" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Submission sent." })).toBeVisible();
+  await expect(page.getByText("Revision 1")).toBeVisible();
+  await expect(page.getByText("Returned feedback")).toBeVisible();
+  await expect(page.getByText("First answer for revision.")).toBeVisible();
+});
+
 test("student can still submit an assignment with a pasted file URL", async ({ page }) => {
   await loginAs(page, e2eUsers.student.email);
   await page.goto(`/student/classes/${seed.class.id}/activities/${seed.activities.assignment.id}`);
