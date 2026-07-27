@@ -11,13 +11,15 @@ import { EMBEDDING_DIMENSION, type EmbeddingProvider } from "@/services/ai/embed
 import {
   backfillPendingResourceEmbeddings,
   embedActivityResourceTextChunks,
+  retrieveRelevantClassResourceChunks,
   retrieveRelevantActivityResourceChunks
 } from "@/services/ai/resource-retrieval-service";
 
 import {
   createActivityFixture,
   createClassFixture,
-  createModuleFixture
+  createModuleFixture,
+  enrollStudentFixture
 } from "./fixtures";
 
 function vectorFor(text: string) {
@@ -145,5 +147,83 @@ describe("resource semantic retrieval services", () => {
     expect(chunk.embeddingStatus).toBe(ActivityResourceEmbeddingStatus.READY);
     expect(chunk.embeddedAt).toBeInstanceOf(Date);
     expect(chunk.embeddingError).toBeNull();
+  });
+
+  it("retrieves relevant class chunks only from enrolled published content", async () => {
+    const { lecturer, class: teachingClass } = await createClassFixture();
+    const { student } = await enrollStudentFixture(teachingClass.id);
+    const learningModule = await createModuleFixture(teachingClass.id, {
+      title: "Visible Region"
+    });
+    const publishedActivity = await createActivityFixture(learningModule.id, {
+      title: "Visible Photosynthesis Mission"
+    });
+    const unpublishedActivity = await createActivityFixture(learningModule.id, {
+      title: "Draft Photosynthesis Mission",
+      isPublished: false,
+      position: 2
+    });
+    const hiddenModule = await createModuleFixture(teachingClass.id, {
+      title: "Hidden Region",
+      isPublished: false,
+      position: 2
+    });
+    const hiddenModuleActivity = await createActivityFixture(hiddenModule.id, {
+      title: "Hidden Photosynthesis Mission"
+    });
+    const otherClass = await createClassFixture({ name: "Other Realm" });
+    const otherModule = await createModuleFixture(otherClass.class.id);
+    const otherActivity = await createActivityFixture(otherModule.id, {
+      title: "Other Photosynthesis Mission"
+    });
+
+    const visibleResource = await createExtractedResource({
+      activityId: publishedActivity.id,
+      lecturerId: lecturer.id,
+      title: "Class Photosynthesis Guide",
+      content: "Photosynthesis class-wide context for enrolled students.",
+      isRequired: true,
+      pageStart: 5,
+      pageEnd: 5
+    });
+    const unpublishedActivityResource = await createExtractedResource({
+      activityId: unpublishedActivity.id,
+      lecturerId: lecturer.id,
+      title: "Draft Activity Notes",
+      content: "Photosynthesis draft activity notes."
+    });
+    const hiddenModuleResource = await createExtractedResource({
+      activityId: hiddenModuleActivity.id,
+      lecturerId: lecturer.id,
+      title: "Hidden Module Notes",
+      content: "Photosynthesis hidden module notes."
+    });
+    const otherClassResource = await createExtractedResource({
+      activityId: otherActivity.id,
+      lecturerId: otherClass.lecturer.id,
+      title: "Other Class Notes",
+      content: "Photosynthesis other class notes."
+    });
+
+    await embedActivityResourceTextChunks(visibleResource.id, testEmbeddingProvider);
+    await embedActivityResourceTextChunks(unpublishedActivityResource.id, testEmbeddingProvider);
+    await embedActivityResourceTextChunks(hiddenModuleResource.id, testEmbeddingProvider);
+    await embedActivityResourceTextChunks(otherClassResource.id, testEmbeddingProvider);
+
+    const chunks = await retrieveRelevantClassResourceChunks({
+      classId: teachingClass.id,
+      studentId: student.id,
+      query: "Explain photosynthesis",
+      provider: testEmbeddingProvider,
+      limit: 8
+    });
+
+    expect(chunks.map((chunk) => chunk.resourceTitle)).toEqual(["Class Photosynthesis Guide"]);
+    expect(chunks[0]).toMatchObject({
+      activityTitle: "Visible Photosynthesis Mission",
+      moduleTitle: "Visible Region",
+      pageStart: 5,
+      pageEnd: 5
+    });
   });
 });

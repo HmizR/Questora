@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { POST as chat } from "@/app/api/ai/chat/route";
 import { POST as streamChat } from "@/app/api/ai/chat/stream/route";
 import { db } from "@/lib/db";
+import { EMBEDDING_DIMENSION, serializeEmbeddingVector } from "@/services/ai/embedding-provider";
 
 import {
   createActivityFixture,
@@ -50,6 +51,34 @@ function mockOllama(answer = "Study the mission instructions and resources first
     Response.json({
       message: { content: answer }
     })
+  );
+}
+
+function mockOllamaEmbeddingThenAnswer(answer = "Use the realm resources.") {
+  return vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+    const url = String(input);
+    if (url.includes("/api/embed")) {
+      return Response.json({
+        embeddings: [Array.from({ length: EMBEDDING_DIMENSION }, (_, index) => (index === 0 ? 1 : 0))]
+      });
+    }
+
+    return Response.json({
+      message: { content: answer }
+    });
+  });
+}
+
+async function markChunkEmbeddingReady(chunkId: string) {
+  await db.$executeRawUnsafe(
+    `UPDATE "ActivityResourceText"
+     SET "embedding" = $1::vector,
+         "embeddingStatus" = 'READY',
+         "embeddedAt" = NOW(),
+         "embeddingError" = NULL
+     WHERE "id" = $2`,
+    serializeEmbeddingVector(Array.from({ length: EMBEDDING_DIMENSION }, (_, index) => (index === 0 ? 1 : 0))),
+    chunkId
   );
 }
 
@@ -318,6 +347,95 @@ describe("AI chat API", () => {
     );
     expect(bodies.some((body) => body.includes("General learning-assistant mode"))).toBe(true);
     expect(bodies.some((body) => body.includes("Tutoring mode for a graded mission"))).toBe(false);
+  });
+
+  it("adds class-wide retrieved resource chunks for enrolled published missions", async () => {
+    const { lecturer, class: teachingClass } = await createClassFixture();
+    const { student } = await enrollStudentFixture(teachingClass.id);
+    const learningModule = await createModuleFixture(teachingClass.id, { title: "Realm Region" });
+    const activity = await createActivityFixture(learningModule.id, {
+      title: "Realm Photosynthesis Mission"
+    });
+    const draftActivity = await createActivityFixture(learningModule.id, {
+      title: "Draft Realm Mission",
+      isPublished: false,
+      position: 2
+    });
+    const resource = await db.activityResource.create({
+      data: {
+        activityId: activity.id,
+        title: "Realm Study Guide",
+        fileName: "realm-guide.md",
+        fileUrl: `s3:mission-resources/${activity.id}/realm-guide.md`,
+        contentType: "text/markdown",
+        size: 1000,
+        position: 1,
+        createdById: lecturer.id,
+        kind: "READING",
+        isRequired: true,
+        textStatus: ActivityResourceTextStatus.READY,
+        textExtractedAt: new Date(),
+        extractedTexts: {
+          create: {
+            chunkIndex: 0,
+            content: "Photosynthesis class-wide evidence appears in the realm study guide.",
+            lineStart: 10,
+            lineEnd: 12
+          }
+        }
+      },
+      include: { extractedTexts: true }
+    });
+    const draftResource = await db.activityResource.create({
+      data: {
+        activityId: draftActivity.id,
+        title: "Draft Realm Guide",
+        fileName: "draft-realm-guide.md",
+        fileUrl: `s3:mission-resources/${draftActivity.id}/draft-realm-guide.md`,
+        contentType: "text/markdown",
+        size: 1000,
+        position: 1,
+        createdById: lecturer.id,
+        textStatus: ActivityResourceTextStatus.READY,
+        textExtractedAt: new Date(),
+        extractedTexts: {
+          create: {
+            chunkIndex: 0,
+            content: "SHOULD_NOT_REACH_CLASS_PROVIDER"
+          }
+        }
+      },
+      include: { extractedTexts: true }
+    });
+    await markChunkEmbeddingReady(resource.extractedTexts[0]!.id);
+    await markChunkEmbeddingReady(draftResource.extractedTexts[0]!.id);
+    setMockSession({
+      id: student.id,
+      name: student.name,
+      email: student.email,
+      role: "STUDENT"
+    });
+    const fetchMock = mockOllamaEmbeddingThenAnswer("Use the class-wide guide.");
+
+    const response = await chat(
+      jsonRequest({
+        message: "Where is photosynthesis explained in this realm?",
+        context: { type: "STUDENT_CLASS", classId: teachingClass.id }
+      })
+    );
+    const body = await json(response);
+    const assistantBody = findAssistantRequestBody(fetchMock);
+
+    expect(response.status).toBe(200);
+    expect(body.contextLabel).toBe("Using current realm");
+    expect(body.answer).toBe("Use the class-wide guide.");
+    expect(assistantBody).toContain(
+      "[Mission: Realm Photosynthesis Mission | Region: Realm Region | Resource: Realm Study Guide, lines 10-12, required]"
+    );
+    expect(assistantBody).toContain(
+      "Photosynthesis class-wide evidence appears in the realm study guide."
+    );
+    expect(assistantBody).not.toContain("SHOULD_NOT_REACH_CLASS_PROVIDER");
   });
 
   it("returns a safe typed error when the provider fails", async () => {

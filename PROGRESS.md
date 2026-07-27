@@ -250,6 +250,7 @@ Completed:
 - Due-date UX with dashboard deadline panels, class deadline panels, and mission due-date badges
 - Class announcements with lecturer authoring, recent overview panels, and student published-only access
 - pgvector RAG foundation for mission-scoped semantic retrieval over extracted resource chunks
+- Student class-wide pgvector RAG over published, accessible mission resources in enrolled realms
 - AI resource citations with PDF page ranges and text/Markdown line ranges when available
 - Storage orphan cleanup dry-run/delete workflow for managed S3/RustFS prefixes
 - Submission revision history for assignment/project resubmissions before grading
@@ -259,8 +260,8 @@ Completed:
 Current automated coverage:
 
 ```text
-70 unit tests passing
-57 integration tests passing
+71 unit tests passing
+59 integration tests passing
 Targeted lecturer resource e2e extraction checks passing
 Targeted student AI assistant streaming e2e check passing
 ```
@@ -280,7 +281,7 @@ Targeted student AI assistant streaming e2e check passing
   - harden student AI guardrails beyond prompt-only behavior with context minimization and anti-impersonation/jailbreak instructions
   - for graded quiz/assignment/project contexts, avoid sending answer-key-like data unless it is safe for tutoring
   - keep output-review model calls as a later option because they add latency and resource usage
-  - expand pgvector RAG from mission-scoped resource chunks to class-wide retrieval after usage patterns are clearer
+  - expand pgvector RAG beyond student-visible resources after usage patterns are clearer, such as announcements or lecturer-only workflows
   - consider Office document text extraction after upload safety, conversion tooling, and performance limits are clearer
   - improve assistant source display in the drawer now that resource chunks can cite PDF pages and text/Markdown lines
   - later add a lecturer grading assistant for summarizing submissions, suggesting feedback, and checking rubric coverage

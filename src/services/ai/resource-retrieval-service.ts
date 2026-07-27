@@ -18,6 +18,10 @@ export type RetrievedResourceChunk = {
   id: string;
   resourceId: string;
   resourceTitle: string;
+  activityId?: string;
+  activityTitle?: string;
+  activityType?: string;
+  moduleTitle?: string;
   isRequired: boolean;
   chunkIndex: number;
   pageStart: number | null;
@@ -137,6 +141,56 @@ export async function retrieveRelevantActivityResourceChunks(params: {
      LIMIT $3`,
     queryEmbedding,
     params.activityId,
+    limit
+  );
+}
+
+export async function retrieveRelevantClassResourceChunks(params: {
+  classId: string;
+  studentId: string;
+  query: string;
+  provider?: EmbeddingProvider;
+  limit?: number;
+}) {
+  const provider = params.provider ?? getEmbeddingProvider();
+  const queryEmbedding = serializeEmbeddingVector(await provider.embed(params.query));
+  const limit = params.limit ?? 8;
+
+  return db.$queryRawUnsafe<RetrievedResourceChunk[]>(
+    `SELECT
+       art."id",
+       art."resourceId",
+       ar."title" AS "resourceTitle",
+       ar."activityId",
+       a."title" AS "activityTitle",
+       a."type"::text AS "activityType",
+       m."title" AS "moduleTitle",
+       ar."isRequired",
+       art."chunkIndex",
+       art."pageStart",
+       art."pageEnd",
+       art."lineStart",
+       art."lineEnd",
+       art."content",
+       (art."embedding" <=> $1::vector) AS "distance"
+     FROM "ActivityResourceText" art
+     INNER JOIN "ActivityResource" ar ON ar."id" = art."resourceId"
+     INNER JOIN "Activity" a ON a."id" = ar."activityId"
+     INNER JOIN "Module" m ON m."id" = a."moduleId"
+     INNER JOIN "ClassStudent" cs ON cs."classId" = m."classId"
+     WHERE m."classId" = $2
+       AND cs."studentId" = $3
+       AND cs."status" = 'ACTIVE'
+       AND m."isPublished" = true
+       AND (m."availableFrom" IS NULL OR m."availableFrom" <= NOW())
+       AND a."isPublished" = true
+       AND art."embeddingStatus" = 'READY'
+       AND art."embedding" IS NOT NULL
+     ORDER BY ((art."embedding" <=> $1::vector) - CASE WHEN ar."isRequired" THEN 0.03 ELSE 0 END) ASC
+     LIMIT $4`,
+    queryEmbedding,
+    params.classId,
+    params.studentId,
     limit
   );
 }

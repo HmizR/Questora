@@ -14,6 +14,7 @@ import type { AIContextResult, AISource } from "@/services/ai/ai-types";
 import { academicHonestyPrompt } from "@/services/ai/ai-prompts";
 import { getPublishedAnnouncementsForStudent } from "@/services/announcement-service";
 import {
+  retrieveRelevantClassResourceChunks,
   retrieveRelevantActivityResourceChunks,
   type RetrievedResourceChunk
 } from "@/services/ai/resource-retrieval-service";
@@ -58,7 +59,7 @@ export async function buildAIContext(
   }
 
   if (input.type === "STUDENT_CLASS") {
-    return buildStudentClassContext(input.classId);
+    return buildStudentClassContext(input.classId, options?.query);
   }
 
   await requireUser();
@@ -181,6 +182,18 @@ async function retrieveRelevantActivityChunksSafely(params: { activityId: string
   }
 }
 
+async function retrieveRelevantClassChunksSafely(params: {
+  classId: string;
+  studentId: string;
+  query: string;
+}) {
+  try {
+    return await retrieveRelevantClassResourceChunks(params);
+  } catch {
+    return [];
+  }
+}
+
 function buildRetrievedResourceContext(chunks: RetrievedResourceChunk[]) {
   let remaining = MAX_RESOURCE_CONTEXT_CHARS;
   const excerpts: string[] = [];
@@ -199,6 +212,37 @@ function buildRetrievedResourceContext(chunks: RetrievedResourceChunk[]) {
     const prefix = `[Resource: ${chunk.resourceTitle}, ${citation}, ${
       chunk.isRequired ? "required" : "optional"
     }]\n`;
+    const available = remaining - prefix.length;
+    if (available <= 0) break;
+
+    const content = sanitizedContent.slice(0, available);
+    excerpts.push(`${prefix}${content}`);
+    remaining -= prefix.length + content.length;
+  }
+
+  return excerpts.join("\n\n");
+}
+
+function buildRetrievedClassResourceContext(chunks: RetrievedResourceChunk[]) {
+  let remaining = MAX_RESOURCE_CONTEXT_CHARS;
+  const excerpts: string[] = [];
+
+  for (const chunk of chunks) {
+    if (remaining <= 0) break;
+    if (isSuspiciousExtractedText(chunk.content)) continue;
+
+    const sanitizedContent = sanitizeExtractedText(chunk.content).slice(
+      0,
+      Math.min(MAX_RESOURCE_CONTEXT_PER_CHUNK_CHARS, remaining)
+    );
+    if (!sanitizedContent) continue;
+
+    const citation = formatResourceChunkCitation(chunk);
+    const missionLabel = chunk.activityTitle ?? "Unknown mission";
+    const regionLabel = chunk.moduleTitle ?? "Unknown region";
+    const prefix = `[Mission: ${missionLabel} | Region: ${regionLabel} | Resource: ${
+      chunk.resourceTitle
+    }, ${citation}, ${chunk.isRequired ? "required" : "optional"}]\n`;
     const available = remaining - prefix.length;
     if (available <= 0) break;
 
@@ -259,7 +303,7 @@ function buildResourceExcerptContext(
   return excerpts.join("\n\n");
 }
 
-async function buildStudentClassContext(classId: string) {
+async function buildStudentClassContext(classId: string, query?: string) {
   const { user } = await requireClassEnrollment(classId);
 
   const [teachingClass, deadlines, announcements, quests] = await Promise.all([
@@ -334,6 +378,13 @@ async function buildStudentClassContext(classId: string) {
     announcements.length === 0
       ? "No recent published announcements."
       : announcements.map((announcement) => `- ${announcement.title}: ${announcement.body}`).join("\n");
+  const retrievedChunks = query
+    ? await retrieveRelevantClassChunksSafely({ classId, studentId: user.id, query })
+    : [];
+  const retrievedResourceText =
+    retrievedChunks.length > 0
+      ? buildRetrievedClassResourceContext(retrievedChunks)
+      : "No class-wide extracted resource matches are available yet.";
 
   return createContextResult({
     label: "Using current realm",
@@ -342,7 +393,11 @@ async function buildStudentClassContext(classId: string) {
       { label: "Realm", detail: teachingClass.name },
       ...teachingClass.modules.map((module) => ({ label: "Region", detail: module.title })),
       ...quests.map((quest) => ({ label: "Quest", detail: quest.title })),
-      ...announcements.map((announcement) => ({ label: "Announcement", detail: announcement.title }))
+      ...announcements.map((announcement) => ({ label: "Announcement", detail: announcement.title })),
+      ...retrievedChunks.map((chunk) => ({
+        label: "Resource",
+        detail: `${chunk.activityTitle ?? "Mission"} / ${chunk.resourceTitle}, ${formatResourceChunkCitation(chunk)}`
+      }))
     ],
     contextText: `
 Student class context:
@@ -360,6 +415,9 @@ ${deadlineText}
 
 Recent published announcements:
 ${announcementText}
+
+Relevant class resource excerpts when available:
+${retrievedResourceText}
 `.trim()
   });
 }

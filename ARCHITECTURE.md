@@ -202,6 +202,8 @@ Current AI MVP:
 - stores chat history in browser state only
 - includes authorized extracted resource excerpts for student mission context when available
 - retrieves relevant mission resource chunks through pgvector when embeddings are ready
+- retrieves relevant class-wide resource chunks for student realm context from published,
+  accessible missions in the enrolled class
 - caps extracted resource context before sending it to the provider
 - adds tutoring-mode guardrail instructions for graded quiz, assignment, and project contexts
 - re-sanitizes extracted resource excerpts before provider requests and skips suspicious chunks
