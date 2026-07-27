@@ -41,6 +41,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Text, Markdown, and PDF mission resources can be extracted server-side so the AI assistant can use authorized resource excerpts.
 - User avatars appear in account menus, leaderboards, profiles, lecturer rosters, and submission review.
 - A global AI assistant drawer can answer with page-aware student mission/realm context, class-wide resource retrieval, local Ollama provider support, and tutoring-mode guardrails.
+- Lecturer submission review pages include an AI feedback helper that drafts human-reviewed feedback guidance without saving grades or suggesting scores.
 - Seed data with one admin, two lecturers, five students, two classes, example modules, activities, quests, badges, and student profiles.
 
 ## Tech Stack
@@ -144,6 +145,11 @@ assignment, and project missions, Questora adds tutoring-mode guardrails so the 
 hints, guiding questions, outlines, rubrics, and explanations instead of direct answers or
 copy-paste graded work. Output review is intentionally deferred to avoid extra latency and local
 model usage.
+
+Lecturer mission-specific submission pages include an AI feedback helper for assignments and
+projects. It analyzes the latest active submission, mission instructions, and authorized mission
+resource excerpts to draft feedback sections for the lecturer to review. Suggestions are temporary,
+not stored, never auto-applied to grades, and intentionally exclude score recommendations.
 
 ## Database
 

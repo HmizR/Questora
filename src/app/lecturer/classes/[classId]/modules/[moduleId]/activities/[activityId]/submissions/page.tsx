@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { GradeSubmissionForm, PublishGradeForm } from "@/components/lecturer/forms";
+import { GradingAssistantPanel } from "@/components/lecturer/grading-assistant-panel";
 import { AvatarImage } from "@/components/ui/avatar-image";
 import { AnalyticsControls } from "@/components/ui/analytics-controls";
 import { ClassTabs } from "@/components/ui/class-tabs";
@@ -394,6 +395,10 @@ export default async function MissionSubmissionsPage({
               <div className="mt-5 rounded-lg border border-border/80 bg-surface-muted p-4">
                 <h3 className="text-sm font-bold">Revision history</h3>
                 <SubmissionRevisionList activityId={activityId} revisions={submission.revisions} />
+              </div>
+
+              <div className="mt-6">
+                <GradingAssistantPanel submissionId={submission.id} />
               </div>
 
               <div className="mt-6">

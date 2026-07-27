@@ -256,12 +256,13 @@ Completed:
 - Submission revision history for assignment/project resubmissions before grading
 - Redis-backed auth login rate limiting with Upstash REST, TCP Redis, local memory fallback, visible temporary lockout feedback, and inline email validation on `/login`
 - AI tutoring-mode guardrails for graded student quiz, assignment, and project contexts without extra output-review model calls
+- Lecturer AI feedback helper for assignment/project submission review with human-reviewed, non-persisted suggestions and no score recommendations
 
 Current automated coverage:
 
 ```text
-71 unit tests passing
-59 integration tests passing
+72 unit tests passing
+63 integration tests passing
 Targeted lecturer resource e2e extraction checks passing
 Targeted student AI assistant streaming e2e check passing
 ```
@@ -284,7 +285,7 @@ Targeted student AI assistant streaming e2e check passing
   - expand pgvector RAG beyond student-visible resources after usage patterns are clearer, such as announcements or lecturer-only workflows
   - consider Office document text extraction after upload safety, conversion tooling, and performance limits are clearer
   - improve assistant source display in the drawer now that resource chunks can cite PDF pages and text/Markdown lines
-  - later add a lecturer grading assistant for summarizing submissions, suggesting feedback, and checking rubric coverage
+  - later expand lecturer AI feedback assistance with rubric coverage after a rubric model exists
   - keep lecturer AI grading suggestions human-reviewed and never auto-publish grades
   - consider AI conversation/message persistence only after deciding whether chat history is needed
 - Production hardening:

@@ -26,6 +26,13 @@ export const aiChatRequestSchema = z.object({
   history: z.array(aiChatMessageSchema).max(8).default([])
 });
 
+export const lecturerGradingAssistantRequestSchema = z.object({
+  submissionId: z.string().cuid()
+});
+
 export type AIContextInput = z.infer<typeof aiContextSchema>;
 export type AIChatMessageInput = z.infer<typeof aiChatMessageSchema>;
 export type AIChatRequestInput = z.infer<typeof aiChatRequestSchema>;
+export type LecturerGradingAssistantRequestInput = z.infer<
+  typeof lecturerGradingAssistantRequestSchema
+>;

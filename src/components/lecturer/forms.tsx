@@ -931,7 +931,7 @@ export function GradeSubmissionForm({
       {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
       <div className="grid gap-3 sm:grid-cols-[120px_1fr_auto]">
         <TextField label="Score" name="score" type="number" />
-        <TextField label="Feedback" name="feedback" required={false} />
+        <TextAreaField label="Feedback" name="feedback" required={false} />
         <button className="self-end rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-steel">
           Grade
         </button>

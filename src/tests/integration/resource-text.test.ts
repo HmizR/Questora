@@ -27,6 +27,7 @@ import { createActivityResource } from "@/services/lecturer-service";
 import {
   clearActivityResourceExtraction,
   clearActivityResourceEmbeddingState,
+  extractTextChunksFromProtectedFile,
   retryActivityResourceEmbeddings,
   retryActivityResourceExtraction
 } from "@/services/resource-text-service";
@@ -126,6 +127,26 @@ describe("resource text extraction services", () => {
     });
     expect(storedResource.extractedTexts[0]?.embeddingStatus).toBe(
       ActivityResourceEmbeddingStatus.READY
+    );
+  });
+
+  it("extracts text chunks from protected submitted files without persisting resource rows", async () => {
+    downloadStorageObjectMock.mockResolvedValue(
+      Buffer.from("First submitted line.\nSecond submitted line.", "utf8")
+    );
+
+    const result = await extractTextChunksFromProtectedFile({
+      fileUrl: "s3:submissions/activity/student/submission.txt"
+    });
+
+    expect(result.status).toBe("READY");
+    expect(result.chunks[0]).toMatchObject({
+      content: "First submitted line.\nSecond submitted line.",
+      lineStart: 1,
+      lineEnd: 2
+    });
+    expect(downloadStorageObjectMock).toHaveBeenCalledWith(
+      "submissions/activity/student/submission.txt"
     );
   });
 

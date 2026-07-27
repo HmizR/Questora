@@ -7,7 +7,8 @@ import { AppError } from "@/lib/errors";
 import {
   chunkPagesWithPageLocations,
   chunkTextWithLineLocations,
-  getResourceExtractability
+  getResourceExtractability,
+  type ExtractedTextChunk
 } from "@/lib/resource-text-rules";
 import { parseStorageRef, downloadStorageObject } from "@/lib/storage";
 import { isProtectedStorageRef } from "@/lib/upload-rules";
@@ -44,10 +45,11 @@ export async function extractTextFromResource(resource: ActivityResource) {
 
   try {
     const objectBuffer = await downloadStorageObject(parseStorageRef(resource.fileUrl));
-    const chunks =
-      extractability === "PDF"
-        ? await extractPdfChunks(objectBuffer)
-        : chunkTextWithLineLocations(objectBuffer.toString("utf8"));
+    const chunks = await extractTextChunksFromBuffer({
+      buffer: objectBuffer,
+      contentType: resource.contentType,
+      fileName: resource.fileName
+    });
 
     if (chunks.length === 0) {
       await markExtractionStatus(
@@ -94,6 +96,39 @@ export async function extractTextFromResource(resource: ActivityResource) {
   } catch {
     // Embeddings are a search enhancement; failed embedding setup must not undo extraction.
   }
+}
+
+export async function extractTextChunksFromProtectedFile(input: {
+  fileUrl: string | null | undefined;
+  fileName?: string | null;
+  contentType?: string | null;
+}) {
+  if (!input.fileUrl || !isProtectedStorageRef(input.fileUrl)) {
+    return { status: "UNSUPPORTED" as const, chunks: [] };
+  }
+
+  const key = parseStorageRef(input.fileUrl);
+  const fileName = input.fileName?.trim() || fileNameFromStorageKey(key);
+  const extractability = getResourceExtractability({
+    contentType: input.contentType,
+    fileName
+  });
+
+  if (extractability === "UNSUPPORTED") {
+    return { status: "UNSUPPORTED" as const, chunks: [] };
+  }
+
+  const objectBuffer = await downloadStorageObject(key);
+  const chunks = await extractTextChunksFromBuffer({
+    buffer: objectBuffer,
+    contentType: input.contentType,
+    fileName
+  });
+
+  return {
+    status: chunks.length > 0 ? ("READY" as const) : ("FAILED" as const),
+    chunks
+  };
 }
 
 export async function retryActivityResourceExtraction(input: {
@@ -159,6 +194,25 @@ async function getLecturerResource(input: {
   return resource;
 }
 
+async function extractTextChunksFromBuffer(input: {
+  buffer: Buffer;
+  contentType?: string | null;
+  fileName: string;
+}): Promise<ExtractedTextChunk[]> {
+  const extractability = getResourceExtractability({
+    contentType: input.contentType,
+    fileName: input.fileName
+  });
+
+  if (extractability === "UNSUPPORTED") {
+    return [];
+  }
+
+  return extractability === "PDF"
+    ? extractPdfChunks(input.buffer)
+    : chunkTextWithLineLocations(input.buffer.toString("utf8"));
+}
+
 async function extractPdfChunks(buffer: Buffer) {
   const { default: pdfParse } = await import("pdf-parse/lib/pdf-parse.js");
   const parsePdfWithOptions = pdfParse as PdfParseWithOptions;
@@ -181,6 +235,11 @@ async function extractPdfChunks(buffer: Buffer) {
   });
 
   return chunkPagesWithPageLocations(pages);
+}
+
+function fileNameFromStorageKey(key: string) {
+  const keyPart = key.split("/").pop() ?? "submission";
+  return keyPart.replace(/^[0-9a-f-]{12,}-/i, "") || keyPart;
 }
 
 async function markExtractionStatus(

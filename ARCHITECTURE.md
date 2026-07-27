@@ -241,13 +241,13 @@ Embeddings use the same provider-boundary approach. The first implementation use
 
 ### Lecturer Grading Assistant
 
-Recommended later AI feature:
+Current lecturer AI MVP:
 
-- appears in mission-specific submission review pages
-- summarizes a student's submission
-- suggests feedback
-- checks rubric or instruction coverage once rubrics exist
-- may suggest a score only as a clearly labeled draft
+- appears in assignment/project mission-specific submission review pages
+- analyzes the latest active submission, mission instructions, and authorized mission resource excerpts
+- drafts a submission summary, strengths, improvement areas, feedback text, and questions to consider
+- does not persist suggestions, fill grade forms automatically, publish feedback, or suggest scores
+- does not read submitted file contents in this pass
 
 Lecturers must remain the final decision-makers. AI should never publish grades automatically.
 

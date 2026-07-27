@@ -218,6 +218,44 @@ test("lecturer filters analytics tables and downloads CSV exports", async ({ pag
   await expect((await quizDownload).suggestedFilename()).toBe("quiz-analytics.csv");
 });
 
+test("lecturer drafts AI feedback for a submitted assignment", async ({ page }) => {
+  await db.submission.create({
+    data: {
+      activityId: seed.activities.assignment.id,
+      studentId: seed.users.student.id,
+      textContent: "This is my submitted explanation with claim and evidence.",
+      status: "SUBMITTED",
+      submittedAt: new Date()
+    }
+  });
+  await page.route("**/api/lecturer/grading-assistant", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        suggestion:
+          "## Submission summary\nThe student explains the claim.\n\n## Strengths\nClear evidence.\n\n## Needs improvement\nAdd reasoning.\n\n## Suggested feedback draft\nGood start; strengthen the reasoning.\n\n## Questions to consider\nWhat evidence best supports the claim?",
+        sources: [{ label: "Mission", detail: "E2E Assignment" }]
+      })
+    });
+  });
+
+  await loginAs(page, e2eUsers.lecturer.email);
+  await page.goto(
+    `/lecturer/classes/${seed.class.id}/modules/${seed.module.id}/activities/${seed.activities.assignment.id}/submissions?studentId=${seed.users.student.id}`
+  );
+
+  await expect(page.getByRole("heading", { name: "Mission submissions" })).toBeVisible();
+  await page.getByRole("button", { name: "Draft feedback" }).click();
+  await expect(page.getByRole("heading", { name: "Submission summary" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Strengths" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Needs improvement" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Suggested feedback draft" })).toBeVisible();
+  await expect(page.getByText("Mission: E2E Assignment")).toBeVisible();
+  await page.getByRole("button", { name: "Copy suggestion" }).click();
+  await expect(page.getByRole("button", { name: "Copied" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Grade" })).toBeVisible();
+});
+
 test("lecturer uploads and removes a mission resource", async ({ page }) => {
   const longResourceFileName =
     "e2e-resource-pack-with-a-very-long-name-that-should-stay-inside-the-card.zip";

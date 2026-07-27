@@ -16,7 +16,11 @@ import {
   parseOllamaStreamLine,
   stripThinkingBlocks
 } from "@/services/ai/ollama-provider";
-import { academicHonestyPrompt, buildAcademicGuardrailInstruction } from "@/services/ai/ai-prompts";
+import {
+  academicHonestyPrompt,
+  buildAcademicGuardrailInstruction,
+  buildLecturerGradingAssistantSystemPrompt
+} from "@/services/ai/ai-prompts";
 
 describe("AI assistant helpers", () => {
   afterEach(() => {
@@ -75,6 +79,18 @@ describe("AI assistant helpers", () => {
     expect(lessonInstruction).toContain("General learning-assistant mode");
     expect(genericInstruction).toContain("General learning-assistant mode");
     expect(lessonInstruction).not.toContain("Tutoring mode for a graded mission");
+  });
+
+  it("builds lecturer grading assistant instructions without score suggestions", () => {
+    const prompt = buildLecturerGradingAssistantSystemPrompt();
+
+    expect(prompt).toContain("## Submission summary");
+    expect(prompt).toContain("## Strengths");
+    expect(prompt).toContain("## Needs improvement");
+    expect(prompt).toContain("## Suggested feedback draft");
+    expect(prompt).toContain("## Questions to consider");
+    expect(prompt).toContain("Do not suggest, estimate, calculate, or imply a numeric score");
+    expect(prompt).toContain("lecturer remains the final decision-maker");
   });
 
   it("normalizes common LaTeX delimiters for markdown math rendering", () => {
