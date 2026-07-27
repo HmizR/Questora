@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
+import { EmptyState } from "@/components/ui/empty-state";
 import { MissionTypeIcon, ProgressStatusBadge } from "@/components/ui/mission-display";
 import { requireClassEnrollment } from "@/lib/authorization-service";
 import { db } from "@/lib/db";
@@ -45,7 +46,13 @@ export default async function StudentQuestsPage({
     >
       <ClassTabs classId={classId} role="STUDENT" />
       <div className="grid gap-4">
-        {teachingClass.quests.map((quest) => {
+        {teachingClass.quests.length === 0 ? (
+          <EmptyState
+            description="Published quests from your lecturer will appear here once they are ready."
+            title="No quests yet"
+          />
+        ) : (
+          teachingClass.quests.map((quest) => {
           const requiredLinks = quest.activities.filter((link) => link.activity.isRequired);
           const completedRequired = requiredLinks.filter((link) =>
             link.activity.progresses.some((progress) => progress.status === "COMPLETED")
@@ -94,7 +101,8 @@ export default async function StudentQuestsPage({
               </div>
             </section>
           );
-        })}
+          })
+        )}
       </div>
     </DashboardShell>
   );
