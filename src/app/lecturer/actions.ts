@@ -26,7 +26,10 @@ import {
   createActivitySchema,
   createModuleSchema,
   createQuestSchema,
+  createRubricCriterionSchema,
   deleteActivityResourceSchema,
+  deleteRubricCriterionSchema,
+  gradeSubmissionWithRubricSchema,
   gradeSubmissionSchema,
   moduleIdSchema,
   publishGradeSchema,
@@ -40,7 +43,8 @@ import {
   updateActivitySchema,
   updateActivityResourceSchema,
   updateModuleSchema,
-  updateQuestSchema
+  updateQuestSchema,
+  updateRubricCriterionSchema
 } from "@/schemas/lecturer";
 import {
   archiveAnnouncement,
@@ -79,6 +83,12 @@ import {
   retryActivityResourceEmbeddings,
   retryActivityResourceExtraction
 } from "@/services/resource-text-service";
+import {
+  createRubricCriterion,
+  deleteRubricCriterion,
+  gradeSubmissionWithRubric,
+  updateRubricCriterion
+} from "@/services/rubric-service";
 
 function validationError(error: z.ZodError): LecturerActionState {
   const fieldErrors = Object.fromEntries(
@@ -697,6 +707,109 @@ export async function gradeSubmissionAction(
   }
 
   return { ok: true, data: { message: "Submission graded." } };
+}
+
+function parseRubricScores(formData: FormData, criterionIds: string) {
+  return criterionIds
+    .split(",")
+    .map((criterionId) => criterionId.trim())
+    .filter(Boolean)
+    .map((criterionId) => {
+      const rawScore = formData.get(`score_${criterionId}`);
+      const rawFeedback = formData.get(`feedback_${criterionId}`);
+      const score = typeof rawScore === "string" ? Number(rawScore) : Number.NaN;
+      const feedback =
+        typeof rawFeedback === "string" && rawFeedback.trim().length > 0
+          ? rawFeedback.trim()
+          : undefined;
+
+      return { criterionId, score, feedback };
+    });
+}
+
+export async function createRubricCriterionAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = createRubricCriterionSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  try {
+    const user = await requireRole("LECTURER");
+    await createRubricCriterion({ ...parsed.data, lecturerId: user.id });
+    revalidatePath(
+      `/lecturer/classes/${parsed.data.classId}/modules/${parsed.data.moduleId}/activities/${parsed.data.activityId}/edit`
+    );
+    return { ok: true, data: { message: "Rubric criterion added." } };
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+}
+
+export async function updateRubricCriterionAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = updateRubricCriterionSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  try {
+    const user = await requireRole("LECTURER");
+    await updateRubricCriterion({ ...parsed.data, lecturerId: user.id });
+    revalidatePath(
+      `/lecturer/classes/${parsed.data.classId}/modules/${parsed.data.moduleId}/activities/${parsed.data.activityId}/edit`
+    );
+    return { ok: true, data: { message: "Rubric criterion updated." } };
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+}
+
+export async function deleteRubricCriterionAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = deleteRubricCriterionSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  try {
+    const user = await requireRole("LECTURER");
+    await deleteRubricCriterion({ ...parsed.data, lecturerId: user.id });
+    revalidatePath(
+      `/lecturer/classes/${parsed.data.classId}/modules/${parsed.data.moduleId}/activities/${parsed.data.activityId}/edit`
+    );
+    return { ok: true, data: { message: "Rubric criterion deleted." } };
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+}
+
+export async function gradeSubmissionWithRubricAction(
+  _state: LecturerActionState,
+  formData: FormData
+): Promise<LecturerActionState> {
+  const parsed = gradeSubmissionWithRubricSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  const returnTo = safeLecturerReturnPath(parsed.data.returnTo);
+  try {
+    const user = await requireRole("LECTURER");
+    await gradeSubmissionWithRubric({
+      lecturerId: user.id,
+      submissionId: parsed.data.submissionId,
+      overallFeedback: parsed.data.overallFeedback,
+      scores: parseRubricScores(formData, parsed.data.criterionIds)
+    });
+    revalidatePath(returnTo ?? "/lecturer/classes");
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
+
+  if (returnTo) {
+    redirect(returnTo);
+  }
+
+  return { ok: true, data: { message: "Submission graded with rubric." } };
 }
 
 export async function returnSubmissionAction(

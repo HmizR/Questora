@@ -6,6 +6,7 @@ import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { EmptyState } from "@/components/ui/empty-state";
 import { activityTypeLabel } from "@/components/ui/mission-display";
+import { RubricBreakdown } from "@/components/ui/rubric-breakdown";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireClassEnrollment } from "@/lib/authorization-service";
 import { formatDate, formatDateTime, formatTimestampLabel } from "@/lib/date-format";
@@ -36,6 +37,15 @@ export default async function StudentClassGradesPage({
                 where: {
                   studentId: user.id,
                   publishedAt: { not: null }
+                },
+                include: {
+                  rubricAssessment: {
+                    include: {
+                      scores: {
+                        include: { criterion: true }
+                      }
+                    }
+                  }
                 }
               },
               quizAttempts: {
@@ -155,8 +165,16 @@ export default async function StudentClassGradesPage({
                         <StatusBadge>Not published</StatusBadge>
                       )}
                     </td>
-                    <td className="max-w-[280px] px-4 py-3 text-ink/70">
-                      {grade?.feedback ? grade.feedback : "No feedback yet"}
+                    <td className="max-w-[340px] px-4 py-3 text-ink/70">
+                      <div className="space-y-3">
+                        <p>{grade?.feedback ? grade.feedback : "No feedback yet"}</p>
+                        {grade?.rubricAssessment ? (
+                          <RubricBreakdown
+                            assessment={grade.rubricAssessment}
+                            title="Rubric"
+                          />
+                        ) : null}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-ink/70">
                       {grade?.publishedAt ? formatDateTime(grade.publishedAt) : "Not published"}

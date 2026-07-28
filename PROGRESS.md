@@ -24,6 +24,7 @@ Post-MVP UI refresh completed:
 - Mission-specific submission review and class-level Grades tab
 - Assignment/project submission edits locked after grading
 - Lecturer return-for-revision workflow for assignment/project submissions
+- Rubric-based assignment/project grading with criterion scores and published student breakdowns
 - Quest connected-mission management with completion stats
 - Global and class-specific student leaderboards
 - Public student profiles linked from leaderboards
@@ -136,6 +137,7 @@ Completed:
 - Quiz analytics for quiz missions
 - Class grade matrix across students and non-lesson missions
 - Assignment grading and grade publishing
+- Optional rubric setup and criterion-by-criterion grading for assignments and boss battles
 - Lecturer ownership checks for all mutations
 
 Key routes:
@@ -180,6 +182,7 @@ Completed:
 - Class leaderboard using quest XP earned in that class
 - Public student profiles with XP, streaks, badges, and recent XP only
 - Class-specific Grades tab with own published assignment, project, and quiz grades
+- Published rubric breakdowns for assignment/project grades
 - Profile with XP, level, badges, XP history, and own published grades
 - Account page profile edits and password changes
 - Student enrollment/publication/prerequisite checks
@@ -216,6 +219,7 @@ Completed:
 - Assignment/project grading triggers activity completion reward flow
 - Graded assignment/project submissions are locked from further student edits
 - Returned assignment/project submissions remain editable and preserve return notes in revision history
+- Rubric grading explains assignment/project grade totals without replacing the `Grade` record or XP flow
 - Quiz attempts store attempt history, update best score, and trigger completion rewards only after passing
 - Quiz grades are auto-published from each student's highest quiz attempt score
 - Quiz analytics are read-only and use stored quiz attempt answer JSON
@@ -262,12 +266,13 @@ Completed:
 - Redis-backed auth login rate limiting with Upstash REST, TCP Redis, local memory fallback, visible temporary lockout feedback, and inline email validation on `/login`
 - AI tutoring-mode guardrails for graded student quiz, assignment, and project contexts without extra output-review model calls
 - Lecturer AI feedback helper for assignment/project submission review with human-reviewed, non-persisted suggestions and no score recommendations
+- Rubric-based assignment/project grading with lecturer-defined criteria, summed `Grade` scores, student-visible published breakdowns, and rubric-aware AI feedback context
 
 Current automated coverage:
 
 ```text
 72 unit tests passing
-63 integration tests passing
+67 integration tests passing
 Targeted lecturer resource e2e extraction checks passing
 Targeted student AI assistant streaming e2e check passing
 ```
@@ -290,7 +295,6 @@ Targeted student AI assistant streaming e2e check passing
   - expand pgvector RAG beyond student-visible resources after usage patterns are clearer, such as announcements or lecturer-only workflows
   - consider Office document text extraction after upload safety, conversion tooling, and performance limits are clearer
   - improve assistant source display in the drawer now that resource chunks can cite PDF pages and text/Markdown lines
-  - later expand lecturer AI feedback assistance with rubric coverage after a rubric model exists
   - keep lecturer AI grading suggestions human-reviewed and never auto-publish grades
   - consider AI conversation/message persistence only after deciding whether chat history is needed
 - Production hardening:

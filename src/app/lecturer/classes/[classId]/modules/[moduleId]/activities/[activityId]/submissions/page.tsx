@@ -2,7 +2,13 @@ import { ActivityType } from "@prisma/client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { GradeSubmissionForm, PublishGradeForm, ReturnSubmissionForm } from "@/components/lecturer/forms";
+import {
+  GradeSubmissionForm,
+  PublishGradeForm,
+  ReturnSubmissionForm,
+  RubricAssessmentSummary,
+  RubricGradeSubmissionForm
+} from "@/components/lecturer/forms";
 import { GradingAssistantPanel } from "@/components/lecturer/grading-assistant-panel";
 import { AvatarImage } from "@/components/ui/avatar-image";
 import { AnalyticsControls } from "@/components/ui/analytics-controls";
@@ -52,7 +58,14 @@ export default async function MissionSubmissionsPage({
       moduleId,
       module: { classId }
     },
-    include: { module: true }
+    include: {
+      module: true,
+      rubric: {
+        include: {
+          criteria: { orderBy: { position: "asc" } }
+        }
+      }
+    }
   });
 
   if (
@@ -147,7 +160,16 @@ export default async function MissionSubmissionsPage({
           }
         }),
         db.grade.findUnique({
-          where: { activityId_studentId: { activityId, studentId: selectedStudentId } }
+          where: { activityId_studentId: { activityId, studentId: selectedStudentId } },
+          include: {
+            rubricAssessment: {
+              include: {
+                scores: {
+                  include: { criterion: true }
+                }
+              }
+            }
+          }
         })
       ])
     : [null, null];
@@ -166,7 +188,7 @@ export default async function MissionSubmissionsPage({
     { label: "Published", value: publishedCount, tone: "success" }
   ];
 
-  function gradeBadge(gradeEntry: typeof grade, isSelected = false) {
+  function gradeBadge(gradeEntry: { publishedAt: Date | null } | null | undefined, isSelected = false) {
     if (!gradeEntry) {
       return (
         <StatusBadge className={isSelected ? "border-white/25 bg-white/15 text-white" : ""} tone="warning">
@@ -433,10 +455,24 @@ export default async function MissionSubmissionsPage({
                 <GradingAssistantPanel submissionId={submission.id} />
               </div>
 
+              {grade?.rubricAssessment ? (
+                <div className="mt-6">
+                  <RubricAssessmentSummary assessment={grade.rubricAssessment} />
+                </div>
+              ) : null}
+
               {submission.status !== "RETURNED" ? (
                 <div className="mt-6 space-y-4">
                   <ReturnSubmissionForm returnTo={returnTo} submissionId={submission.id} />
-                  <GradeSubmissionForm returnTo={returnTo} submissionId={submission.id} />
+                  {activity.rubric?.criteria.length ? (
+                    <RubricGradeSubmissionForm
+                      criteria={activity.rubric.criteria}
+                      returnTo={returnTo}
+                      submissionId={submission.id}
+                    />
+                  ) : (
+                    <GradeSubmissionForm returnTo={returnTo} submissionId={submission.id} />
+                  )}
                 </div>
               ) : null}
               {submission.status !== "RETURNED" && grade && !grade.publishedAt ? (

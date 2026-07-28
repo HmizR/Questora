@@ -23,6 +23,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Lecturer region, mission, and quest creation/editing use dedicated pages and compact action menus to keep management lists clean.
 - Lecturer submission review is mission-specific for assignments and projects, with a class-level Grades matrix.
 - Assignment and project submissions can be edited until grading; lecturers can return work for revision without grading.
+- Assignment and project missions can use optional point-based rubrics for criterion-by-criterion grading and published student breakdowns.
 - Assignment and quiz pages show clearer work status, attempt summaries, and review guidance for students and lecturers.
 - Lecturer roster, grades, submission review, and quiz analytics tables support filters, sorting, needs-attention highlights, and protected CSV exports.
 - Student and lecturer dashboards show due-soon and overdue deadline panels, with clearer deadline badges on student mission cards.
@@ -148,8 +149,9 @@ model usage.
 
 Lecturer mission-specific submission pages include an AI feedback helper for assignments and
 projects. It analyzes the latest active submission, mission instructions, and authorized mission
-resource excerpts to draft feedback sections for the lecturer to review. Suggestions are temporary,
-not stored, never auto-applied to grades, and intentionally exclude score recommendations.
+resource excerpts, plus rubric criteria when configured, to draft feedback sections for the
+lecturer to review. Suggestions are temporary, not stored, never auto-applied to grades, and
+intentionally exclude score recommendations.
 
 ## Database
 

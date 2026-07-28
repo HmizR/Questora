@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import {
   ActivityPrerequisiteForm,
   MissionResourcesPanel,
+  RubricCriteriaPanel,
   UpdateActivityForm
 } from "@/components/lecturer/forms";
 import { ClassTabs } from "@/components/ui/class-tabs";
@@ -47,6 +48,14 @@ export default async function EditMissionPage({
           }
         },
         orderBy: [{ isRequired: "desc" }, { position: "asc" }]
+      },
+      rubric: {
+        include: {
+          criteria: { orderBy: { position: "asc" } },
+          _count: {
+            select: { assessments: true }
+          }
+        }
       }
     }
   });
@@ -77,6 +86,12 @@ export default async function EditMissionPage({
             activityId={activity.id}
             classId={classId}
             prerequisites={activity.prerequisites}
+          />
+          <RubricCriteriaPanel
+            activity={activity}
+            classId={classId}
+            moduleId={moduleId}
+            rubric={activity.rubric}
           />
           <MissionResourcesPanel
             activityId={activity.id}

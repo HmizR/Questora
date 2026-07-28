@@ -22,11 +22,14 @@ import {
   createActivityResourceAction,
   createModuleAction,
   createQuestAction,
+  createRubricCriterionAction,
   deleteAnnouncementAction,
   deleteActivityAction,
   deleteActivityResourceAction,
   deleteModuleAction,
   deleteQuestAction,
+  deleteRubricCriterionAction,
+  gradeSubmissionWithRubricAction,
   gradeSubmissionAction,
   publishActivityAction,
   publishAnnouncementAction,
@@ -42,7 +45,8 @@ import {
   updateAnnouncementAction,
   updateActivityResourceAction,
   updateModuleAction,
-  updateQuestAction
+  updateQuestAction,
+  updateRubricCriterionAction
 } from "@/app/lecturer/actions";
 import { LecturerActionForm } from "@/components/lecturer/action-form";
 import { MissionResourceUpload } from "@/components/lecturer/mission-resource-upload";
@@ -50,6 +54,7 @@ import { SelectField, TextAreaField, TextField } from "@/components/admin/form-f
 import { ConfirmAction } from "@/components/ui/confirm-action";
 import { activityTypeLabel } from "@/components/ui/mission-display";
 import { ResourceFileCard } from "@/components/ui/resource-file-card";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { QuizBuilderFields } from "@/components/lecturer/quiz-builder-fields";
 import { getQuizQuestionFieldDefaults } from "@/lib/quiz";
 
@@ -63,6 +68,28 @@ type ResourceWithEmbeddingSummary = ActivityResource & {
   extractedTexts?: Array<{
     embeddingStatus: ActivityResourceEmbeddingStatus;
     embeddingError: string | null;
+  }>;
+};
+type RubricCriterionView = {
+  id: string;
+  title: string;
+  description: string | null;
+  maxPoints: { toString(): string };
+  position: number;
+};
+type RubricView = {
+  id: string;
+  criteria: RubricCriterionView[];
+  _count?: {
+    assessments: number;
+  };
+};
+type RubricAssessmentView = {
+  scores: Array<{
+    id: string;
+    score: { toString(): string };
+    feedback: string | null;
+    criterion: RubricCriterionView;
   }>;
 };
 
@@ -427,6 +454,144 @@ export function ActivityPrerequisiteForm({
       ) : (
         <p className="mt-3 text-sm text-ink/60">No available prerequisite candidates.</p>
       )}
+    </div>
+  );
+}
+
+export function RubricCriteriaPanel({
+  activity,
+  classId,
+  moduleId,
+  rubric
+}: {
+  activity: Pick<Activity, "id" | "type">;
+  classId: string;
+  moduleId: string;
+  rubric?: RubricView | null;
+}) {
+  if (activity.type !== ActivityType.ASSIGNMENT && activity.type !== ActivityType.PROJECT) {
+    return null;
+  }
+
+  const criteria = rubric?.criteria ?? [];
+  const assessmentCount = rubric?._count?.assessments ?? 0;
+  const hasAssessments = assessmentCount > 0;
+
+  return (
+    <div className="rounded-lg border border-ink/10 bg-parchment/50 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h4 className="text-sm font-bold">Rubric</h4>
+          <p className="mt-1 text-sm text-ink/60">
+            Define criteria for criterion-by-criterion grading.
+          </p>
+        </div>
+        {hasAssessments ? <StatusBadge tone="info">Grading started</StatusBadge> : null}
+      </div>
+
+      <div className="mt-3 space-y-3">
+        {criteria.length === 0 ? (
+          <p className="text-sm text-ink/60">No rubric criteria added yet.</p>
+        ) : (
+          criteria.map((criterion) => (
+            <details className="rounded-lg border border-border/80 bg-surface p-4" key={criterion.id}>
+              <summary className="cursor-pointer list-none">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold" title={criterion.title}>
+                      {criterion.position}. {criterion.title}
+                    </p>
+                    <p className="text-xs font-semibold text-ink/55">
+                      {criterion.maxPoints.toString()} points
+                    </p>
+                  </div>
+                  {hasAssessments ? (
+                    <StatusBadge tone="warning">Locked shape</StatusBadge>
+                  ) : null}
+                </div>
+              </summary>
+              {criterion.description ? (
+                <p className="mt-3 whitespace-pre-wrap text-sm text-ink/65">
+                  {criterion.description}
+                </p>
+              ) : null}
+              <LecturerActionForm action={updateRubricCriterionAction} className="mt-4 grid gap-3">
+                <input name="classId" type="hidden" value={classId} />
+                <input name="moduleId" type="hidden" value={moduleId} />
+                <input name="activityId" type="hidden" value={activity.id} />
+                <input name="criterionId" type="hidden" value={criterion.id} />
+                <TextField label="Criterion title" name="title" defaultValue={criterion.title} minLength={2} />
+                <TextAreaField
+                  label="Description"
+                  name="description"
+                  defaultValue={criterion.description}
+                  required={false}
+                />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <TextField
+                    label="Max points"
+                    name="maxPoints"
+                    type="number"
+                    defaultValue={criterion.maxPoints.toString()}
+                  />
+                  <TextField
+                    label="Position"
+                    name="position"
+                    type="number"
+                    defaultValue={String(criterion.position)}
+                  />
+                </div>
+                {hasAssessments ? (
+                  <p className="text-xs font-semibold text-ink/55">
+                    Existing rubric assessments keep this criterion in place. Title and description
+                    edits are safest after grading starts.
+                  </p>
+                ) : null}
+                <div className="flex flex-wrap gap-2">
+                  <button className="rounded-md border border-ink/20 bg-white px-3 py-2 text-sm font-semibold hover:bg-ink hover:text-white">
+                    Save criterion
+                  </button>
+                </div>
+              </LecturerActionForm>
+              {!hasAssessments ? (
+                <LecturerActionForm action={deleteRubricCriterionAction} className="mt-3">
+                  <input name="classId" type="hidden" value={classId} />
+                  <input name="moduleId" type="hidden" value={moduleId} />
+                  <input name="activityId" type="hidden" value={activity.id} />
+                  <input name="criterionId" type="hidden" value={criterion.id} />
+                  <ConfirmAction
+                    className="rounded-md border border-ember/30 bg-white px-3 py-1.5 text-xs font-semibold text-ember hover:bg-ember hover:text-white"
+                    confirmLabel="Delete criterion"
+                    description="This removes the criterion from the rubric. It is blocked once rubric grading starts."
+                    label="Delete criterion"
+                    title="Delete this rubric criterion?"
+                  />
+                </LecturerActionForm>
+              ) : null}
+            </details>
+          ))
+        )}
+      </div>
+
+      <LecturerActionForm action={createRubricCriterionAction} className="mt-4 border-t border-ink/10 pt-4">
+        <input name="classId" type="hidden" value={classId} />
+        <input name="moduleId" type="hidden" value={moduleId} />
+        <input name="activityId" type="hidden" value={activity.id} />
+        <TextField label="Criterion title" name="title" minLength={2} />
+        <TextAreaField label="Description" name="description" required={false} />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <TextField label="Max points" name="maxPoints" type="number" />
+          <TextField
+            defaultValue={String(criteria.length + 1)}
+            label="Position"
+            name="position"
+            type="number"
+          />
+        </div>
+        <button className="rounded-md border border-ink/20 bg-white px-3 py-2 text-sm font-semibold hover:bg-ink hover:text-white">
+          Add criterion
+        </button>
+      </LecturerActionForm>
     </div>
   );
 }
@@ -937,6 +1102,100 @@ export function GradeSubmissionForm({
           Grade
         </button>
       </div>
+    </LecturerActionForm>
+  );
+}
+
+export function RubricAssessmentSummary({
+  assessment
+}: {
+  assessment?: RubricAssessmentView | null;
+}) {
+  if (!assessment) return null;
+
+  const sortedScores = [...assessment.scores].sort(
+    (left, right) => left.criterion.position - right.criterion.position
+  );
+
+  return (
+    <div className="rounded-lg border border-border/80 bg-surface-muted p-4">
+      <h3 className="text-sm font-bold">Rubric assessment</h3>
+      <div className="mt-3 space-y-2">
+        {sortedScores.map((score) => (
+          <div className="rounded-md border border-border/80 bg-surface p-3 text-sm" key={score.id}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="font-semibold">{score.criterion.title}</p>
+              <StatusBadge tone="info">
+                {score.score.toString()} / {score.criterion.maxPoints.toString()}
+              </StatusBadge>
+            </div>
+            {score.feedback ? (
+              <p className="mt-2 whitespace-pre-wrap text-ink/65">{score.feedback}</p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function RubricGradeSubmissionForm({
+  criteria,
+  submissionId,
+  returnTo
+}: {
+  criteria: RubricCriterionView[];
+  submissionId: string;
+  returnTo?: string;
+}) {
+  const sortedCriteria = [...criteria].sort((left, right) => left.position - right.position);
+
+  return (
+    <LecturerActionForm action={gradeSubmissionWithRubricAction} className="rounded-lg border border-moss/20 bg-moss/5 p-4">
+      <input name="submissionId" type="hidden" value={submissionId} />
+      <input name="criterionIds" type="hidden" value={sortedCriteria.map((criterion) => criterion.id).join(",")} />
+      {returnTo ? <input name="returnTo" type="hidden" value={returnTo} /> : null}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 className="text-sm font-bold">Grade with rubric</h3>
+          <p className="mt-1 text-sm text-ink/60">
+            The final grade is the sum of all criterion scores.
+          </p>
+        </div>
+        <StatusBadge tone="info">{sortedCriteria.length} criteria</StatusBadge>
+      </div>
+      <div className="mt-4 space-y-3">
+        {sortedCriteria.map((criterion) => (
+          <div className="rounded-md border border-border/80 bg-surface p-3" key={criterion.id}>
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-bold">{criterion.title}</p>
+                {criterion.description ? (
+                  <p className="mt-1 text-sm text-ink/60">{criterion.description}</p>
+                ) : null}
+              </div>
+              <StatusBadge>{criterion.maxPoints.toString()} pts</StatusBadge>
+            </div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-[120px_1fr]">
+              <TextField
+                label="Score"
+                name={`score_${criterion.id}`}
+                type="number"
+                required
+              />
+              <TextAreaField
+                label="Criterion feedback"
+                name={`feedback_${criterion.id}`}
+                required={false}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <TextAreaField label="Overall feedback" name="overallFeedback" required={false} />
+      <button className="w-fit rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-steel">
+        Save rubric grade
+      </button>
     </LecturerActionForm>
   );
 }

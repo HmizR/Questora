@@ -92,29 +92,29 @@ enum ActivityResourceEmbeddingStatus {
 }
 
 model User {
-  id               String             @id @default(cuid())
-  name             String
-  email            String             @unique
-  passwordHash     String
-  role             UserRole
-  status           UserStatus         @default(ACTIVE)
-  avatarUrl        String?
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  taughtClasses    Class[]            @relation("ClassLecturer")
-  createdClasses   Class[]            @relation("ClassCreator")
-  enrollments      ClassStudent[]
-  progresses       ActivityProgress[]
-  submissions      Submission[]
+  id                  String               @id @default(cuid())
+  name                String
+  email               String               @unique
+  passwordHash        String
+  role                UserRole
+  status              UserStatus           @default(ACTIVE)
+  avatarUrl           String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  taughtClasses       Class[]              @relation("ClassLecturer")
+  createdClasses      Class[]              @relation("ClassCreator")
+  enrollments         ClassStudent[]
+  progresses          ActivityProgress[]
+  submissions         Submission[]
   submissionRevisions SubmissionRevision[]
-  grades           Grade[]            @relation("StudentGrades")
-  gradedGrades     Grade[]            @relation("GradedBy")
-  profile          StudentProfile?
-  xpTransactions   XPTransaction[]
-  badges           StudentBadge[]
-  quizAttempts     QuizAttempt[]
-  createdResources ActivityResource[] @relation("ActivityResourceCreator")
-  announcements    Announcement[]     @relation("AnnouncementCreator")
+  grades              Grade[]              @relation("StudentGrades")
+  gradedGrades        Grade[]              @relation("GradedBy")
+  profile             StudentProfile?
+  xpTransactions      XPTransaction[]
+  badges              StudentBadge[]
+  quizAttempts        QuizAttempt[]
+  createdResources    ActivityResource[]   @relation("ActivityResourceCreator")
+  announcements       Announcement[]       @relation("AnnouncementCreator")
 }
 
 model Class {
@@ -167,31 +167,32 @@ model Module {
 }
 
 model Activity {
-  id            String                 @id @default(cuid())
-  moduleId      String
-  type          ActivityType
-  title         String
-  description   String?
-  content       String?
-  position      Int
-  maxScore      Decimal?               @db.Decimal(8, 2)
-  passingScore  Decimal?               @db.Decimal(8, 2)
-  maxAttempts   Int?
-  dueAt         DateTime?
-  isRequired    Boolean                @default(true)
-  isPublished   Boolean                @default(false)
-  createdAt     DateTime               @default(now())
-  updatedAt     DateTime               @updatedAt
-  module        Module                 @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  prerequisites ActivityPrerequisite[] @relation("ActivityPrerequisites")
-  requiredBy    ActivityPrerequisite[] @relation("RequiredActivity")
-  progresses    ActivityProgress[]
-  submissions   Submission[]
+  id                  String                 @id @default(cuid())
+  moduleId            String
+  type                ActivityType
+  title               String
+  description         String?
+  content             String?
+  position            Int
+  maxScore            Decimal?               @db.Decimal(8, 2)
+  passingScore        Decimal?               @db.Decimal(8, 2)
+  maxAttempts         Int?
+  dueAt               DateTime?
+  isRequired          Boolean                @default(true)
+  isPublished         Boolean                @default(false)
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  module              Module                 @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  prerequisites       ActivityPrerequisite[] @relation("ActivityPrerequisites")
+  requiredBy          ActivityPrerequisite[] @relation("RequiredActivity")
+  progresses          ActivityProgress[]
+  submissions         Submission[]
   submissionRevisions SubmissionRevision[]
-  grades        Grade[]
-  questLinks    QuestActivity[]
-  quizAttempts  QuizAttempt[]
-  resources     ActivityResource[]
+  grades              Grade[]
+  questLinks          QuestActivity[]
+  quizAttempts        QuizAttempt[]
+  resources           ActivityResource[]
+  rubric              Rubric?
 
   @@unique([moduleId, position])
 }
@@ -304,61 +305,121 @@ model ActivityProgress {
 }
 
 model Submission {
-  id          String           @id @default(cuid())
-  activityId  String
-  studentId   String
-  textContent String?
-  fileUrl     String?
-  status      SubmissionStatus @default(DRAFT)
-  returnFeedback String?
-  returnedAt  DateTime?
-  submittedAt DateTime?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  activity    Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  student     User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  revisions   SubmissionRevision[]
+  id                String               @id @default(cuid())
+  activityId        String
+  studentId         String
+  textContent       String?
+  fileUrl           String?
+  status            SubmissionStatus     @default(DRAFT)
+  returnFeedback    String?
+  returnedAt        DateTime?
+  submittedAt       DateTime?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  activity          Activity             @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  student           User                 @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  revisions         SubmissionRevision[]
+  rubricAssessments RubricAssessment[]
 
   @@unique([activityId, studentId])
 }
 
 model SubmissionRevision {
-  id           String           @id @default(cuid())
-  submissionId String
-  activityId   String
-  studentId    String
-  revisionNo   Int
-  textContent  String?
-  fileUrl      String?
-  status       SubmissionStatus
+  id             String           @id @default(cuid())
+  submissionId   String
+  activityId     String
+  studentId      String
+  revisionNo     Int
+  textContent    String?
+  fileUrl        String?
+  status         SubmissionStatus
   returnFeedback String?
-  returnedAt    DateTime?
-  submittedAt  DateTime?
-  createdAt    DateTime         @default(now())
-  submission   Submission       @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  activity     Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  student      User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  returnedAt     DateTime?
+  submittedAt    DateTime?
+  createdAt      DateTime         @default(now())
+  submission     Submission       @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  activity       Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  student        User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([submissionId, revisionNo])
   @@index([activityId, studentId])
 }
 
 model Grade {
-  id          String    @id @default(cuid())
-  activityId  String
-  studentId   String
-  score       Decimal   @db.Decimal(8, 2)
-  feedback    String?
-  gradedById  String
-  gradedAt    DateTime  @default(now())
-  publishedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  activity    Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  student     User      @relation("StudentGrades", fields: [studentId], references: [id], onDelete: Cascade)
-  gradedBy    User      @relation("GradedBy", fields: [gradedById], references: [id])
+  id               String            @id @default(cuid())
+  activityId       String
+  studentId        String
+  score            Decimal           @db.Decimal(8, 2)
+  feedback         String?
+  gradedById       String
+  gradedAt         DateTime          @default(now())
+  publishedAt      DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  activity         Activity          @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  student          User              @relation("StudentGrades", fields: [studentId], references: [id], onDelete: Cascade)
+  gradedBy         User              @relation("GradedBy", fields: [gradedById], references: [id])
+  rubricAssessment RubricAssessment?
 
   @@unique([activityId, studentId])
+}
+
+model Rubric {
+  id          String             @id @default(cuid())
+  activityId  String             @unique
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  activity    Activity           @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  criteria    RubricCriterion[]
+  assessments RubricAssessment[]
+}
+
+model RubricCriterion {
+  id          String                 @id @default(cuid())
+  rubricId    String
+  title       String
+  description String?
+  maxPoints   Decimal                @db.Decimal(8, 2)
+  position    Int
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  rubric      Rubric                 @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+  scores      RubricCriterionScore[]
+
+  @@unique([rubricId, position])
+}
+
+model RubricAssessment {
+  id           String                 @id @default(cuid())
+  rubricId     String
+  submissionId String
+  gradeId      String                 @unique
+  studentId    String
+  gradedById   String
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  rubric       Rubric                 @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+  submission   Submission             @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  grade        Grade                  @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+  scores       RubricCriterionScore[]
+
+  @@unique([rubricId, submissionId])
+  @@index([studentId])
+  @@index([gradedById])
+}
+
+model RubricCriterionScore {
+  id           String           @id @default(cuid())
+  assessmentId String
+  criterionId  String
+  score        Decimal          @db.Decimal(8, 2)
+  feedback     String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  assessment   RubricAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  criterion    RubricCriterion  @relation(fields: [criterionId], references: [id])
+
+  @@unique([assessmentId, criterionId])
 }
 
 model Quest {

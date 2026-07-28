@@ -13,6 +13,7 @@ import { ClassTabs } from "@/components/ui/class-tabs";
 import { DashboardShell } from "@/components/ui/dashboard-shell";
 import { activityTypeLabel, MissionTypeIcon } from "@/components/ui/mission-display";
 import { ProtectedFileLink } from "@/components/ui/protected-file-link";
+import { RubricBreakdown } from "@/components/ui/rubric-breakdown";
 import { SubmissionRevisionList } from "@/components/ui/submission-revision-list";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireClassEnrollment } from "@/lib/authorization-service";
@@ -59,7 +60,16 @@ export default async function StudentActivityPage({
       }
     }),
     db.grade.findUnique({
-      where: { activityId_studentId: { activityId, studentId: user.id } }
+      where: { activityId_studentId: { activityId, studentId: user.id } },
+      include: {
+        rubricAssessment: {
+          include: {
+            scores: {
+              include: { criterion: true }
+            }
+          }
+        }
+      }
     }),
     db.quizAttempt.findMany({
       where: { activityId, studentId: user.id },
@@ -155,6 +165,11 @@ export default async function StudentActivityPage({
             ) : null}
             {publishedGrade?.feedback ? (
               <p className="mt-2 text-sm text-ink/65">{publishedGrade.feedback}</p>
+            ) : null}
+            {publishedGrade?.rubricAssessment ? (
+              <div className="mt-4">
+                <RubricBreakdown assessment={publishedGrade.rubricAssessment} />
+              </div>
             ) : null}
             {activity.type === ActivityType.QUIZ ? (
               <div className="mt-4 rounded-md border border-border/80 bg-surface-muted p-3 text-sm">

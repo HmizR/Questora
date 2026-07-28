@@ -237,6 +237,34 @@ export const gradeSubmissionSchema = z.object({
   returnTo: optionalText.optional()
 });
 
+export const createRubricCriterionSchema = z.object({
+  classId: z.string().min(1),
+  moduleId: z.string().min(1),
+  activityId: z.string().min(1),
+  title: z.string().trim().min(2, "Criterion title is required"),
+  description: optionalText.optional(),
+  maxPoints: z.coerce.number().positive("Max points must be greater than zero"),
+  position: z.coerce.number().int().positive()
+});
+
+export const updateRubricCriterionSchema = createRubricCriterionSchema.extend({
+  criterionId: z.string().min(1)
+});
+
+export const deleteRubricCriterionSchema = z.object({
+  classId: z.string().min(1),
+  moduleId: z.string().min(1),
+  activityId: z.string().min(1),
+  criterionId: z.string().min(1)
+});
+
+export const gradeSubmissionWithRubricSchema = z.object({
+  submissionId: z.string().min(1),
+  criterionIds: z.string().trim().min(1, "Rubric criteria are required"),
+  overallFeedback: optionalText.optional(),
+  returnTo: optionalText.optional()
+});
+
 export const returnSubmissionSchema = z.object({
   submissionId: z.string().min(1),
   returnFeedback: z.string().trim().min(2, "Revision feedback is required."),

@@ -16,6 +16,12 @@ import { assertStudentCanAccessActivity, completeActivity } from "@/services/pro
 import { getLecturerQuizAnalytics } from "@/services/quiz-analytics-service";
 import { attemptQuiz } from "@/services/student-service";
 import { getLecturerDeadlineItems, getLecturerOverdueWork, getStudentDeadlineItems } from "@/services/deadline-service";
+import {
+  createRubricCriterion,
+  deleteRubricCriterion,
+  gradeSubmissionWithRubric,
+  updateRubricCriterion
+} from "@/services/rubric-service";
 
 import {
   connectQuestActivityFixture,
@@ -163,6 +169,134 @@ describe("database-backed service rules", () => {
     });
 
     await expect(db.activityResource.findUnique({ where: { id: resource.id } })).resolves.toBeNull();
+  });
+
+  it("supports lecturer-owned rubric setup and rubric grading", async () => {
+    const otherLecturer = await createUser(UserRole.LECTURER, "Rubric Outsider");
+    const { lecturer, class: teachingClass } = await createClassFixture();
+    const { student } = await enrollStudentFixture(teachingClass.id);
+    const learningModule = await createModuleFixture(teachingClass.id);
+    const lesson = await createActivityFixture(learningModule.id, {
+      type: ActivityType.LESSON,
+      title: "No Rubric Lesson"
+    });
+    const assignment = await createActivityFixture(learningModule.id, {
+      type: ActivityType.ASSIGNMENT,
+      title: "Rubric Assignment",
+      position: 2,
+      maxScore: 10
+    });
+    const submission = await createSubmissionFixture(assignment.id, student.id);
+
+    await expect(
+      createRubricCriterion({
+        lecturerId: lecturer.id,
+        activityId: lesson.id,
+        title: "Understanding",
+        maxPoints: 5,
+        position: 1
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+    await expect(
+      createRubricCriterion({
+        lecturerId: otherLecturer.id,
+        activityId: assignment.id,
+        title: "Unauthorized",
+        maxPoints: 5,
+        position: 1
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    const clarity = await createRubricCriterion({
+      lecturerId: lecturer.id,
+      activityId: assignment.id,
+      title: "Clarity",
+      description: "Explains the approach.",
+      maxPoints: 4,
+      position: 1
+    });
+    const evidence = await createRubricCriterion({
+      lecturerId: lecturer.id,
+      activityId: assignment.id,
+      title: "Evidence",
+      maxPoints: 6,
+      position: 2
+    });
+
+    await updateRubricCriterion({
+      lecturerId: lecturer.id,
+      activityId: assignment.id,
+      criterionId: clarity.id,
+      title: "Explanation clarity",
+      description: "Explains the approach clearly.",
+      maxPoints: 4,
+      position: 1
+    });
+
+    await expect(
+      gradeSubmissionWithRubric({
+        lecturerId: lecturer.id,
+        submissionId: submission.id,
+        scores: [
+          { criterionId: clarity.id, score: 5 },
+          { criterionId: evidence.id, score: 6 }
+        ]
+      })
+    ).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
+
+    await expect(
+      gradeSubmissionWithRubric({
+        lecturerId: otherLecturer.id,
+        submissionId: submission.id,
+        scores: [
+          { criterionId: clarity.id, score: 4 },
+          { criterionId: evidence.id, score: 6 }
+        ]
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    const grade = await gradeSubmissionWithRubric({
+      lecturerId: lecturer.id,
+      submissionId: submission.id,
+      overallFeedback: "Strong work overall.",
+      scores: [
+        { criterionId: clarity.id, score: 4, feedback: "Clear explanation." },
+        { criterionId: evidence.id, score: 5.5, feedback: "Good supporting evidence." }
+      ]
+    });
+
+    const [gradedSubmission, progress, assessment] = await Promise.all([
+      db.submission.findUniqueOrThrow({ where: { id: submission.id } }),
+      db.activityProgress.findUniqueOrThrow({
+        where: { activityId_studentId: { activityId: assignment.id, studentId: student.id } }
+      }),
+      db.rubricAssessment.findUniqueOrThrow({
+        where: {
+          rubricId_submissionId: {
+            rubricId: clarity.rubricId,
+            submissionId: submission.id
+          }
+        },
+        include: { scores: true }
+      })
+    ]);
+
+    expect(grade.score.toString()).toBe("9.5");
+    expect(grade.feedback).toBe("Strong work overall.");
+    expect(gradedSubmission.status).toBe("GRADED");
+    expect(progress.status).toBe("COMPLETED");
+    expect(progress.bestScore?.toString()).toBe("9.5");
+    expect(assessment.gradeId).toBe(grade.id);
+    expect(assessment.scores).toHaveLength(2);
+
+    await expect(
+      deleteRubricCriterion({
+        lecturerId: lecturer.id,
+        activityId: assignment.id,
+        criterionId: evidence.id
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
   it("blocks student activity access when not enrolled or content is unpublished", async () => {

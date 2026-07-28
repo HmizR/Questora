@@ -203,6 +203,11 @@ export async function createLecturerGradingSuggestion(
               }
             },
             orderBy: [{ isRequired: "desc" }, { position: "asc" }]
+          },
+          rubric: {
+            include: {
+              criteria: { orderBy: { position: "asc" } }
+            }
           }
         }
       }
@@ -250,6 +255,17 @@ export async function createLecturerGradingSuggestion(
   const submissionFileContext = await buildSubmissionFileContext({
     fileUrl: submission.fileUrl
   });
+  const rubricContext =
+    activity.rubric?.criteria.length
+      ? activity.rubric.criteria
+          .map(
+            (criterion) =>
+              `${criterion.position}. ${criterion.title} (${criterion.maxPoints.toString()} pts)${
+                criterion.description ? ` - ${criterion.description}` : ""
+              }`
+          )
+          .join("\n")
+      : "No rubric criteria are configured.";
   const sources: AISource[] = [
     { label: "Mission", detail: activity.title },
     { label: "Student", detail: submission.student.name },
@@ -269,6 +285,8 @@ Mission description: ${compact(activity.description)}
 Mission instructions/content: ${compact(activity.content)}
 Due date: ${dateOrNone(activity.dueAt)}
 Max score: ${activity.maxScore?.toString() ?? "None"}
+Rubric criteria:
+${rubricContext}
 
 Student:
 Name: ${submission.student.name}
