@@ -1,8 +1,9 @@
-import { ActivityType, ProgressStatus, SubmissionStatus } from "@prisma/client";
+import { ActivityType, NotificationType, ProgressStatus, SubmissionStatus } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
+import { createNotification } from "@/services/notification-service";
 import { processActivityCompletionRewards } from "@/services/progress-service";
 
 type RubricScoreInput = {
@@ -244,6 +245,21 @@ export async function gradeSubmissionWithRubric(input: {
         gradedById: input.lecturerId
       }
     });
+
+    await createNotification(
+      {
+        recipientId: submission.studentId,
+        actorId: input.lecturerId,
+        type: NotificationType.GRADE_DRAFTED,
+        title: "Grade draft saved",
+        body: `A draft grade was saved for ${submission.activity.title}.`,
+        href: `/student/classes/${submission.activity.module.classId}/grades`,
+        entityType: "Grade",
+        entityId: grade.id,
+        dedupeKey: `grade:${grade.id}:drafted:student:${submission.studentId}`
+      },
+      tx
+    );
 
     await tx.submission.update({
       where: { id: submission.id },

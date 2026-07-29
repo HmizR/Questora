@@ -66,6 +66,7 @@ export function clearMockSession() {
 async function clearDatabase() {
   await db.$transaction([
     db.studentBadge.deleteMany(),
+    db.notification.deleteMany(),
     db.badge.deleteMany(),
     db.xPTransaction.deleteMany(),
     db.studentProfile.deleteMany(),

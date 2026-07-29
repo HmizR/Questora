@@ -1,8 +1,12 @@
-import { AnnouncementStatus, EnrollmentStatus } from "@prisma/client";
+import { AnnouncementStatus, EnrollmentStatus, NotificationType } from "@prisma/client";
 
 import { nextAnnouncementPublishedAt } from "@/lib/announcement-rules";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
+import {
+  createNotifications,
+  getActiveClassStudentIds
+} from "@/services/notification-service";
 
 async function getClassForLecturer(classId: string, lecturerId: string) {
   const teachingClass = await db.class.findUnique({ where: { id: classId } });
@@ -47,15 +51,37 @@ export async function createAnnouncement(input: {
 }) {
   await getClassForLecturer(input.classId, input.lecturerId);
 
-  return db.announcement.create({
-    data: {
-      classId: input.classId,
-      title: input.title,
-      body: input.body,
-      status: input.status,
-      createdById: input.lecturerId,
-      publishedAt: nextAnnouncementPublishedAt({ status: input.status })
+  return db.$transaction(async (tx) => {
+    const announcement = await tx.announcement.create({
+      data: {
+        classId: input.classId,
+        title: input.title,
+        body: input.body,
+        status: input.status,
+        createdById: input.lecturerId,
+        publishedAt: nextAnnouncementPublishedAt({ status: input.status })
+      }
+    });
+
+    if (announcement.status === AnnouncementStatus.PUBLISHED) {
+      const studentIds = await getActiveClassStudentIds(input.classId, tx);
+      await createNotifications(
+        studentIds.map((studentId) => ({
+          recipientId: studentId,
+          actorId: input.lecturerId,
+          type: NotificationType.ANNOUNCEMENT_PUBLISHED,
+          title: "New realm announcement",
+          body: announcement.title,
+          href: `/student/classes/${input.classId}/announcements`,
+          entityType: "Announcement",
+          entityId: announcement.id,
+          dedupeKey: `announcement:${announcement.id}:published:student:${studentId}`
+        })),
+        tx
+      );
     }
+
+    return announcement;
   });
 }
 
@@ -69,17 +95,39 @@ export async function updateAnnouncement(input: {
 }) {
   const announcement = await getAnnouncementForLecturer(input);
 
-  return db.announcement.update({
-    where: { id: input.announcementId },
-    data: {
-      title: input.title,
-      body: input.body,
-      status: input.status,
-      publishedAt: nextAnnouncementPublishedAt({
+  return db.$transaction(async (tx) => {
+    const updated = await tx.announcement.update({
+      where: { id: input.announcementId },
+      data: {
+        title: input.title,
+        body: input.body,
         status: input.status,
-        previousPublishedAt: announcement.publishedAt
-      })
+        publishedAt: nextAnnouncementPublishedAt({
+          status: input.status,
+          previousPublishedAt: announcement.publishedAt
+        })
+      }
+    });
+
+    if (updated.status === AnnouncementStatus.PUBLISHED && !announcement.publishedAt) {
+      const studentIds = await getActiveClassStudentIds(input.classId, tx);
+      await createNotifications(
+        studentIds.map((studentId) => ({
+          recipientId: studentId,
+          actorId: input.lecturerId,
+          type: NotificationType.ANNOUNCEMENT_PUBLISHED,
+          title: "New realm announcement",
+          body: updated.title,
+          href: `/student/classes/${input.classId}/announcements`,
+          entityType: "Announcement",
+          entityId: updated.id,
+          dedupeKey: `announcement:${updated.id}:published:student:${studentId}`
+        })),
+        tx
+      );
     }
+
+    return updated;
   });
 }
 
@@ -90,15 +138,37 @@ export async function publishAnnouncement(input: {
 }) {
   const announcement = await getAnnouncementForLecturer(input);
 
-  return db.announcement.update({
-    where: { id: input.announcementId },
-    data: {
-      status: AnnouncementStatus.PUBLISHED,
-      publishedAt: nextAnnouncementPublishedAt({
+  return db.$transaction(async (tx) => {
+    const published = await tx.announcement.update({
+      where: { id: input.announcementId },
+      data: {
         status: AnnouncementStatus.PUBLISHED,
-        previousPublishedAt: announcement.publishedAt
-      })
+        publishedAt: nextAnnouncementPublishedAt({
+          status: AnnouncementStatus.PUBLISHED,
+          previousPublishedAt: announcement.publishedAt
+        })
+      }
+    });
+
+    if (!announcement.publishedAt) {
+      const studentIds = await getActiveClassStudentIds(input.classId, tx);
+      await createNotifications(
+        studentIds.map((studentId) => ({
+          recipientId: studentId,
+          actorId: input.lecturerId,
+          type: NotificationType.ANNOUNCEMENT_PUBLISHED,
+          title: "New realm announcement",
+          body: published.title,
+          href: `/student/classes/${input.classId}/announcements`,
+          entityType: "Announcement",
+          entityId: published.id,
+          dedupeKey: `announcement:${published.id}:published:student:${studentId}`
+        })),
+        tx
+      );
     }
+
+    return published;
   });
 }
 

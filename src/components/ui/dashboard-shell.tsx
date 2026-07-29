@@ -6,10 +6,15 @@ import { db } from "@/lib/db";
 import { AIAssistantButton } from "@/components/ai/ai-assistant-button";
 import { AIAssistantDrawer } from "@/components/ai/ai-assistant-drawer";
 import { AIAssistantProvider } from "@/components/ai/ai-assistant-provider";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { AppNav } from "@/components/ui/app-nav";
 import { AvatarImage } from "@/components/ui/avatar-image";
 import { DashboardFrame } from "@/components/ui/dashboard-frame";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import {
+  getRecentNotifications,
+  getUnreadNotificationCount
+} from "@/services/notification-service";
 
 type DashboardShellProps = {
   title: string;
@@ -25,14 +30,18 @@ const roleLabels = {
 
 export async function DashboardShell({ title, subtitle, children }: DashboardShellProps) {
   const user = await requireUser();
-  const currentUser = await db.user.findUnique({
+  const [currentUser, recentNotifications, unreadNotificationCount] = await Promise.all([
+    db.user.findUnique({
     where: { id: user.id },
     select: {
       avatarUrl: true,
       email: true,
       name: true
     }
-  });
+    }),
+    getRecentNotifications(user.id, 8),
+    getUnreadNotificationCount(user.id)
+  ]);
   const displayName = currentUser?.name ?? user.name ?? "User";
   const displayEmail = currentUser?.email ?? user.email ?? "";
 
@@ -64,6 +73,20 @@ export async function DashboardShell({ title, subtitle, children }: DashboardShe
 
             <div className="flex items-center gap-3">
               <AIAssistantButton />
+              <NotificationBell
+                initialNotifications={recentNotifications.map((notification) => ({
+                  id: notification.id,
+                  type: notification.type,
+                  title: notification.title,
+                  body: notification.body,
+                  href: notification.href,
+                  readAt: notification.readAt?.toISOString() ?? null,
+                  createdAt: notification.createdAt.toISOString(),
+                  actorName: notification.actor?.name ?? null,
+                  actorAvatarUrl: notification.actor?.avatarUrl ?? null
+                }))}
+                initialUnreadCount={unreadNotificationCount}
+              />
               <ThemeToggle />
               <span className="hidden rounded-lg bg-surface-muted px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-ink/70 sm:inline-block">
                 {user.role}

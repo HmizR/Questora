@@ -12,6 +12,7 @@ Questora is an MVP gamified Learning Management System that presents classes as 
 - Service layer for authorization, activity progress, quest completion, XP transactions, badges, grades, enrollment, lecturer workflows, and student workflows.
 - Shared dashboard app shell with top account navigation and role-aware sidebar navigation.
 - Modern responsive dashboard UI with icon navigation, polished cards, and a persisted light/dark theme toggle.
+- In-app notifications with a navbar bell, unread counts, recent dropdown, and shared notification history page.
 - Structured toast notifications and inline action error summaries for admin, lecturer, and student workflows.
 - Confirmation dialogs protect destructive admin and lecturer actions.
 - Shared empty states make low-data dashboards and workspaces easier to recover from.

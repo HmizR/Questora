@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { UserRole } from "@prisma/client";
 import {
   BookOpen,
+  Bell,
   GraduationCap,
   LayoutDashboard,
   Settings,
@@ -28,6 +29,7 @@ function getRoleItems(role: UserRole): NavItem[] {
       { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
       { href: "/admin/users", label: "Users", icon: UsersRound },
       { href: "/admin/classes", label: "Classes / Realms", icon: BookOpen },
+      { href: "/notifications", label: "Notifications", icon: Bell },
       { href: "/account", label: "Account", icon: Settings }
     ];
   }
@@ -36,6 +38,7 @@ function getRoleItems(role: UserRole): NavItem[] {
     return [
       { href: "/lecturer", label: "Dashboard", icon: LayoutDashboard },
       { href: "/lecturer/classes", label: "Classes / Realms", icon: GraduationCap },
+      { href: "/notifications", label: "Notifications", icon: Bell },
       { href: "/account", label: "Account", icon: Settings }
     ];
   }
@@ -45,12 +48,19 @@ function getRoleItems(role: UserRole): NavItem[] {
     { href: "/student/classes", label: "Realms", icon: BookOpen },
     { href: "/student/leaderboard", label: "Leaderboard", icon: Trophy },
     { href: "/student/profile", label: "Profile", icon: UserRound },
+    { href: "/notifications", label: "Notifications", icon: Bell },
     { href: "/account", label: "Account", icon: Settings }
   ];
 }
 
 function isActive(pathname: string, href: string) {
-  if (href === "/account" || href === "/admin" || href === "/lecturer" || href === "/student") {
+  if (
+    href === "/account" ||
+    href === "/notifications" ||
+    href === "/admin" ||
+    href === "/lecturer" ||
+    href === "/student"
+  ) {
     return pathname === href;
   }
 

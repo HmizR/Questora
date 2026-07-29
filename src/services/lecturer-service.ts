@@ -1,8 +1,20 @@
-import { ActivityResourceKind, ActivityType, ProgressStatus, SubmissionStatus, type QuestType } from "@prisma/client";
+import {
+  ActivityResourceKind,
+  ActivityType,
+  NotificationType,
+  ProgressStatus,
+  SubmissionStatus,
+  type QuestType
+} from "@prisma/client";
 import { Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
+import {
+  createNotification,
+  createNotifications,
+  getActiveClassStudentIds
+} from "@/services/notification-service";
 import { processActivityCompletionRewards } from "@/services/progress-service";
 import { extractTextFromResource } from "@/services/resource-text-service";
 
@@ -218,8 +230,35 @@ export async function updateActivity(input: {
 }
 
 export async function publishActivity(activityId: string, lecturerId: string) {
-  await getActivityForLecturer(activityId, lecturerId);
-  return db.activity.update({ where: { id: activityId }, data: { isPublished: true } });
+  const activity = await getActivityForLecturer(activityId, lecturerId);
+  const wasPublished = activity.isPublished;
+
+  return db.$transaction(async (tx) => {
+    const published = await tx.activity.update({
+      where: { id: activityId },
+      data: { isPublished: true }
+    });
+
+    if (!wasPublished && activity.module.isPublished) {
+      const studentIds = await getActiveClassStudentIds(activity.module.classId, tx);
+      await createNotifications(
+        studentIds.map((studentId) => ({
+          recipientId: studentId,
+          actorId: lecturerId,
+          type: NotificationType.MISSION_PUBLISHED,
+          title: "New mission available",
+          body: activity.title,
+          href: `/student/classes/${activity.module.classId}/activities/${activity.id}`,
+          entityType: "Activity",
+          entityId: activity.id,
+          dedupeKey: `activity:${activity.id}:published:student:${studentId}`
+        })),
+        tx
+      );
+    }
+
+    return published;
+  });
 }
 
 export async function deleteActivity(activityId: string, lecturerId: string) {
@@ -259,6 +298,27 @@ export async function createActivityResource(input: {
       }
     });
     await extractTextFromResource(resource);
+    const activity = await db.activity.findUnique({
+      where: { id: input.activityId },
+      include: { module: true }
+    });
+
+    if (activity?.isPublished && activity.module.isPublished) {
+      const studentIds = await getActiveClassStudentIds(activity.module.classId);
+      await createNotifications(
+        studentIds.map((studentId) => ({
+          recipientId: studentId,
+          actorId: input.lecturerId,
+          type: NotificationType.RESOURCE_ADDED,
+          title: "New mission resource",
+          body: `${resource.title} was added to ${activity.title}.`,
+          href: `/student/classes/${activity.module.classId}/activities/${activity.id}`,
+          entityType: "ActivityResource",
+          entityId: resource.id,
+          dedupeKey: `resource:${resource.id}:added:student:${studentId}`
+        }))
+      );
+    }
     return resource;
   } catch (error) {
     throw prismaErrorToAppError(error);
@@ -584,6 +644,21 @@ export async function gradeSubmission(input: {
       }
     });
 
+    await createNotification(
+      {
+        recipientId: submission.studentId,
+        actorId: input.lecturerId,
+        type: NotificationType.GRADE_DRAFTED,
+        title: "Grade draft saved",
+        body: `A draft grade was saved for ${submission.activity.title}.`,
+        href: `/student/classes/${submission.activity.module.classId}/grades`,
+        entityType: "Grade",
+        entityId: grade.id,
+        dedupeKey: `grade:${grade.id}:drafted:student:${submission.studentId}`
+      },
+      tx
+    );
+
     await tx.submission.update({
       where: { id: submission.id },
       data: { status: SubmissionStatus.GRADED }
@@ -671,6 +746,20 @@ export async function returnSubmissionForRevision(input: {
         returnedAt: new Date()
       }
     });
+
+    await createNotification(
+      {
+        recipientId: submission.studentId,
+        actorId: input.lecturerId,
+        type: NotificationType.SUBMISSION_RETURNED,
+        title: "Submission returned",
+        body: `${submission.activity.title} was returned for revision.`,
+        href: `/student/classes/${submission.activity.module.classId}/activities/${submission.activityId}`,
+        entityType: "Submission",
+        entityId: submission.id
+      },
+      tx
+    );
 
     await tx.activityProgress.upsert({
       where: {

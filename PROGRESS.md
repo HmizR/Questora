@@ -33,6 +33,7 @@ Post-MVP UI refresh completed:
 - Self-service account profile edits and password changes
 - Admin-assisted password reset for MVP account recovery
 - Modern responsive dashboard UI refresh with icons and persisted light/dark theme toggle
+- In-app notifications with navbar bell, unread counts, recent dropdown, and shared `/notifications` history page
 - Structured toast notifications and inline action error summaries
 - Data-safety UX with confirmation dialogs and shared empty states
 - Lightweight submission and grading visibility with consistent status badges and timestamps
@@ -267,12 +268,13 @@ Completed:
 - AI tutoring-mode guardrails for graded student quiz, assignment, and project contexts without extra output-review model calls
 - Lecturer AI feedback helper for assignment/project submission review with human-reviewed, non-persisted suggestions and no score recommendations
 - Rubric-based assignment/project grading with lecturer-defined criteria, summed `Grade` scores, student-visible published breakdowns, and rubric-aware AI feedback context
+- In-app notification delivery for announcements, submissions, returns, grade drafts/publication, mission publishing, and resource additions
 
 Current automated coverage:
 
 ```text
 72 unit tests passing
-67 integration tests passing
+71 integration tests passing
 Targeted lecturer resource e2e extraction checks passing
 Targeted student AI assistant streaming e2e check passing
 ```

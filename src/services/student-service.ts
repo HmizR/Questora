@@ -1,9 +1,16 @@
-import { ActivityType, Prisma, ProgressStatus, SubmissionStatus } from "@prisma/client";
+import {
+  ActivityType,
+  NotificationType,
+  Prisma,
+  ProgressStatus,
+  SubmissionStatus
+} from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { canStudentEditSubmission } from "@/lib/domain-rules";
 import { AppError } from "@/lib/errors";
 import { parseQuizDefinition, quizAnswersSchema, scoreQuiz } from "@/lib/quiz";
+import { createNotification } from "@/services/notification-service";
 import {
   assertStudentCanAccessActivity,
   processActivityCompletionRewards
@@ -106,6 +113,20 @@ export async function submitAssignment(input: {
         submittedAt: new Date()
       }
     });
+
+    await createNotification(
+      {
+        recipientId: activity.module.class.lecturerId,
+        actorId: input.studentId,
+        type: NotificationType.SUBMISSION_SUBMITTED,
+        title: "Mission submitted",
+        body: `${activity.title} has a new submission.`,
+        href: `/lecturer/classes/${activity.module.classId}/modules/${activity.moduleId}/activities/${activity.id}/submissions?studentId=${input.studentId}`,
+        entityType: "Submission",
+        entityId: submission.id
+      },
+      tx
+    );
 
     return submission;
   });

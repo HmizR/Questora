@@ -1,7 +1,8 @@
-import { Prisma } from "@prisma/client";
+import { NotificationType, Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
+import { createNotification } from "@/services/notification-service";
 import { awardBadgeByName } from "@/services/xp-service";
 
 export async function getOwnPublishedGrade(activityId: string, studentId: string) {
@@ -53,6 +54,21 @@ export async function publishGrade(gradeId: string, lecturerId: string) {
       where: { id: gradeId },
       data: { publishedAt: new Date() }
     });
+
+    await createNotification(
+      {
+        recipientId: grade.studentId,
+        actorId: lecturerId,
+        type: NotificationType.GRADE_PUBLISHED,
+        title: "Grade published",
+        body: `${grade.activity.title} is now available in your grades.`,
+        href: `/student/classes/${grade.activity.module.classId}/grades`,
+        entityType: "Grade",
+        entityId: grade.id,
+        dedupeKey: `grade:${grade.id}:published:student:${grade.studentId}`
+      },
+      tx
+    );
 
     if (
       grade.activity.maxScore &&
